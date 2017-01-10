@@ -208,5 +208,3 @@ def rewritingFile(newtable, fileName):
 def main():
     resultsTable = columnGOCleaning()
     rewritingFile(resultsTable, "queryResultsGOTranslatedAndFixed.tsv")
-
-main()

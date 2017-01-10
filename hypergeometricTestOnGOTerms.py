@@ -2,6 +2,7 @@ import csv
 import pandas as pa
 import scipy.stats as stats
 from ast import literal_eval
+import primaryFileManagement
 
 def createGenGOAnalysisFile(fileName):
     table = pa.read_csv(fileName + ".tsv", sep = "\t")
@@ -34,9 +35,11 @@ def HypergeometricTestOnDataFrame():
 
     computeHypergeometricTest = lambda x: computeHypergeometricTestForeachValue(x, 1070, 20, numberOfGeneOfInterest)
     counts_df['HypergeoTest'] = counts_df['Counts'].apply(computeHypergeometricTest)
-    print("BonFerroni p-value :" + str((0.05 / numberOfAnnotations)))
+    print("BonFerroni p-value : " + str((0.05 / numberOfAnnotations)))
+    print(counts_df)
 
 def main():
+    primaryFileManagement.main()
     createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed")
     HypergeometricTestOnDataFrame()
 

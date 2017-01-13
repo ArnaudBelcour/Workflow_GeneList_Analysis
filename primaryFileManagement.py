@@ -1,19 +1,25 @@
 import pandas as pa
 import math
+import os
+import sys
 from collections import defaultdict
 
-def GOLabelNumberDictionnaryCreation(fileName):
+inputDirectory = "inputFiles/"
+temporaryDirectory = 'temporaryFiles/'
+outputDirectory = 'outputFiles/'
+
+def GOLabelNumberDictionnaryCreation(fileName, specification):
     d_GOLabelToNumber = {}
 
     with open ("queryResults.csv", 'r') as file:
         queryResultsFile = file.read()
         queryResultsFile = queryResultsFile.replace(" ,\n", "\n")
         queryResultsFile = queryResultsFile.replace(" , ", "\t")
-        queryResultsModified = open("queryResults.tsv", "w")
+        queryResultsModified = open(temporaryDirectory + "queryResults.tsv", "w")
         queryResultsModified.write(queryResultsFile)
         queryResultsModified.close()
 
-    queryResultsTable = pa.read_csv("queryResults.tsv", sep = "\t")
+    queryResultsTable = pa.read_csv(temporaryDirectory + "queryResults.tsv", sep = "\t")
 
     queryResultsTable.columns = [["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"]]
 
@@ -35,7 +41,11 @@ def GOLabelNumberDictionnaryCreation(fileName):
     spaceDeletion = lambda x: str(x).replace(" ", "")
     queryResultsTable["RelatedSynonym"] = queryResultsTable["RelatedSynonym"].apply(spaceDeletion)
 
-    d_GOLabelToNumber = dict(zip(queryResultsTable['label'], queryResultsTable['subject']))
+    if specification == "inverse":
+        d_GOLabelToNumber = dict(zip(queryResultsTable['subject'], queryResultsTable['label']))
+
+    else:
+        d_GOLabelToNumber = dict(zip(queryResultsTable['label'], queryResultsTable['subject']))
 
     d_GOLabelWithSynonym = {}
 
@@ -197,7 +207,7 @@ def fixTermsIssue(listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSynony
                     listOfGONumber.append(GONumber)
             elif "homocysteineS-methyltransferaseactivity" in GOLabelAndNumber:
                 GOLabelFixed = "S-adenosylmethionine-" + GOLabelAndNumber
-                if GOLabelFixed in d_GOLabelToNumber:
+                if GOLabelFixed in d_GOLabelToNumber[GOLabelFixed]:
                     GONumber = d_GOLabelToNumber[GOLabelFixed]
                     listOfGONumber.append(GONumber)
                 elif GOLabelFixed in d_GOLabelWithSynonym:
@@ -220,7 +230,7 @@ def fixTermsIssue(listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSynony
                     GONumber = d_GOLabelWithSynonym[GOLabelFixed]
                     listOfGONumber.append(GONumber)
             elif "mitosis" in GOLabelAndNumber:
-                GOLabelFixed = "mitoticnucleardivision" + GOLabelAndNumber
+                GOLabelFixed = "mitoticnucleardivision"
                 if GOLabelFixed in d_GOLabelToNumber:
                     GONumber = d_GOLabelToNumber[GOLabelFixed]
                     listOfGONumber.append(GONumber)
@@ -255,37 +265,49 @@ def fixDashInExcess(listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSyno
     return listOfGONumber
 
 def columnGOCleaning():
-    resultsTable = pa.read_csv("Fichier3_Comparatif2ConditionsAvecAnnotations.csv", sep = ";")
-    resultsTable = resultsTable[['Row.names', 'SeqDescription', 'SeqLength', 'GOs', 'EnzymeCodes', 'InterProScan']]
+	if os.path.isdir(inputDirectory[:-1]) == False :
+		os.system("sudo mkdir " + inputDirectory)
+	if os.path.isdir(temporaryDirectory[:-1]) == False :
+		os.system("sudo mkdir " + temporaryDirectory)
+	if os.path.isdir(outputDirectory[:-1]) == False :
+		os.system("sudo mkdir " + outputDirectory)
 
-    resultsTable['GOs'] = resultsTable['GOs'].str.replace("C:", "")
-    resultsTable['GOs'] = resultsTable['GOs'].str.replace("P:", "")
-    resultsTable['GOs'] = resultsTable['GOs'].str.replace("F:", "")
-    resultsTable['GOs'] = resultsTable['GOs'].str.split(";")
+	sentenceChoice = "Write the name of your input file : "
+	if sys.version_info  < (3,0,0):
+		nameInputFile = raw_input(sentenceChoice)
+	if sys.version_info  > (3,0,0):
+		nameInputFile = input(sentenceChoice)
+	resultsTable = pa.read_csv(inputDirectory + nameInputFile, sep = ";")
+	resultsTable = resultsTable[['Row.names', 'SeqDescription', 'SeqLength', 'GOs', 'EnzymeCodes', 'InterProScan']]
 
-    d_GOLabelToNumber, d_GOLabelWithSynonym = GOLabelNumberDictionnaryCreation("queryResults.csv")
+	resultsTable['GOs'] = resultsTable['GOs'].str.replace("C:", "")
+	resultsTable['GOs'] = resultsTable['GOs'].str.replace("P:", "")
+	resultsTable['GOs'] = resultsTable['GOs'].str.replace("F:", "")
+	resultsTable['GOs'] = resultsTable['GOs'].str.split(";")
 
-    resultsTable = cleaningNanColumn(resultsTable, 'GOs')
+	d_GOLabelToNumber, d_GOLabelWithSynonym = GOLabelNumberDictionnaryCreation("queryResults.csv", 'normal')
 
-    translation = lambda x: translateGOTerm(x, d_GOLabelToNumber)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(translation)
+	resultsTable = cleaningNanColumn(resultsTable, 'GOs')
 
-    correctionProblesmSynonym = lambda x : fixProblemsWithSynonym(x,  d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionProblesmSynonym)
+	translation = lambda x: translateGOTerm(x, d_GOLabelToNumber)
+	resultsTable['GOs'] = resultsTable['GOs'].apply(translation)
 
-    correctionObsolete = lambda x: fixObsoleteGOTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionObsolete)
+	correctionProblesmSynonym = lambda x : fixProblemsWithSynonym(x,  d_GOLabelToNumber, d_GOLabelWithSynonym)
+	resultsTable['GOs'] = resultsTable['GOs'].apply(correctionProblesmSynonym)
 
-    correctionNorL = lambda x: fixWrongNorLTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionNorL)
+	correctionObsolete = lambda x: fixObsoleteGOTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
+	resultsTable['GOs'] = resultsTable['GOs'].apply(correctionObsolete)
 
-    correctionTermsIssue = lambda x : fixTermsIssue(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionTermsIssue)
+	correctionNorL = lambda x: fixWrongNorLTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
+	resultsTable['GOs'] = resultsTable['GOs'].apply(correctionNorL)
 
-    correctionDashIssue = lambda x : fixDashInExcess(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionDashIssue)
+	correctionTermsIssue = lambda x : fixTermsIssue(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
+	resultsTable['GOs'] = resultsTable['GOs'].apply(correctionTermsIssue)
 
-    return resultsTable
+	correctionDashIssue = lambda x : fixDashInExcess(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
+	resultsTable['GOs'] = resultsTable['GOs'].apply(correctionDashIssue)
+
+	return resultsTable
 
 def cleaningNanColumn(dataframe, column):
 
@@ -298,10 +320,8 @@ def cleaningNanColumn(dataframe, column):
 
 def rewritingFile(newtable, fileName):
     import csv
-    newtable.to_csv(fileName, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    newtable.to_csv(temporaryDirectory + fileName, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
 def main():
     resultsTable = columnGOCleaning()
     rewritingFile(resultsTable, "queryResultsGOTranslatedAndFixed.tsv")
-
-main()

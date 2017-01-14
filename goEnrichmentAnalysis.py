@@ -177,8 +177,18 @@ def enrichmentAnalysis():
     writer.writerow(['GOSidak', 'GOBonferroni', 'GOHolm', 'GOBenjaminiHochberg'])
 
     for index in range(len(GOLabelSignificativesBenjaminiAndHochberg)):
-        if index > len(GOLabelSignificativesSidak) or index >= len(GOLabelSignificativesBonferroni) or index >= len(GOLabelSignificativesHolm) :
-            writer.writerow(['nan', 'nan', 'nan', GOLabelSignificativesBenjaminiAndHochberg[index]])
-        else :
-            writer.writerow([GOLabelSignificativesSidak[index], GOLabelSignificativesBonferroni[index], GOLabelSignificativesHolm[index], GOLabelSignificativesBenjaminiAndHochberg[index]])
-    csvfile.close()
+		try :
+			GOlabelSignificativesSidak =  GOLabelSignificativesSidak[index]
+		except :
+			GOlabelSignificativesSidak =  nan
+		try :
+			GOLabelSignificativesBonferroni =  GOLabelSignificativesBonferroni[index]
+		except :
+			GOLabelSignificativesBonferroni =  nan
+		try :
+			GOLabelSignificativesHolm =  GOLabelSignificativesHolm[index]
+		except :
+			GOLabelSignificativesHolm =  nan
+
+		writer.writerow([GOLabelSignificativesSidak, GOLabelSignificativesBonferroni, GOLabelSignificativesHolm, GOLabelSignificativesBenjaminiAndHochberg[index]])
+	csvfile.close()

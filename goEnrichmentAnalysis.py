@@ -43,19 +43,19 @@ def HypergeometricTestOnDataFrame():
 
     return counts_df
 
-def correctionBonferroni(df):
+def correctionBonferroni(df, numberOfGeneOfInterest:
     pValueCorrectionBonferroni = lambda x: x * numberOfGeneOfInterest
     df['pValueBonferroni'] = df['pValueHypergeometric'].apply(pValueCorrectionBonferroni)
     return df
 
-def correctionBenjaminiHochberg(df):
+def correctionBenjaminiHochberg(df, numberOfGeneOfInterest):
 
     for GO, row in df.iterrows():
         pValueCorrectionBenjaminiHochberg = row['pValueHypergeometric'] * (numberOfGeneOfInterest/(df.index.get_loc(GO)+1))
         df.set_value(GO, 'pValueBenjaminiHochberg', pValueCorrectionBenjaminiHochberg)
     return df
 
-def correctionHolm(df):
+def correctionHolm(df, numberOfGeneOfInterest):
 
     for GO, row in df.iterrows():
         pValueCorrectionHolm = row['pValueHypergeometric'] * (numberOfGeneOfInterest - df.index.get_loc(GO))
@@ -88,9 +88,9 @@ def selectionGOTermWithAdjustedPValue(methodName, alpha, df):
 
 	return GOSignificatives
 
-def tranlsationGONumberToGOLabem(GONumbers):
+def tranlsationGONumberToGOLabel(GONumbers):
 	GOLabels = []
-	d_GOLabelToNumber, d_GOLabelWithSynonym = GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
+	d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
 
 	for GONumber in GONumbers:
 			if GONumber in d_GOLabelToNumber:
@@ -99,7 +99,7 @@ def tranlsationGONumberToGOLabem(GONumbers):
 	return GOLabels
 
 def enrichmentAnalysis():
-	primaryFileManagement.main()
+	primaryFileManagement.columnGOCleaning()
 	createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed", ['Row.names', 'GOs'])
 	counts_df = HypergeometricTestOnDataFrame()
 
@@ -145,11 +145,11 @@ def enrichmentAnalysis():
 				dfJoined = dfJoined.drop([GO])
 
 	dfJoined.sort_values(['pValueHypergeometric'])
-	dfJoined = correctionBonferroni(dfJoined)
-	dfJoined = correctionBenjaminiHochberg(dfJoined)
-	dfJoined = correctionHolm(dfJoined)
+	dfJoined = correctionBonferroni(dfJoined, numberOfGeneOfInterest)
+	dfJoined = correctionBenjaminiHochberg(dfJoined, numberOfGeneOfInterest)
+	dfJoined = correctionHolm(dfJoined, numberOfGeneOfInterest)
 
-	d_GOLabelToNumber, d_GOLabelWithSynonym = GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
+	d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
 	for GO, row in dfJoined.iterrows():
 			if GO in d_GOLabelToNumber:
 				dfJoined.set_value(GO, 'GOLabel', d_GOLabelToNumber[GO])
@@ -160,17 +160,17 @@ def enrichmentAnalysis():
 
     errorRateSidak = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
     GOSignificativesSidak = selectionGOTermWithAdjustedErrorRate(errorRateSidak, dfMerged)
-    GOLabelSignificativesSidak = tranlsationGONumberToGOLabem(GOSignificativesSidak)
+    GOLabelSignificativesSidak = tranlsationGONumberToGOLabel(GOSignificativesSidak)
 
     errorRateBonferroni = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
     GOSignificativesBonferroni = selectionGOTermWithAdjustedErrorRate(errorRateBonferroni, dfMerged)
-    GOLabelSignificativesBonferroni= tranlsationGONumberToGOLabem(GOSignificativesBonferroni)
+    GOLabelSignificativesBonferroni= tranlsationGONumberToGOLabel(GOSignificativesBonferroni)
 
     GOSignificativesHolm = selectionGOTermWithAdjustedPValue("Holm", alpha, dfMerged)
-    GOLabelSignificativesHolm = tranlsationGONumberToGOLabem(GOSignificativesHolm)
+    GOLabelSignificativesHolm = tranlsationGONumberToGOLabel(GOSignificativesHolm)
 
     GOSignificativesBenjaminiHochberg = selectionGOTermWithAdjustedPValue("BenjaminiHochberg", alpha, dfMerged)
-    GOLabelSignificativesBenjaminiAndHochberg = tranlsationGONumberToGOLabem(GOSignificativesBenjaminiHochberg)
+    GOLabelSignificativesBenjaminiAndHochberg = tranlsationGONumberToGOLabel(GOSignificativesBenjaminiHochberg)
 
     csvfile = open(outputDirectory + "significativesGO.tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
@@ -180,15 +180,17 @@ def enrichmentAnalysis():
 		try :
 			GOlabelSignificativesSidak =  GOLabelSignificativesSidak[index]
 		except :
-			GOlabelSignificativesSidak =  nan
+			GOlabelSignificativesSidak =  'nan'
 		try :
 			GOLabelSignificativesBonferroni =  GOLabelSignificativesBonferroni[index]
 		except :
-			GOLabelSignificativesBonferroni =  nan
+			GOLabelSignificativesBonferroni =  'nan'
 		try :
 			GOLabelSignificativesHolm =  GOLabelSignificativesHolm[index]
 		except :
-			GOLabelSignificativesHolm =  nan
+			GOLabelSignificativesHolm =  'nan'
 
 		writer.writerow([GOLabelSignificativesSidak, GOLabelSignificativesBonferroni, GOLabelSignificativesHolm, GOLabelSignificativesBenjaminiAndHochberg[index]])
 	csvfile.close()
+
+enrichmentAnalysis()

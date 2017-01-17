@@ -265,12 +265,12 @@ def fixDashInExcess(listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSyno
     return listOfGONumber
 
 def columnGOCleaning():
-	if os.path.isdir(inputDirectory[:-1]) == False :
-		os.system("sudo mkdir " + inputDirectory)
-	if os.path.isdir(temporaryDirectory[:-1]) == False :
-		os.system("sudo mkdir " + temporaryDirectory)
-	if os.path.isdir(outputDirectory[:-1]) == False :
-		os.system("sudo mkdir " + outputDirectory)
+	if os.path.exists(inputDirectory[:-1]) == False :
+		os.makedirs(inputDirectory)
+	if os.path.exists(temporaryDirectory[:-1]) == False :
+		os.makedirs(temporaryDirectory)
+	if os.path.exists(outputDirectory[:-1]) == False :
+		os.makedirs(outputDirectory)
 
 	sentenceChoice = "Write the name of your input file : "
 	if sys.version_info  < (3,0,0):
@@ -307,7 +307,7 @@ def columnGOCleaning():
 	correctionDashIssue = lambda x : fixDashInExcess(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
 	resultsTable['GOs'] = resultsTable['GOs'].apply(correctionDashIssue)
 
-	return resultsTable
+	rewritingFile(resultsTable, "queryResultsGOTranslatedAndFixed.tsv")
 
 def cleaningNanColumn(dataframe, column):
 
@@ -321,7 +321,3 @@ def cleaningNanColumn(dataframe, column):
 def rewritingFile(newtable, fileName):
     import csv
     newtable.to_csv(temporaryDirectory + fileName, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
-
-def main():
-    resultsTable = columnGOCleaning()
-    rewritingFile(resultsTable, "queryResultsGOTranslatedAndFixed.tsv")

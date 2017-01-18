@@ -26,9 +26,11 @@ def createGenGOAnalysisFile(fileName, columnsNames):
 
     csvfile.close()
 
-def computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneGenome, GOGenomeNumber, dfJoined):
+def computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneGenome, GOGenomeNumber, df):
     pValueHypergeo = stats.hypergeom.sf(GOSetNumber - 1, numberOfGeneGenome, GOGenomeNumber, numberOfGeneOfInterest)
-    dfJoined.set_value(GO, 'pValueHypergeometric', pValueHypergeo)
+    df.set_value(GO, 'pValueHypergeometric', pValueHypergeo)
+
+    return df
 
 def HypergeometricTestOnDataFrame():
     df = pa.read_csv(temporaryDirectory + "Gene_GO.tsv", sep = "\t")
@@ -47,6 +49,7 @@ def HypergeometricTestOnDataFrame():
 def correctionBonferroni(df, numberOfGeneOfInterest):
     pValueCorrectionBonferroni = lambda x: x * numberOfGeneOfInterest
     df['pValueBonferroni'] = df['pValueHypergeometric'].apply(pValueCorrectionBonferroni)
+
     return df
 
 def correctionBenjaminiHochberg(df, numberOfGeneOfInterest):
@@ -54,6 +57,7 @@ def correctionBenjaminiHochberg(df, numberOfGeneOfInterest):
     for GO, row in df.iterrows():
         pValueCorrectionBenjaminiHochberg = row['pValueHypergeometric'] * (numberOfGeneOfInterest/(df.index.get_loc(GO)+1))
         df.set_value(GO, 'pValueBenjaminiHochberg', pValueCorrectionBenjaminiHochberg)
+
     return df
 
 def correctionHolm(df, numberOfGeneOfInterest):
@@ -61,14 +65,17 @@ def correctionHolm(df, numberOfGeneOfInterest):
     for GO, row in df.iterrows():
         pValueCorrectionHolm = row['pValueHypergeometric'] * (numberOfGeneOfInterest - df.index.get_loc(GO))
         df.set_value(GO, 'pValueHolm', pValueCorrectionHolm)
+
     return df
 
 def errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest):
     errorRateAdjusted = alpha / numberOfGeneOfInterest
+
     return errorRateAdjusted
 
 def errorRateAdjustementSidak(alpha, numberOfGeneOfInterest):
     errorRateAdjusted = (1- math.pow((1-alpha), (1 / numberOfGeneOfInterest)))
+
     return errorRateAdjusted
 
 def selectionGOTermWithAdjustedErrorRate(errorRate, df):
@@ -97,6 +104,14 @@ def tranlsationGONumberToGOLabel(GONumbers, d_GOLabelToNumber):
             GOLabels.append(d_GOLabelToNumber[GONumber])
 
     return GOLabels
+
+def inputPythonFormat(sentenceChoice, pythonVersion):
+    if pythonVersion  < (3,0,0):
+        choice = raw_input(sentenceChoice)
+    if pythonVersion  > (3,0,0):
+        choice = input(sentenceChoice)
+
+    return choice
 
 def enrichmentAnalysis():
     primaryFileManagement.columnGOCleaning()
@@ -130,17 +145,13 @@ def enrichmentAnalysis():
 
     dfJoined = dfJoined.sort_values("pValueHypergeometric")
 
-    sentenceChoice = "Enter the alpha risk : "
-    if sys.version_info  < (3,0,0):
-        alpha = float(raw_input(sentenceChoice))
-    if sys.version_info  > (3,0,0):
-        alpha = float(input(sentenceChoice))
+    pythonVersion = sys.version_info
 
-    sentenceChoice = "Enter the number of genes in the genome of your organism : "
-    if sys.version_info  < (3,0,0):
-        numberOfGenesInGenome = int(raw_input(sentenceChoice))
-    if sys.version_info  > (3,0,0):
-        numberOfGenesInGenome = int(input(sentenceChoice))
+    sentenceChoiceAlpha = "Enter the alpha risk : "
+    alpha = float(inputPythonFormat(sentenceChoiceAlpha, pythonVersion))
+
+    sentenceChoiceNumberGene = "Enter the number of genes in the genome of your organism : "
+    numberOfGenesInGenome = int(inputPythonFormat(sentenceChoiceNumberGene, pythonVersion))
 
     for GO, row in dfJoined.iterrows():
         dfJoined.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])

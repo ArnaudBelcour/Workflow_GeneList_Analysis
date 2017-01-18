@@ -6,13 +6,13 @@ Workflow for gene enrichment analysis (at this time, it only does a GO terms Enr
 
 The scripts need :
 
-*[Python 3.0](https://www.python.org/downloads/)
+* [Python 3.0](https://www.python.org/downloads/)
 
 *Some python modules :
 
-**[pandas](http://pandas.pydata.org/)
+** [pandas](http://pandas.pydata.org/)
 
-**[scipy](https://pypi.python.org/pypi/scipy)
+** [scipy](https://pypi.python.org/pypi/scipy)
 
 
 # GO terms Enrichment Analysis
@@ -27,11 +27,11 @@ goTermExtractionUniprot.py queries Uniprot to obtain GO terms associated with Un
 
 This workflow works with three directories (inputFiles, temporaryFiles and outputFiles) :
 
-*inputFiles must have three files : queryResults.csv (a csv file resulting from queriyng on the Gene Ontology to have all the GO terms with their GO labels (it will be automated in the future), GOTermsPlasmoGenome.tsv (which contains all the GO terms from the genome of your species, it will also be automated) and your data (in .csv).
+* inputFiles must have three files : queryResults.csv (a csv file resulting from queriyng on the Gene Ontology to have all the GO terms with their GO labels (it will be automated in the future), GOTermsPlasmoGenome.tsv (which contains all the GO terms from the genome of your species, it will also be automated) and your data (in .csv).
 
-*temporaryFiles : will contain files used during the script, it will be created during the analysis.
+* temporaryFiles : will contain files used during the script, it will be created during the analysis.
 
-*-outputFiles : the results of the analysis in tsv, it will be created during the analysis.
+* outputFiles : the results of the analysis in tsv, it will be created during the analysis.
 
 # Launch the analysis
 

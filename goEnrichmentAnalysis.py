@@ -43,7 +43,7 @@ def HypergeometricTestOnDataFrame():
 
     return counts_df
 
-def correctionBonferroni(df, numberOfGeneOfInterest:
+def correctionBonferroni(df, numberOfGeneOfInterest):
     pValueCorrectionBonferroni = lambda x: x * numberOfGeneOfInterest
     df['pValueBonferroni'] = df['pValueHypergeometric'].apply(pValueCorrectionBonferroni)
     return df
@@ -71,105 +71,105 @@ def errorRateAdjustementSidak(alpha, numberOfGeneOfInterest):
     return errorRateAdjusted
 
 def selectionGOTermWithAdjustedErrorRate(errorRate, df):
-	GOSignificatives = []
+    GOSignificatives = []
 
-	for GO, row in df.iterrows():
-		if row['pValueHypergeometric'] < errorRate :
-			GOSignificatives.append(GO)
+    for GO, row in df.iterrows():
+        if row['pValueHypergeometric'] < errorRate :
+            GOSignificatives.append(GO)
 
-	return GOSignificatives
+    return GOSignificatives
 
 def selectionGOTermWithAdjustedPValue(methodName, alpha, df):
-	GOSignificatives = []
+    GOSignificatives = []
 
-	for GO, row in df.iterrows():
-		if row['pValue' + methodName] < alpha :
-			GOSignificatives.append(GO)
+    for GO, row in df.iterrows():
+        if row['pValue' + methodName] < alpha :
+            GOSignificatives.append(GO)
 
-	return GOSignificatives
+    return GOSignificatives
 
 def tranlsationGONumberToGOLabel(GONumbers):
-	GOLabels = []
-	d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
+    GOLabels = []
+    d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
 
-	for GONumber in GONumbers:
-			if GONumber in d_GOLabelToNumber:
-				GOLabels.append(d_GOLabelToNumber[GONumber])
+    for GONumber in GONumbers:
+        if GONumber in d_GOLabelToNumber:
+		    GOLabels.append(d_GOLabelToNumber[GONumber])
 
-	return GOLabels
+    return GOLabels
 
 def enrichmentAnalysis():
-	primaryFileManagement.columnGOCleaning()
-	createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed", ['Row.names', 'GOs'])
-	counts_df = HypergeometricTestOnDataFrame()
+    primaryFileManagement.columnGOCleaning()
+    createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed", ['Row.names', 'GOs'])
+    counts_df = HypergeometricTestOnDataFrame()
 
-	df = pa.read_csv("Gene_GO.tsv", sep = "\t")
-	numberOfGeneOfInterest = len(df["Row.names"].unique())
+    df = pa.read_csv("Gene_GO.tsv", sep = "\t")
+    numberOfGeneOfInterest = len(df["Row.names"].unique())
 
-	df = pa.read_csv("GOTermsPlasmoGenome.tsv", sep="\t")
-	df.columns = ['GOs']
-	counts_df_GOGenome = pa.DataFrame(df.groupby("GOs").size().rename("CountsGenome"))
+    df = pa.read_csv("GOTermsPlasmoGenome.tsv", sep="\t")
+    df.columns = ['GOs']
+    counts_df_GOGenome = pa.DataFrame(df.groupby("GOs").size().rename("CountsGenome"))
 
-	counts_df = counts_df.drop(['-'])
-	counts_df_GOGenome.reset_index(inplace=True)
-	counts_df_GOGenome['GOs'] = counts_df_GOGenome['GOs'].str.replace(":", "_")
-	counts_df_GOGenome = counts_df_GOGenome.set_index('GOs')
+    counts_df = counts_df.drop(['-'])
+    counts_df_GOGenome.reset_index(inplace=True)
+    counts_df_GOGenome['GOs'] = counts_df_GOGenome['GOs'].str.replace(":", "_")
+    counts_df_GOGenome = counts_df_GOGenome.set_index('GOs')
 
-	dfJoined = counts_df.join(counts_df_GOGenome)
+    dfJoined = counts_df.join(counts_df_GOGenome)
 
-	GOtermsWithHyperGeoTestNAN = []
+    GOtermsWithHyperGeoTestNAN = []
 
-	for GO, row in dfJoined.iterrows():
-		if math.isnan(dfJoined.get_value(GO, 'CountsGenome')):
-			dfJoined = dfJoined.drop([GO])
-		else:
-			computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, row['Counts'], 1070, row['CountsGenome'], dfJoined)
-			if math.isnan(dfJoined.get_value(GO, 'pValueHypergeometric')):
-				GOtermsWithHyperGeoTestNAN.append(GO)
-				dfJoined = dfJoined.drop([GO])
+    for GO, row in dfJoined.iterrows():
+        if math.isnan(dfJoined.get_value(GO, 'CountsGenome')):
+            dfJoined = dfJoined.drop([GO])
+        else:
+            computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, row['Counts'], 1070, row['CountsGenome'], dfJoined)
+            if math.isnan(dfJoined.get_value(GO, 'pValueHypergeometric')):
+                GOtermsWithHyperGeoTestNAN.append(GO)
+                dfJoined = dfJoined.drop([GO])
 
-	dfJoined = dfJoined.sort_values("pValueHypergeometric")
+    dfJoined = dfJoined.sort_values("pValueHypergeometric")
 
-	alpha = 0.05
+    alpha = 0.05
 
-	for GO, row in dfJoined.iterrows():
-		dfJoined.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])
+    for GO, row in dfJoined.iterrows():
+        dfJoined.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])
 
-	for GO, row in dfJoined.iterrows():
-		if math.isnan(dfJoined.get_value(GO, 'CountsTotal')):
-			dfJoined = dfJoined.drop([GO])
-		else:
-			computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, row['Counts'], 12000, row['CountsTotal'], dfJoined)
-			if math.isnan(dfJoined.get_value(GO, 'pValueHypergeometric')):
-				GOtermsWithHyperGeoTestNAN.append(GO)
-				dfJoined = dfJoined.drop([GO])
+    for GO, row in dfJoined.iterrows():
+        if math.isnan(dfJoined.get_value(GO, 'CountsTotal')):
+            dfJoined = dfJoined.drop([GO])
+        else:
+            computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, row['Counts'], 12000, row['CountsTotal'], dfJoined)
+            if math.isnan(dfJoined.get_value(GO, 'pValueHypergeometric')):
+                GOtermsWithHyperGeoTestNAN.append(GO)
+                dfJoined = dfJoined.drop([GO])
 
-	dfJoined.sort_values(['pValueHypergeometric'])
-	dfJoined = correctionBonferroni(dfJoined, numberOfGeneOfInterest)
-	dfJoined = correctionBenjaminiHochberg(dfJoined, numberOfGeneOfInterest)
-	dfJoined = correctionHolm(dfJoined, numberOfGeneOfInterest)
+    dfJoined.sort_values(['pValueHypergeometric'])
+    dfJoined = correctionBonferroni(dfJoined, numberOfGeneOfInterest)
+    dfJoined = correctionBenjaminiHochberg(dfJoined, numberOfGeneOfInterest)
+    dfJoined = correctionHolm(dfJoined, numberOfGeneOfInterest)
 
-	d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
-	for GO, row in dfJoined.iterrows():
-			if GO in d_GOLabelToNumber:
-				dfJoined.set_value(GO, 'GOLabel', d_GOLabelToNumber[GO])
-	dfJoined = dfJoined.sort_values('pValueBenjaminiHochberg')
-	dfJoined[['Counts', 'CountsGenome', 'CountsTotal', 'pValueBenjaminiHochberg', 'GOLabel']]
+    d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
+    for GO, row in dfJoined.iterrows():
+        if GO in d_GOLabelToNumber:
+            dfJoined.set_value(GO, 'GOLabel', d_GOLabelToNumber[GO])
+    dfJoined = dfJoined.sort_values('pValueBenjaminiHochberg')
+    dfJoined[['Counts', 'CountsGenome', 'CountsTotal', 'pValueBenjaminiHochberg', 'GOLabel']]
 
-	dfJoined.to_csv(outputDirectory + "output.tsv", sep= "\t", index = True, header = True, quoting = csv.QUOTE_NONE)
+    dfJoined.to_csv(outputDirectory + "output.tsv", sep= "\t", index = True, header = True, quoting = csv.QUOTE_NONE)
 
     errorRateSidak = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
-    GOSignificativesSidak = selectionGOTermWithAdjustedErrorRate(errorRateSidak, dfMerged)
+    GOSignificativesSidak = selectionGOTermWithAdjustedErrorRate(errorRateSidak, dfJoined)
     GOLabelSignificativesSidak = tranlsationGONumberToGOLabel(GOSignificativesSidak)
 
     errorRateBonferroni = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
-    GOSignificativesBonferroni = selectionGOTermWithAdjustedErrorRate(errorRateBonferroni, dfMerged)
+    GOSignificativesBonferroni = selectionGOTermWithAdjustedErrorRate(errorRateBonferroni, dfJoined)
     GOLabelSignificativesBonferroni= tranlsationGONumberToGOLabel(GOSignificativesBonferroni)
 
-    GOSignificativesHolm = selectionGOTermWithAdjustedPValue("Holm", alpha, dfMerged)
+    GOSignificativesHolm = selectionGOTermWithAdjustedPValue("Holm", alpha, dfJoined)
     GOLabelSignificativesHolm = tranlsationGONumberToGOLabel(GOSignificativesHolm)
 
-    GOSignificativesBenjaminiHochberg = selectionGOTermWithAdjustedPValue("BenjaminiHochberg", alpha, dfMerged)
+    GOSignificativesBenjaminiHochberg = selectionGOTermWithAdjustedPValue("BenjaminiHochberg", alpha, dfJoined)
     GOLabelSignificativesBenjaminiAndHochberg = tranlsationGONumberToGOLabel(GOSignificativesBenjaminiHochberg)
 
     csvfile = open(outputDirectory + "significativesGO.tsv", "w")
@@ -177,20 +177,21 @@ def enrichmentAnalysis():
     writer.writerow(['GOSidak', 'GOBonferroni', 'GOHolm', 'GOBenjaminiHochberg'])
 
     for index in range(len(GOLabelSignificativesBenjaminiAndHochberg)):
-		try :
-			GOlabelSignificativesSidak =  GOLabelSignificativesSidak[index]
-		except :
-			GOlabelSignificativesSidak =  'nan'
-		try :
-			GOLabelSignificativesBonferroni =  GOLabelSignificativesBonferroni[index]
-		except :
-			GOLabelSignificativesBonferroni =  'nan'
-		try :
-			GOLabelSignificativesHolm =  GOLabelSignificativesHolm[index]
-		except :
-			GOLabelSignificativesHolm =  'nan'
+        try :
+            GOlabelSignificativesSidak =  GOLabelSignificativesSidak[index]
+        except :
+            GOlabelSignificativesSidak =  'nan'
+        try :
+            GOLabelSignificativesBonferroni =  GOLabelSignificativesBonferroni[index]
+        except :
+            GOLabelSignificativesBonferroni =  'nan'
+        try :
+            GOLabelSignificativesHolm =  GOLabelSignificativesHolm[index]
+        except :
+            GOLabelSignificativesHolm =  'nan'
 
-		writer.writerow([GOLabelSignificativesSidak, GOLabelSignificativesBonferroni, GOLabelSignificativesHolm, GOLabelSignificativesBenjaminiAndHochberg[index]])
-	csvfile.close()
+        writer.writerow([GOLabelSignificativesSidak, GOLabelSignificativesBonferroni, GOLabelSignificativesHolm, GOLabelSignificativesBenjaminiAndHochberg[index]])
+
+    csvfile.close()
 
 enrichmentAnalysis()

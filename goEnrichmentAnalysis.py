@@ -88,13 +88,12 @@ def selectionGOTermWithAdjustedPValue(methodName, alpha, df):
 
     return GOSignificatives
 
-def tranlsationGONumberToGOLabel(GONumbers):
+def tranlsationGONumberToGOLabel(GONumbers, d_GOLabelToNumber):
     GOLabels = []
-    d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
 
     for GONumber in GONumbers:
         if GONumber in d_GOLabelToNumber:
-		    GOLabels.append(d_GOLabelToNumber[GONumber])
+            GOLabels.append(d_GOLabelToNumber[GONumber])
 
     return GOLabels
 
@@ -103,10 +102,10 @@ def enrichmentAnalysis():
     createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed", ['Row.names', 'GOs'])
     counts_df = HypergeometricTestOnDataFrame()
 
-    df = pa.read_csv("Gene_GO.tsv", sep = "\t")
+    df = pa.read_csv(temporaryDirectory + "Gene_GO.tsv", sep = "\t")
     numberOfGeneOfInterest = len(df["Row.names"].unique())
 
-    df = pa.read_csv("GOTermsPlasmoGenome.tsv", sep="\t")
+    df = pa.read_csv(inputDirectory + "GOTermsPlasmoGenome.tsv", sep="\t")
     df.columns = ['GOs']
     counts_df_GOGenome = pa.DataFrame(df.groupby("GOs").size().rename("CountsGenome"))
 
@@ -149,7 +148,8 @@ def enrichmentAnalysis():
     dfJoined = correctionBenjaminiHochberg(dfJoined, numberOfGeneOfInterest)
     dfJoined = correctionHolm(dfJoined, numberOfGeneOfInterest)
 
-    d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation("queryResults.csv", 'inverse')
+    d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'inverse')
+
     for GO, row in dfJoined.iterrows():
         if GO in d_GOLabelToNumber:
             dfJoined.set_value(GO, 'GOLabel', d_GOLabelToNumber[GO])
@@ -160,37 +160,38 @@ def enrichmentAnalysis():
 
     errorRateSidak = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
     GOSignificativesSidak = selectionGOTermWithAdjustedErrorRate(errorRateSidak, dfJoined)
-    GOLabelSignificativesSidak = tranlsationGONumberToGOLabel(GOSignificativesSidak)
+    GOLabelSignificativesSidak = tranlsationGONumberToGOLabel(GOSignificativesSidak, d_GOLabelToNumber)
 
     errorRateBonferroni = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
     GOSignificativesBonferroni = selectionGOTermWithAdjustedErrorRate(errorRateBonferroni, dfJoined)
-    GOLabelSignificativesBonferroni= tranlsationGONumberToGOLabel(GOSignificativesBonferroni)
+    GOLabelSignificativesBonferroni= tranlsationGONumberToGOLabel(GOSignificativesBonferroni, d_GOLabelToNumber)
 
     GOSignificativesHolm = selectionGOTermWithAdjustedPValue("Holm", alpha, dfJoined)
-    GOLabelSignificativesHolm = tranlsationGONumberToGOLabel(GOSignificativesHolm)
+    GOLabelSignificativesHolm = tranlsationGONumberToGOLabel(GOSignificativesHolm, d_GOLabelToNumber)
 
     GOSignificativesBenjaminiHochberg = selectionGOTermWithAdjustedPValue("BenjaminiHochberg", alpha, dfJoined)
-    GOLabelSignificativesBenjaminiAndHochberg = tranlsationGONumberToGOLabel(GOSignificativesBenjaminiHochberg)
+    GOLabelSignificativesBenjaminiAndHochberg = tranlsationGONumberToGOLabel(GOSignificativesBenjaminiHochberg, d_GOLabelToNumber)
 
     csvfile = open(outputDirectory + "significativesGO.tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['GOSidak', 'GOBonferroni', 'GOHolm', 'GOBenjaminiHochberg'])
 
     for index in range(len(GOLabelSignificativesBenjaminiAndHochberg)):
-        try :
-            GOlabelSignificativesSidak =  GOLabelSignificativesSidak[index]
-        except :
-            GOlabelSignificativesSidak =  'nan'
-        try :
-            GOLabelSignificativesBonferroni =  GOLabelSignificativesBonferroni[index]
-        except :
-            GOLabelSignificativesBonferroni =  'nan'
-        try :
-            GOLabelSignificativesHolm =  GOLabelSignificativesHolm[index]
-        except :
-            GOLabelSignificativesHolm =  'nan'
+        if index in range (len(GOLabelSignificativesSidak)):
+            GOLabelSignificativesSidakValue =  GOLabelSignificativesSidak[index]
+        else :
+            GOLabelSignificativesSidakValue =  'nan'
+        if index in range (len(GOLabelSignificativesBonferroni)):
+            GOLabelSignificativesBonferroniValue =  GOLabelSignificativesBonferroni[index]
+        else :
+            GOLabelSignificativesBonferroniValue =  'nan'
+        if index in range (len(GOLabelSignificativesHolm)):
+            GOLabelSignificativesHolmValue =  GOLabelSignificativesHolm[index]
+        else :
+            GOLabelSignificativesHolmValue =  'nan'
 
-        writer.writerow([GOLabelSignificativesSidak, GOLabelSignificativesBonferroni, GOLabelSignificativesHolm, GOLabelSignificativesBenjaminiAndHochberg[index]])
+        writer.writerow([GOLabelSignificativesSidakValue, GOLabelSignificativesBonferroniValue, GOLabelSignificativesHolmValue, \
+        GOLabelSignificativesBenjaminiAndHochberg[index]])
 
     csvfile.close()
 

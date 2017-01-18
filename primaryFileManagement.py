@@ -12,7 +12,7 @@ outputDirectory = 'outputFiles/'
 def GOLabelNumberDictionnaryCreation(fileName, specification):
     d_GOLabelToNumber = {}
 
-    with open ("queryResults.csv", 'r') as file:
+    with open (fileName, 'r') as file:
         queryResultsFile = file.read()
         queryResultsFile = queryResultsFile.replace(" ,\n", "\n")
         queryResultsFile = queryResultsFile.replace(" , ", "\t")
@@ -297,7 +297,7 @@ def columnGOCleaning():
     resultsTable['GOs'] = resultsTable['GOs'].str.replace("F:", "")
     resultsTable['GOs'] = resultsTable['GOs'].str.split(";")
 
-    d_GOLabelToNumber, d_GOLabelWithSynonym = GOLabelNumberDictionnaryCreation("queryResults.csv", 'normal')
+    d_GOLabelToNumber, d_GOLabelWithSynonym = GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'normal')
 
     resultsTable = cleaningNanColumn(resultsTable, 'GOs')
 

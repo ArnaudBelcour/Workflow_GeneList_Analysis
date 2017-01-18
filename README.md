@@ -8,11 +8,11 @@ The scripts need :
 
 * [Python 3.0](https://www.python.org/downloads/)
 
-*Some python modules :
+Some python modules :
 
-** [pandas](http://pandas.pydata.org/)
+* [pandas](http://pandas.pydata.org/)
 
-** [scipy](https://pypi.python.org/pypi/scipy)
+* [scipy](https://pypi.python.org/pypi/scipy)
 
 
 # GO terms Enrichment Analysis
@@ -32,6 +32,21 @@ This workflow works with three directories (inputFiles, temporaryFiles and outpu
 * temporaryFiles : will contain files used during the script, it will be created during the analysis.
 
 * outputFiles : the results of the analysis in tsv, it will be created during the analysis.
+
+Test used :
+
+* Hypergeometric test to compare the distribution of GO terms in your list and in the complete organism.
+
+And multiple testing corrections :
+
+* [Bonferroni Correction](http://www.jstor.org/stable/2282330?seq=1#page_scan_tab_contents)
+
+* [Sidak](https://www.jstor.org/stable/2283989?seq=1#page_scan_tab_contents)
+
+* [Holm](http://www.jstor.org/stable/4615733?seq=1#page_scan_tab_contents)
+
+* [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents)
+
 
 # Launch the analysis
 

@@ -1,7 +1,7 @@
 import csv
-import pandas as pa
 import math
 import os
+import pandas as pa
 import sys
 from collections import defaultdict
 
@@ -289,6 +289,7 @@ def columnGOCleaning():
         nameInputFile = raw_input(sentenceChoice)
     if sys.version_info  > (3,0,0):
         nameInputFile = input(sentenceChoice)
+
     resultsTable = pa.read_csv(inputDirectory + nameInputFile, sep = ";")
     resultsTable = resultsTable[['Row.names', 'SeqDescription', 'SeqLength', 'GOs', 'EnzymeCodes', 'InterProScan']]
 

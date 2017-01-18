@@ -1,9 +1,10 @@
 import csv
-import pandas as pa
-import scipy.stats as stats
-from ast import literal_eval
 import math
+import pandas as pa
 import primaryFileManagement
+import scipy.stats as stats
+import sys
+from ast import literal_eval
 
 inputDirectory = "inputFiles/"
 temporaryDirectory = 'temporaryFiles/'
@@ -129,7 +130,17 @@ def enrichmentAnalysis():
 
     dfJoined = dfJoined.sort_values("pValueHypergeometric")
 
-    alpha = 0.05
+    sentenceChoice = "Enter the alpha risk : "
+    if sys.version_info  < (3,0,0):
+        alpha = float(raw_input(sentenceChoice))
+    if sys.version_info  > (3,0,0):
+        alpha = float(input(sentenceChoice))
+
+    sentenceChoice = "Enter the number of genes in the genome of your organism : "
+    if sys.version_info  < (3,0,0):
+        numberOfGenesInGenome = int(raw_input(sentenceChoice))
+    if sys.version_info  > (3,0,0):
+        numberOfGenesInGenome = int(input(sentenceChoice))
 
     for GO, row in dfJoined.iterrows():
         dfJoined.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])
@@ -138,7 +149,7 @@ def enrichmentAnalysis():
         if math.isnan(dfJoined.get_value(GO, 'CountsTotal')):
             dfJoined = dfJoined.drop([GO])
         else:
-            computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, row['Counts'], 12000, row['CountsTotal'], dfJoined)
+            computeHypergeometricTestForeachValue(GO, numberOfGeneOfInterest, row['Counts'], numberOfGenesInGenome, row['CountsTotal'], dfJoined)
             if math.isnan(dfJoined.get_value(GO, 'pValueHypergeometric')):
                 GOtermsWithHyperGeoTestNAN.append(GO)
                 dfJoined = dfJoined.drop([GO])
@@ -156,7 +167,7 @@ def enrichmentAnalysis():
     dfJoined = dfJoined.sort_values('pValueBenjaminiHochberg')
     dfJoined[['Counts', 'CountsGenome', 'CountsTotal', 'pValueBenjaminiHochberg', 'GOLabel']]
 
-    dfJoined.to_csv(outputDirectory + "output.tsv", sep= "\t", index = True, header = True, quoting = csv.QUOTE_NONE)
+    dfJoined.to_csv(outputDirectory + "pValuesOfGOTermAndLabel.tsv", sep= "\t", index = True, header = True, quoting = csv.QUOTE_NONE)
 
     errorRateSidak = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
     GOSignificativesSidak = selectionGOTermWithAdjustedErrorRate(errorRateSidak, dfJoined)

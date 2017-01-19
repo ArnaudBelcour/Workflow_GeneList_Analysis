@@ -52,6 +52,9 @@ And multiple testing corrections :
 
 * [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents)
 
+# Network Enrichment Analysis
+
+enzymeToPathway.R translates Enzyme Commission number (ec) into pathway using KEGGREST, it creates a tsv file (in temporaryFiles directory) containing ec number associated with the pathway name and the pathway ID on KEGG.
 
 # Launch the analysis
 

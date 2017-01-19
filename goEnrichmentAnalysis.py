@@ -53,7 +53,6 @@ def correctionBonferroni(df, numberOfGeneOfInterest):
     return df
 
 def correctionBenjaminiHochberg(df, numberOfGeneOfInterest):
-
     for GO, row in df.iterrows():
         pValueCorrectionBenjaminiHochberg = row['pValueHypergeometric'] * (numberOfGeneOfInterest/(df.index.get_loc(GO)+1))
         df.set_value(GO, 'pValueBenjaminiHochberg', pValueCorrectionBenjaminiHochberg)
@@ -61,7 +60,6 @@ def correctionBenjaminiHochberg(df, numberOfGeneOfInterest):
     return df
 
 def correctionHolm(df, numberOfGeneOfInterest):
-
     for GO, row in df.iterrows():
         pValueCorrectionHolm = row['pValueHypergeometric'] * (numberOfGeneOfInterest - df.index.get_loc(GO))
         df.set_value(GO, 'pValueHolm', pValueCorrectionHolm)

@@ -6,14 +6,19 @@ Workflow for gene enrichment analysis (at this time, it only does a GO terms Enr
 
 The scripts need :
 
-* [Python 3.0](https://www.python.org/downloads/)
+* [Python](https://www.python.org/downloads/)
 
-Some python modules :
+* [R](https://cran.r-project.org/index.html)
+
+These python modules :
 
 * [pandas](http://pandas.pydata.org/)
 
 * [scipy](https://pypi.python.org/pypi/scipy)
 
+This R package :
+
+* [KEGGREST](https://bioconductor.org/packages/release/bioc/html/KEGGREST.html)
 
 # GO terms Enrichment Analysis
 

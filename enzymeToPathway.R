@@ -6,7 +6,9 @@ enzymePathwayTable <- data.frame(matrix(ncol=3))
 colnames(enzymePathwayTable) <- c('ecCode', 'Pathway', 'PathwayID')
 enzymePathwayTable = enzymePathwayTable[-1,]
 
-write.table(enzymePathwayTable, file = "enzymeToPathway.tsv", append = FALSE, row.names = FALSE, col.names = TRUE, sep="\t")
+temporaryFiles = 'temporaryFiles/'
+
+write.table(enzymePathwayTable, file = paste(temporaryFiles, "enzymeToPathway.tsv"), append = FALSE, row.names = FALSE, col.names = TRUE, sep="\t")
 
 for(enzymeCode in enzymeCodes)
 {
@@ -15,7 +17,7 @@ for(enzymeCode in enzymeCodes)
     {
         enzymePathwayTable <- matrix(c(enzymeCode, NA, NA), ncol = 3)
 
-        write.table(enzymePathwayTable, file="enzymeToPathway.tsv", append = T, col.names = FALSE, row.names = FALSE, sep = "\t")
+        write.table(enzymePathwayTable, file = paste(temporaryFiles, "enzymeToPathway.tsv"), append = T, col.names = FALSE, row.names = FALSE, sep = "\t")
     }
 
     for (pathwayID in pathwayLinkedToEnzyme)
@@ -26,7 +28,7 @@ for(enzymeCode in enzymeCodes)
         {
             enzymePathwayTable <- matrix(c(enzymeCode, pathwayName, pathwayID), ncol = 3)
 
-            write.table(enzymePathwayTable, file="enzymeToPathway.tsv", append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
+            write.table(enzymePathwayTable, file = paste(temporaryFiles, "enzymeToPathway.tsv"), append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
         }
     }
 }

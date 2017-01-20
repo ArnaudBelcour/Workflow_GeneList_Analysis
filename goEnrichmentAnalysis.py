@@ -45,6 +45,10 @@ def HypergeometricTestOnDataFrame():
     numberOfAnnotations = counts_df['Counts'].sum()
 
     return counts_df
+def percentageCalculation(number1, number2):
+    percentage = (number1 / number2) * 100
+
+    return percentage
 
 def correctionBonferroni(df, numberOfGeneOfInterest):
     pValueCorrectionBonferroni = lambda x: x * numberOfGeneOfInterest
@@ -153,6 +157,15 @@ def enrichmentAnalysis():
 
     for GO, row in dfJoined.iterrows():
         dfJoined.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])
+
+    numberGOList = dfJoined['Counts'].sum()
+    numberGOGenome = dfjoined['CountsTotal'].sum()
+
+    for GO, row in dfJoined.iterrows():
+        dfJoined.set_value(GO, 'PercentageGOList', percentageCalculation(row['Counts'], numberGOList))
+
+    for GO, row in dfJoined.iterrows():
+        dfJoined.set_value(GO, 'PercentageGOGenome', percentageCalculation(row['CountsTotal'], numberGOGenome))
 
     for GO, row in dfJoined.iterrows():
         if math.isnan(dfJoined.get_value(GO, 'CountsTotal')):

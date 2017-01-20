@@ -181,7 +181,7 @@ def enrichmentAnalysis():
     dfJoined = dfJoined.sort_values('pValueBenjaminiHochberg')
     dfJoined[['Counts', 'CountsGenome', 'CountsTotal', 'pValueBenjaminiHochberg', 'GOLabel']]
 
-    dfJoined.to_csv(outputDirectory + "pValuesOfGOTermAndLabel.tsv", sep= "\t", index = True, header = True, quoting = csv.QUOTE_NONE)
+    dfJoined.to_csv(outputDirectory + "pValuesOfGOTermAndLabel.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
 
     errorRateSidak = errorRateAdjustementBonferroni(alpha, numberOfGeneOfInterest)
     GOSignificativesSidak = selectionGOTermWithAdjustedErrorRate(errorRateSidak, dfJoined)
@@ -197,7 +197,7 @@ def enrichmentAnalysis():
     GOSignificativesBenjaminiHochberg = selectionGOTermWithAdjustedPValue("BenjaminiHochberg", alpha, dfJoined)
     GOLabelSignificativesBenjaminiAndHochberg = tranlsationGONumberToGOLabel(GOSignificativesBenjaminiHochberg, d_GOLabelToNumber)
 
-    csvfile = open(outputDirectory + "significativesGO.tsv", "w")
+    csvfile = open(outputDirectory + "significativesGO.tsv", "w", newlines = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['GOSidak', 'GOBonferroni', 'GOHolm', 'GOBenjaminiHochberg'])
 

@@ -107,14 +107,6 @@ def tranlsationGONumberToGOLabel(GONumbers, d_GOLabelToNumber):
 
     return GOLabels
 
-def inputPythonFormat(sentenceChoice, pythonVersion):
-    if pythonVersion  < (3,0,0):
-        choice = raw_input(sentenceChoice)
-    if pythonVersion  > (3,0,0):
-        choice = input(sentenceChoice)
-
-    return choice
-
 def enrichmentAnalysis():
     primaryFileManagement.columnGOCleaning()
     createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed", ['Row.names', 'GOs'])
@@ -150,10 +142,10 @@ def enrichmentAnalysis():
     pythonVersion = sys.version_info
 
     sentenceChoiceAlpha = "Enter the alpha risk : "
-    alpha = float(inputPythonFormat(sentenceChoiceAlpha, pythonVersion))
+    alpha = float(primaryFileManagement.inputPythonFormat(sentenceChoiceAlpha, pythonVersion))
 
     sentenceChoiceNumberGene = "Enter the number of genes in the genome of your organism : "
-    numberOfGenesInGenome = int(inputPythonFormat(sentenceChoiceNumberGene, pythonVersion))
+    numberOfGenesInGenome = int(primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, pythonVersion))
 
     for GO, row in dfJoined.iterrows():
         dfJoined.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])

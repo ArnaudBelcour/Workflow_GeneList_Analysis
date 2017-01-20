@@ -159,7 +159,7 @@ def enrichmentAnalysis():
         dfJoined.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])
 
     numberGOList = dfJoined['Counts'].sum()
-    numberGOGenome = dfjoined['CountsTotal'].sum()
+    numberGOGenome = dfJoined['CountsTotal'].sum()
 
     for GO, row in dfJoined.iterrows():
         dfJoined.set_value(GO, 'PercentageGOList', percentageCalculation(row['Counts'], numberGOList))

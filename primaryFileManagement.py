@@ -20,39 +20,39 @@ def GOLabelNumberDictionnaryCreation(fileName, specification):
         queryResultsModified.write(queryResultsFile)
         queryResultsModified.close()
 
-    queryResultsTable = pa.read_csv(temporaryDirectory + "queryResults.tsv", sep = "\t")
+    queryResultsDataframe = pa.read_csv(temporaryDirectory + "queryResults.tsv", sep = "\t")
 
-    queryResultsTable.columns = [["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"]]
+    queryResultsDataframe.columns = [["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"]]
 
     quoteDeletion = lambda x: x.replace('"', '')
-    queryResultsTable["subject"] = queryResultsTable["subject"].apply(quoteDeletion)
+    queryResultsDataframe["subject"] = queryResultsDataframe["subject"].apply(quoteDeletion)
 
     goIsolation = lambda x: x[32:]
-    queryResultsTable["subject"] = queryResultsTable["subject"].apply(goIsolation)
+    queryResultsDataframe["subject"] = queryResultsDataframe["subject"].apply(goIsolation)
 
     spaceDeletion = lambda x: x.replace(" ", "")
-    queryResultsTable["label"] = queryResultsTable["label"].apply(spaceDeletion)
+    queryResultsDataframe["label"] = queryResultsDataframe["label"].apply(spaceDeletion)
 
     spaceDeletion = lambda x: str(x).replace(" ", "")
-    queryResultsTable["NarrowSynonym"] = queryResultsTable["NarrowSynonym"].apply(spaceDeletion)
+    queryResultsDataframe["NarrowSynonym"] = queryResultsDataframe["NarrowSynonym"].apply(spaceDeletion)
 
     spaceDeletion = lambda x: str(x).replace(" ", "")
-    queryResultsTable["BroadSynonym"] = queryResultsTable["BroadSynonym"].apply(spaceDeletion)
+    queryResultsDataframe["BroadSynonym"] = queryResultsDataframe["BroadSynonym"].apply(spaceDeletion)
 
     spaceDeletion = lambda x: str(x).replace(" ", "")
-    queryResultsTable["RelatedSynonym"] = queryResultsTable["RelatedSynonym"].apply(spaceDeletion)
+    queryResultsDataframe["RelatedSynonym"] = queryResultsDataframe["RelatedSynonym"].apply(spaceDeletion)
 
     if specification == "inverse":
-        d_GOLabelToNumber = dict(zip(queryResultsTable['subject'], queryResultsTable['label']))
+        d_GOLabelToNumber = dict(zip(queryResultsDataframe['subject'], queryResultsDataframe['label']))
 
     else:
-        d_GOLabelToNumber = dict(zip(queryResultsTable['label'], queryResultsTable['subject']))
+        d_GOLabelToNumber = dict(zip(queryResultsDataframe['label'], queryResultsDataframe['subject']))
 
     d_GOLabelWithSynonym = {}
 
-    queryResultsTable = queryResultsTable.set_index(queryResultsTable['subject'])
+    queryResultsDataframe = queryResultsDataframe.set_index(queryResultsDataframe['subject'])
 
-    for index, row in queryResultsTable.iterrows():
+    for index, row in queryResultsDataframe.iterrows():
         if row['NarrowSynonym'] not in d_GOLabelWithSynonym and row['BroadSynonym'] not in d_GOLabelWithSynonym\
         and row['RelatedSynonym'] not in d_GOLabelWithSynonym:
             if row['NarrowSynonym'] != 'nan':
@@ -265,13 +265,31 @@ def fixDashInExcess(listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSyno
 
     return listOfGONumber
 
-def cleaningNanColumn(dataframe, column):
+def cleaningDashValue(dataframe):
+    dashDataframe = dataframe[dataframe.GOs.str.match("-") == True]
+    
+    dataframe = dataframe.set_index("Gene_Name")
+    for index in dashDataframe['Gene_Name'].tolist():
+        dataframe = dataframe.drop(index)
+    dataframe = dataframe.reset_index()
+
+    return dataframe
+
+def cleaningNanValue(dataframe, column):
     for index, row in dataframe.iterrows():
-        if type(index) is float:
+        if type(row[column]) is float:
             if math.isnan(dataframe.get_value(index, column)):
                 dataframe = dataframe.drop([index])
 
     return dataframe
+
+def inputPythonFormat(sentenceChoice, pythonVersion):
+    if pythonVersion  < (3,0,0):
+        choice = raw_input(sentenceChoice)
+    if pythonVersion  > (3,0,0):
+        choice = input(sentenceChoice)
+
+    return choice
 
 def rewritingFile(newtable, fileName):
     newtable.to_csv(temporaryDirectory + fileName, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
@@ -285,39 +303,43 @@ def columnGOCleaning():
         os.makedirs(outputDirectory)
 
     sentenceChoice = "Write the name of your input file : "
-    if sys.version_info  < (3,0,0):
-        nameInputFile = raw_input(sentenceChoice)
-    if sys.version_info  > (3,0,0):
-        nameInputFile = input(sentenceChoice)
+    pythonVersion = sys.version_info
+    nameInputFile = inputPythonFormat(sentenceChoice, pythonVersion)
 
-    resultsTable = pa.read_csv(inputDirectory + nameInputFile, sep = ";")
-    resultsTable = resultsTable[['Row.names', 'SeqDescription', 'SeqLength', 'GOs', 'EnzymeCodes', 'InterProScan']]
+    resultsDataframe = pa.read_csv(inputDirectory + nameInputFile, sep = ";")
 
-    resultsTable['GOs'] = resultsTable['GOs'].str.replace("C:", "")
-    resultsTable['GOs'] = resultsTable['GOs'].str.replace("P:", "")
-    resultsTable['GOs'] = resultsTable['GOs'].str.replace("F:", "")
-    resultsTable['GOs'] = resultsTable['GOs'].str.split(";")
+    sentenceChoice = "Write the name of the column containing the gene names : "
+    nameGeneColumn = inputPythonFormat(sentenceChoice, pythonVersion)
+
+    resultsDataframe = resultsDataframe[[nameGeneColumn, 'GOs', 'EnzymeCodes', 'InterProScan']]
+    resultsDataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
+
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].str.replace("C:", "")
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].str.replace("P:", "")
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].str.replace("F:", "")
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].str.split(";")
 
     d_GOLabelToNumber, d_GOLabelWithSynonym = GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'normal')
 
-    resultsTable = cleaningNanColumn(resultsTable, 'GOs')
+    resultsDataframe = cleaningDashValue(resultsDataframe)
+    resultsDataframe = cleaningNanValue(resultsDataframe, 'GOs')
 
     translation = lambda x: translateGOTerm(x, d_GOLabelToNumber)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(translation)
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(translation)
 
     correctionProblesmSynonym = lambda x : fixProblemsWithSynonym(x,  d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionProblesmSynonym)
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionProblesmSynonym)
 
     correctionObsolete = lambda x: fixObsoleteGOTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionObsolete)
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionObsolete)
 
     correctionNorL = lambda x: fixWrongNorLTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionNorL)
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionNorL)
 
     correctionTermsIssue = lambda x : fixTermsIssue(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionTermsIssue)
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionTermsIssue)
 
     correctionDashIssue = lambda x : fixDashInExcess(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsTable['GOs'] = resultsTable['GOs'].apply(correctionDashIssue)
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionDashIssue)
 
-    rewritingFile(resultsTable, "queryResultsGOTranslatedAndFixed.tsv")
+    rewritingFile(resultsDataframe, "queryResultsGOTranslatedAndFixed.tsv")

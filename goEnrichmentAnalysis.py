@@ -15,7 +15,7 @@ def createGenGOAnalysisFile(fileName, columnsNames):
     table = table[columnsNames]
     table = table.set_index(columnsNames[0])
 
-    csvfile = open(temporaryDirectory + "Gene_GO.tsv", "w")
+    csvfile = open(temporaryDirectory + "Gene_GO.tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow((columnsNames[0], columnsNames[1]))
 
@@ -36,7 +36,7 @@ def HypergeometricTestOnDataFrame():
     df = pa.read_csv(temporaryDirectory + "Gene_GO.tsv", sep = "\t")
     counts_df = pa.DataFrame(df.groupby('GOs').size().rename("Counts"))
 
-    numberOfGeneOfInterest = len(df["Row.names"].unique())
+    numberOfGeneOfInterest = len(df["Gene_Name"].unique())
 
     counts_df = pa.DataFrame(df.groupby("GOs").size().rename("Counts"))
     counts_df = counts_df.sort_values(['Counts'], ascending=[False])
@@ -45,6 +45,7 @@ def HypergeometricTestOnDataFrame():
     numberOfAnnotations = counts_df['Counts'].sum()
 
     return counts_df
+
 def percentageCalculation(number1, number2):
     percentage = (number1 / number2) * 100
 
@@ -109,11 +110,11 @@ def tranlsationGONumberToGOLabel(GONumbers, d_GOLabelToNumber):
 
 def enrichmentAnalysis():
     primaryFileManagement.columnGOCleaning()
-    createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed", ['Row.names', 'GOs'])
+    createGenGOAnalysisFile("queryResultsGOTranslatedAndFixed", ['Gene_Name', 'GOs'])
     counts_df = HypergeometricTestOnDataFrame()
 
     df = pa.read_csv(temporaryDirectory + "Gene_GO.tsv", sep = "\t")
-    numberOfGeneOfInterest = len(df["Row.names"].unique())
+    numberOfGeneOfInterest = len(df["Gene_Name"].unique())
 
     df = pa.read_csv(inputDirectory + "GOTermsPlasmoGenome.tsv", sep="\t")
     df.columns = ['GOs']
@@ -197,7 +198,7 @@ def enrichmentAnalysis():
     GOSignificativesBenjaminiHochberg = selectionGOTermWithAdjustedPValue("BenjaminiHochberg", alpha, dfJoined)
     GOLabelSignificativesBenjaminiAndHochberg = tranlsationGONumberToGOLabel(GOSignificativesBenjaminiHochberg, d_GOLabelToNumber)
 
-    csvfile = open(outputDirectory + "significativesGO.tsv", "w", newlines = "")
+    csvfile = open(outputDirectory + "significativesGO.tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['GOSidak', 'GOBonferroni', 'GOHolm', 'GOBenjaminiHochberg'])
 

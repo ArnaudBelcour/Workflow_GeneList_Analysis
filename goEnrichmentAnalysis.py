@@ -78,14 +78,14 @@ def hypergeometricTestOnDataframe(df, numberOfGeneOfInterest, numberOfGenesInGen
 
     return df
 
-def computeHypergeometricTestOverRepresentation(GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneGenome, GOGenomeNumber, df):
-    pValueHypergeo = stats.hypergeom.sf(GOSetNumber - 1, (numberOfGeneGenome + GOGenomeNumber), GOGenomeNumber, numberOfGeneOfInterest)
+def computeHypergeometricTestOverRepresentation(GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneInGenome, GOGenomeNumber, df):
+    pValueHypergeo = stats.hypergeom.sf(GOSetNumber - 1, numberOfGeneInGenome, GOGenomeNumber, numberOfGeneOfInterest)
     df.set_value(GO, 'pValueHypergeometric', pValueHypergeo)
 
     return df
 
-def computeHypergeometricTestUnderRepresentation(GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneGenome, GOGenomeNumber, df):
-    pValueHypergeo = stats.hypergeom.cdf(GOSetNumber - 1, (numberOfGeneGenome + GOGenomeNumber), GOGenomeNumber, numberOfGeneOfInterest)
+def computeHypergeometricTestUnderRepresentation(GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneInGenome, GOGenomeNumber, df):
+    pValueHypergeo = stats.hypergeom.cdf(GOSetNumber + 1, numberOfGeneInGenome, GOGenomeNumber, numberOfGeneOfInterest)
     df.set_value(GO, 'pValueHypergeometric', pValueHypergeo)
 
     return df

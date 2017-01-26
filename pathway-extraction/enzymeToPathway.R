@@ -5,7 +5,7 @@ enzymeCodes = c('ec:3.6.1.3', 'ec:3.2.1.55', 'ec:3.2.1.78', 'ec:3.2.1.8', 'ec:2.
 enzymePathwayTable = data.frame(matrix(nrow=0,ncol=3))
 colnames(enzymePathwayTable) = c('ecCode', 'Pathway', 'PathwayID')
 
-temporaryFiles = 'temporaryFiles/'
+temporaryFiles = '../temporaryFiles/'
 
 write.table(enzymePathwayTable, file = paste(temporaryFiles, "enzymeToPathway.tsv"), append = FALSE, row.names = FALSE, col.names = TRUE, sep="\t")
 

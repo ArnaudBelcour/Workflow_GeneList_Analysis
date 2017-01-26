@@ -14,6 +14,8 @@ These python modules :
 
 * [pandas](http://pandas.pydata.org/)
 
+* [requests](http://docs.python-requests.org/en/master/)
+
 * [scipy](https://pypi.python.org/pypi/scipy)
 
 This R package :

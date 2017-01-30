@@ -524,4 +524,4 @@ def columnGOCleaning():
     correctionDashIssue = lambda x : fixDashInExcess(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
     resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionDashIssue)
 
-    rewritingFile(resultsDataframe, "queryResultsGOTranslatedAndFixed.tsv")
+    rewritingFile(resultsDataframe, "queryResultsGOsTranslatedAndFixed.tsv")

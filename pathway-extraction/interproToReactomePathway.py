@@ -5,9 +5,10 @@ from bs4 import BeautifulSoup
 temporaryDirectory = '../temporaryFiles/'
 
 def getInterproXMLCompressed(url, fileName):
-    fileGZ = urllib2.urlopen(url)
-    with open(temporaryDirectory + fileName + '.xml.gz','w') as interproFileCompressed:
-      interproFileCompressed.write(fileGZ.read())
+    reponse = urllib2.urlopen(url, headers = {"Accept-Encoding": "gzip"})
+    with GzipFile(fileobj = response) as xmlFile:
+        soup = BeautifulSoup(xmlFile, 'lxml')
+        print(soup.prettify())
 
 def uncompressInterproXML(fileCompressedName, outputFileName):
     with gzip.open(temporaryDirectory + fileName + '.xml.gz', 'r') as interproFileCompressed:

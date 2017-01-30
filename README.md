@@ -22,13 +22,13 @@ This R package :
 
 * [KEGGREST](https://bioconductor.org/packages/release/bioc/html/KEGGREST.html)
 
-# GO terms Enrichment Analysis
+# Enrichment Analysis
 
 Actually, the first scripts are for GO terms enrichment analysis.
 
 primaryFileManagement.py translates GO label from Blast2Go files into GO number.
 
-goEnrichmentAnalysis.py computes an hypergeometric test for GO terms, it also calculates different multiple tests corrections (Bonferroni, Holm, Sidak and Benjamini & Hochberg).
+enrichmentAnalysis.py computes an hypergeometric test for variables (now it works for GO terms, in the future it will worked for pathway), it also calculates different multiple tests corrections (Bonferroni, Holm, Sidak, Benjamini & Hochberg and SGoF).
 
 goTermExtractionUniprot.py queries Uniprot to obtain GO terms associated with Uniprot ID (actually the SPARQL queries don't work, only the http requests work).
 
@@ -53,6 +53,8 @@ And multiple testing corrections :
 * [Holm](http://www.jstor.org/stable/4615733?seq=1#page_scan_tab_contents)
 
 * [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents)
+
+* [SGoF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2719628/)
 
 # Network Enrichment Analysis
 

@@ -12,8 +12,6 @@ def httpRequestGeneOntology(url, fileName):
 
     csvfile = open(temporaryDirectory + fileName + ".tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
-    #writer.writerow(('pathwayAccession', 'pathwayName', 'pathwayComponentAccession', 'pathwayComponentName', 'uniProtID', 'proteinDefinition', 'confidenceCode', 'evidence'\
-                    #, 'evidenceType', 'pantherSubfamilyID', 'pantherSubfamilyName'))
     writer.writerow(['pathwayAccession', 'pathwayName', 'uniProtID', 'pantherSubfamilyID', 'pantherSubfamilyName'])
 
     for i in page[:-1]:
@@ -26,14 +24,13 @@ def httpRequestGeneOntology(url, fileName):
 
 def cleaningFile(fileName):
     df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
-    print(df)
-    #df['metacycPathway'] = df['metacycPathway'].str.replace("MetaCyc:", "")
-    #df['goLabel'] = df['goLabel'].str.replace("GO:", "")
-    #df.to_csv(temporaryDirectory + "output.tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    df['metacycPathway'] = df['metacycPathway'].str.replace("MetaCyc:", "")
+    df['goLabel'] = df['goLabel'].str.replace("GO:", "")
+    df.to_csv(temporaryDirectory + "output.tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
 def main():
     fileName = 'uniprotPantherPathwayTranslation'
-    #test = httpRequestGeneOntology('ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt', fileName)
+    test = httpRequestGeneOntology('ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt', fileName)
     cleaningFile(fileName)
 
 main()

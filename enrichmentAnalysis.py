@@ -14,9 +14,16 @@ class EnrichmentAnalysis():
 
     def __init__(self, columnName):
         self.objectToAnalyze = columnName
+        self.outputColumns = ['Counts', 'CountsGenome', 'Percentage' + self.getObjectToAnalyze() + 'List', 'Percentage' + self.getObjectToAnalyze() + 'Genome', 'pValueHypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg']
 
     def getObjectToAnalyze(self):
         return self.objectToAnalyze
+
+    def getOutputColumns(self):
+        return self.outputColumns
+
+    def setOutputColumns(self, index, value):
+        self.outputColumns[index] = value
 
     def createGeneObjectAnalysisFile(self, fileName, columnsNames):
         df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
@@ -27,10 +34,10 @@ class EnrichmentAnalysis():
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow((columnsNames[0], columnsNames[1]))
 
-        for gene, listOflistOfBiologicalDatas in df.iterrows():
-            for listOfBiologicalDatas in listOflistOfBiologicalDatas:
-                for biologicalData in literal_eval(listOfBiologicalDatas):
-                    writer.writerow((gene, biologicalData))
+        for gene, listOflistOfAnalyzedObjects in df.iterrows():
+            for listOfAnalyzedObjects in listOflistOfAnalyzedObjects:
+                for analyzedObject in literal_eval(listOfAnalyzedObjects):
+                    writer.writerow((gene, analyzedObject))
 
         csvfile.close()
 
@@ -60,49 +67,47 @@ class EnrichmentAnalysis():
         return counts_df_Genome
 
     def hypergeometricTestOnDataframe(self, df, numberOfGeneOfInterest, numberOfGenesInGenome, overOrUnderRepresentation, genomeColumns):
-        GOtermsWithHyperGeoTestNAN = []
+        analyzedObjectsWithHyperGeoTestNAN = []
 
         if overOrUnderRepresentation == "over":
-            for GO, row in df.iterrows():
-                if math.isnan(df.get_value(GO, genomeColumns)):
-                    df = df.drop([GO])
+            for analyzedObject, row in df.iterrows():
+                if math.isnan(df.get_value(analyzedObject, genomeColumns)):
+                    df = df.drop([analyzedObject])
                 else:
-                    self.computeHypergeometricTestOverRepresentation(GO, numberOfGeneOfInterest, row['Counts'], numberOfGenesInGenome, row[genomeColumns], df)
-                    if math.isnan(df.get_value(GO, 'pValueHypergeometric')):
-                        GOtermsWithHyperGeoTestNAN.append(GO)
-                        df = df.drop([GO])
+                    self.computeHypergeometricTestOverRepresentation(analyzedObject, numberOfGeneOfInterest, row['Counts'], numberOfGenesInGenome, row[genomeColumns], df)
+                    if math.isnan(df.get_value(analyzedObject, 'pValueHypergeometric')):
+                        analyzedObjectsWithHyperGeoTestNAN.append(analyzedObject)
+                        df = df.drop([analyzedObject])
 
         if overOrUnderRepresentation == "under":
-            for GO, row in df.iterrows():
-                if math.isnan(df.get_value(GO, genomeColumns)):
-                    df = df.drop([GO])
+            for analyzedObject, row in df.iterrows():
+                if math.isnan(df.get_value(analyzedObject, genomeColumns)):
+                    df = df.drop([analyzedObject])
                 else:
-                    self.computeHypergeometricTestUnderRepresentation(GO, numberOfGeneOfInterest, row['Counts'], numberOfGenesInGenome, row[genomeColumns], df)
-                    if math.isnan(df.get_value(GO, 'pValueHypergeometric')):
-                        GOtermsWithHyperGeoTestNAN.append(GO)
-                        df = df.drop([GO])
+                    self.computeHypergeometricTestUnderRepresentation(analyzedObject, numberOfGeneOfInterest, row['Counts'], numberOfGenesInGenome, row[genomeColumns], df)
+                    if math.isnan(df.get_value(analyzedObject, 'pValueHypergeometric')):
+                        analyzedObjectsWithHyperGeoTestNAN.append(analyzedObject)
+                        df = df.drop([analyzedObject])
 
         df = df.sort_values("pValueHypergeometric")
 
         return df
 
-    def computeHypergeometricTestOverRepresentation(self, GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneInGenome, GOGenomeNumber, df):
-        pValueHypergeo = stats.hypergeom.sf(GOSetNumber - 1, numberOfGeneInGenome, GOGenomeNumber, numberOfGeneOfInterest)
-        df.set_value(GO, 'pValueHypergeometric', pValueHypergeo)
+    def computeHypergeometricTestOverRepresentation(self, analyzedObject, numberOfGeneOfInterest, numberOfObjectOfInterest, numberOfGeneInGenome, numberOfObjectInGenome, df):
+        pValueHypergeo = stats.hypergeom.sf(numberOfObjectOfInterest - 1, numberOfGeneInGenome, numberOfObjectInGenome, numberOfGeneOfInterest)
+        df.set_value(analyzedObject, 'pValueHypergeometric', pValueHypergeo)
 
         return df
 
-    def computeHypergeometricTestUnderRepresentation(self, GO, numberOfGeneOfInterest, GOSetNumber, numberOfGeneInGenome, GOGenomeNumber, df):
-        pValueHypergeo = stats.hypergeom.cdf(GOSetNumber + 1, numberOfGeneInGenome, GOGenomeNumber, numberOfGeneOfInterest)
-        df.set_value(GO, 'pValueHypergeometric', pValueHypergeo)
+    def computeHypergeometricTestUnderRepresentation(self, analyzedObject, numberOfGeneOfInterest, numberOfObjectOfInterest, numberOfGeneInGenome, numberOfObjectInGenome, df):
+        pValueHypergeo = stats.hypergeom.cdf(numberOfObjectOfInterest + 1, numberOfGeneInGenome, numberOfObjectInGenome, numberOfGeneOfInterest)
+        df.set_value(analyzedObject, 'pValueHypergeometric', pValueHypergeo)
 
         return df
 
     def countingApproximation(self, df):
-        GOtermsWithHyperGeoTestNAN = []
-
-        for GO, row in df.iterrows():
-            df.set_value(GO, 'CountsTotal', row['Counts'] + row['CountsGenome'])
+        for analyzedObject, row in df.iterrows():
+            df.set_value(analyzedObject, 'CountsTotal', row['Counts'] + row['CountsGenome'])
 
         return df
 
@@ -111,7 +116,7 @@ class EnrichmentAnalysis():
 
         return percentage
 
-    def multipleTestingCorrectionAndOutputWrting(self, df, numberOfGeneOfInterest, alpha, overOrUnderRepresentation, approximationYesOrNo, yesAnswers):
+    def multipleTestingCorrection(self, df, numberOfGeneOfInterest, alpha):
         df = df.sort_values(['pValueHypergeometric'])
 
         df = self.correctionBonferroni(df, numberOfGeneOfInterest)
@@ -119,56 +124,39 @@ class EnrichmentAnalysis():
         df = self.correctionHolm(df, numberOfGeneOfInterest)
         df = self.correctionSGoF(df, numberOfGeneOfInterest, alpha)
 
-        d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'inverse')
+        significativeObjects = {}
 
-        if self.getObjectToAnalyze() == 'GOs':
-            for GO, row in df.iterrows():
-                if GO in d_GOLabelToNumber:
-                    df.set_value(GO, 'GOLabel', d_GOLabelToNumber[GO])
+        errorRateSidak = self.errorRateAdjustementBonferroni(alpha, df, numberOfGeneOfInterest)
+        objectSignificativesSidak = self.selectionObjectWithAdjustedErrorRate(errorRateSidak, df)
+        significativeObjects['Sidak'] = objectSignificativesSidak
 
-            outputColumns = ['Counts', 'CountsGenome', 'Percentage' + self.getObjectToAnalyze() + 'List', 'Percentage' + self.getObjectToAnalyze() + 'Genome', 'pValueHypergeometric', 'pValueBonferroni', 'pValueHolm', \
-                            'pValueSGoF', 'pValueBenjaminiHochberg', 'GOLabel']
+        errorRateBonferroni = self.errorRateAdjustementBonferroni(alpha, df, numberOfGeneOfInterest)
+        objectSignificativesBonferroni = self.selectionObjectWithAdjustedErrorRate(errorRateBonferroni, df)
+        significativeObjects['Bonferroni'] = objectSignificativesBonferroni
 
-            if approximationYesOrNo in yesAnswers:
-                outputColumns[1] = 'CountsTotal'
-                df = df[outputColumns]
-            else:
-                df = df[outputColumns]
+        objectSignificativesHolm = self.selectionObjectWithAdjustedPValue("Holm", alpha, df)
+        significativeObjects['Holm'] = objectSignificativesHolm
 
+        objectSignificativesSGoF = self.selectionObjectWithSGoF("SGoF", df)
+        significativeObjects['SGoF'] = objectSignificativesSGoF
+
+        objectSignificativesBenjaminiHochberg = self.selectionObjectWithAdjustedPValue("BenjaminiHochberg", alpha, df)
+        significativeObjects['BenjaminiHochberg'] = objectSignificativesBenjaminiHochberg
+
+        return df, significativeObjects
+
+    def writingOutput(self, df, significativeObjects, overOrUnderRepresentation, approximationYesOrNo, yesAnswers):
+
+        if approximationYesOrNo in yesAnswers:
+            self.setOutputColumns(1, "CountsTotal")
+            df = df[self.getOutputColumns()]
         else:
-            outputColumns = ['Counts', 'CountsGenome', 'Percentage' + self.getObjectToAnalyze() + 'List', 'Percentage' + self.getObjectToAnalyze() + 'Genome', 'pValueHypergeometric', 'pValueBonferroni', 'pValueHolm', \
-                            'pValueSGoF', 'pValueBenjaminiHochberg']
-
-            if approximationYesOrNo in yesAnswers:
-                outputColumns[1] = 'CountsTotal'
-                df = df[outputColumns]
-            else:
-                df = df[outputColumns]
+            df = df[self.getOutputColumns()]
 
         if overOrUnderRepresentation == 'over':
             df.to_csv(outputDirectory + "pValuesOf" + self.getObjectToAnalyze() + "TermAndLabel_over.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
         elif overOrUnderRepresentation == 'under':
             df.to_csv(outputDirectory + "pValuesOf" + self.getObjectToAnalyze() + "TermAndLabel_under.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
-
-        errorRateSidak = self.errorRateAdjustementBonferroni(alpha, df, numberOfGeneOfInterest)
-        objectSignificativesSidak = self.selectionObjectWithAdjustedErrorRate(errorRateSidak, df)
-
-        errorRateBonferroni = self.errorRateAdjustementBonferroni(alpha, df, numberOfGeneOfInterest)
-        objectSignificativesBonferroni = self.selectionObjectWithAdjustedErrorRate(errorRateBonferroni, df)
-
-
-        objectSignificativesHolm = self.selectionObjectWithAdjustedPValue("Holm", alpha, df)
-        GOLabelSignificativesHolm = self.tranlsationGONumberToGOLabel(objectSignificativesHolm, d_GOLabelToNumber)
-
-        objectSignificativesBenjaminiHochberg = self.selectionObjectWithAdjustedPValue("BenjaminiHochberg", alpha, df)
-
-        objectSignificativesSGoF = self.selectionObjectWithSGoF("SGoF", df)
-
-        if self.getObjectToAnalyze() == 'GOs':
-            GOLabelSignificativesSidak = self.tranlsationGONumberToGOLabel(objectSignificativesSidak, d_GOLabelToNumber)
-            GOLabelSignificativesBonferroni= self.tranlsationGONumberToGOLabel(objectSignificativesBonferroni, d_GOLabelToNumber)
-            GOLabelSignificativesBenjaminiAndHochberg = self.tranlsationGONumberToGOLabel(objectSignificativesBenjaminiHochberg, d_GOLabelToNumber)
-            GOLabelSignificativesSGoF = self.tranlsationGONumberToGOLabel(objectSignificativesSGoF, d_GOLabelToNumber)
 
         if overOrUnderRepresentation == 'over':
             csvfile = open(outputDirectory + "significatives" + self.getObjectToAnalyze() + "_over.tsv", "w", newline = "")
@@ -178,26 +166,26 @@ class EnrichmentAnalysis():
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow([self.getObjectToAnalyze() + 'Sidak', self.getObjectToAnalyze() + 'Bonferroni', self.getObjectToAnalyze() + 'Holm', self.getObjectToAnalyze() + 'SGoF', self.getObjectToAnalyze() + 'BenjaminiHochberg'])
 
-        for index in range(len(GOLabelSignificativesBenjaminiAndHochberg)):
-            if index in range(len(GOLabelSignificativesSidak)):
-                GOLabelSignificativesSidakValue =  GOLabelSignificativesSidak[index]
+        for index in range(len(significativeObjects['BenjaminiHochberg'])):
+            if index in range(len(significativeObjects['Sidak'])):
+                objectSignificativesSidakValue =  significativeObjects['Sidak'][index]
             else :
-                GOLabelSignificativesSidakValue =  'nan'
-            if index in range(len(GOLabelSignificativesBonferroni)):
-                GOLabelSignificativesBonferroniValue =  GOLabelSignificativesBonferroni[index]
+                objectSignificativesSidakValue =  'nan'
+            if index in range(len(significativeObjects['Bonferroni'])):
+                objectSignificativesBonferroniValue =  significativeObjects['Bonferroni'][index]
             else :
-                GOLabelSignificativesBonferroniValue =  'nan'
-            if index in range(len(GOLabelSignificativesHolm)):
-                GOLabelSignificativesHolmValue =  GOLabelSignificativesHolm[index]
+                objectSignificativesBonferroniValue =  'nan'
+            if index in range(len(significativeObjects['Holm'])):
+                objectSignificativesHolmValue =  significativeObjects['Holm'][index]
             else :
-                GOLabelSignificativesHolmValue =  'nan'
-            if index in range(len(GOLabelSignificativesSGoF)):
-                GOLabelSignificativesSGoFValue =  GOLabelSignificativesSGoF[index]
+                objectSignificativesHolmValue =  'nan'
+            if index in range(len(significativeObjects['SGoF'])):
+                objectSignificativesSGoFValue =  significativeObjects['SGoF'][index]
             else :
-                GOLabelSignificativesSGoFValue =  'nan'
+                objectSignificativesSGoFValue =  'nan'
 
-            writer.writerow([GOLabelSignificativesSidakValue, GOLabelSignificativesBonferroniValue, GOLabelSignificativesHolmValue, \
-            GOLabelSignificativesSGoFValue, GOLabelSignificativesBenjaminiAndHochberg[index]])
+            writer.writerow([objectSignificativesSidakValue, objectSignificativesBonferroniValue, objectSignificativesHolmValue, \
+            objectSignificativesSGoFValue, significativeObjects['BenjaminiHochberg'][index]])
 
         csvfile.close()
 
@@ -208,16 +196,16 @@ class EnrichmentAnalysis():
         return df
 
     def correctionBenjaminiHochberg(self, df, numberOfGeneOfInterest):
-        for GO, row in df.iterrows():
-            pValueCorrectionBenjaminiHochberg = row['pValueHypergeometric'] * (len(df.index)/(df.index.get_loc(GO)+1))
-            df.set_value(GO, 'pValueBenjaminiHochberg', pValueCorrectionBenjaminiHochberg)
+        for analyzedObject, row in df.iterrows():
+            pValueCorrectionBenjaminiHochberg = row['pValueHypergeometric'] * (len(df.index)/(df.index.get_loc(analyzedObject)+1))
+            df.set_value(analyzedObject, 'pValueBenjaminiHochberg', pValueCorrectionBenjaminiHochberg)
 
         return df
 
     def correctionHolm(self, df, numberOfGeneOfInterest):
-        for GO, row in df.iterrows():
-            pValueCorrectionHolm = row['pValueHypergeometric'] * (len(df.index) - df.index.get_loc(GO))
-            df.set_value(GO, 'pValueHolm', pValueCorrectionHolm)
+        for analyzedObject, row in df.iterrows():
+            pValueCorrectionHolm = row['pValueHypergeometric'] * (len(df.index) - df.index.get_loc(analyzedObject))
+            df.set_value(analyzedObject, 'pValueHolm', pValueCorrectionHolm)
 
         return df
 
@@ -226,7 +214,7 @@ class EnrichmentAnalysis():
         df = df.sort_values("pValueHypergeometric")
         R = 0
 
-        for GO, row in df.iterrows():
+        for analyzedObject, row in df.iterrows():
             if row['pValueHypergeometric'] < alpha:
                 R += 1
 
@@ -242,12 +230,12 @@ class EnrichmentAnalysis():
 
         df = df.set_index(self.getObjectToAnalyze())
 
-        for GO, row in df.iterrows():
+        for analyzedObject, row in df.iterrows():
             try:
-                if GO not in objectSignificatives:
-                    df.set_value(GO, 'pValueSGoF', 'nonSignificant')
+                if analyzedObject not in objectSignificatives:
+                    df.set_value(analyzedObject, 'pValueSGoF', 'nonSignificant')
             except:
-                df.set_value(GO, 'pValueSGoF', 'nonSignificant')
+                df.set_value(analyzedObject, 'pValueSGoF', 'nonSignificant')
 
         return df
 
@@ -264,38 +252,29 @@ class EnrichmentAnalysis():
     def selectionObjectWithAdjustedErrorRate(self, errorRate, df):
         objectSignificatives = []
 
-        for GO, row in df.iterrows():
+        for analyzedObject, row in df.iterrows():
             if row['pValueHypergeometric'] < errorRate :
-                objectSignificatives.append(GO)
+                objectSignificatives.append(analyzedObject)
 
         return objectSignificatives
 
     def selectionObjectWithAdjustedPValue(self, methodName, alpha, df):
         objectSignificatives = []
 
-        for GO, row in df.iterrows():
+        for analyzedObject, row in df.iterrows():
             if row['pValue' + methodName] < alpha :
-                objectSignificatives.append(GO)
+                objectSignificatives.append(analyzedObject)
 
         return objectSignificatives
 
     def selectionObjectWithSGoF(self, methodName, df):
         objectSignificatives = []
 
-        for GO, row in df.iterrows():
+        for analyzedObject, row in df.iterrows():
             if row['pValue' + methodName] == 'significant' :
-                objectSignificatives.append(GO)
+                objectSignificatives.append(analyzedObject)
 
         return objectSignificatives
-
-    def tranlsationGONumberToGOLabel(self, GONumbers, d_GOLabelToNumber):
-        GOLabels = []
-
-        for GONumber in GONumbers:
-            if GONumber in d_GOLabelToNumber:
-                GOLabels.append(d_GOLabelToNumber[GONumber])
-
-        return GOLabels
 
     def enrichmentAnalysis(self):
         pythonVersion = sys.version_info
@@ -317,29 +296,89 @@ class EnrichmentAnalysis():
         sentenceChoiceNumberGene = "Is this an approximation of the genome? "
         yesOrNo = primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, pythonVersion)
 
-        for GO, row in dfJoined.iterrows():
-            dfJoined.set_value(GO, 'Percentage' + self.getObjectToAnalyze() + 'List', self.percentageCalculation(row['Counts'], numberOfGene))
+        for analyzedObject, row in dfJoined.iterrows():
+            dfJoined.set_value(analyzedObject, 'Percentage' + self.getObjectToAnalyze() + 'List', self.percentageCalculation(row['Counts'], numberOfGene))
 
         if yesOrNo in yesAnswers:
             dfJoinedApproximation = self.countingApproximation(dfJoined)
-            for GO, row in dfJoinedApproximation.iterrows():
-                dfJoinedApproximation.set_value(GO, 'Percentage' + self.getObjectToAnalyze() + 'Genome', self.percentageCalculation(row['CountsTotal'], numberOfGenesInGenome))
+            for analyzedObject, row in dfJoinedApproximation.iterrows():
+                dfJoinedApproximation.set_value(analyzedObject, 'Percentage' + self.getObjectToAnalyze() + 'Genome', self.percentageCalculation(row['CountsTotal'], numberOfGenesInGenome))
 
             dfJoinedOverRepresentation = self.hypergeometricTestOnDataframe(dfJoinedApproximation, numberOfGene, numberOfGenesInGenome, "over", 'CountsTotal')
-            self.multipleTestingCorrectionAndOutputWrting(dfJoinedOverRepresentation, numberOfGene, alpha, 'over', yesOrNo, yesAnswers)
+            dfJoinedOverRepresentation, significativeObjects = self.multipleTestingCorrection(dfJoinedOverRepresentation, numberOfGene, alpha)
+            self.writingOutput(dfJoinedOverRepresentation, significativeObjects, "over", yesOrNo, yesAnswers)
 
             dfJoinedUnderRepresentation = self.hypergeometricTestOnDataframe(dfJoinedApproximation, numberOfGene, numberOfGenesInGenome, "under", 'CountsTotal')
-            self.multipleTestingCorrectionAndOutputWrting(dfJoinedUnderRepresentation, numberOfGene, alpha, 'under', yesOrNo, yesAnswers)
+            dfJoinedUnderRepresentation, significativeObjects = self.multipleTestingCorrection(dfJoinedUnderRepresentation, numberOfGene, alpha)
+            self.writingOutput(dfJoinedUnderRepresentation, significativeObjects, "under", yesOrNo, yesAnswers)
 
         else:
-            for GO, row in dfJoined.iterrows():
-                dfJoined.set_value(GO, 'Percentage' + self.getObjectToAnalyze() + 'Genome', self.percentageCalculation(row['CountsGenome'], numberOfGenesInGenome))
+            for analyzedObject, row in dfJoined.iterrows():
+                dfJoined.set_value(analyzedObject, 'Percentage' + self.getObjectToAnalyze() + 'Genome', self.percentageCalculation(row['CountsGenome'], numberOfGenesInGenome))
 
             dfJoinedOverRepresentation = self.hypergeometricTestOnDataframe(dfJoined, numberOfGene, numberOfGenesInGenome, "over", 'CountsGenome')
-            self.multipleTestingCorrectionAndOutputWrting(dfJoinedOverRepresentation, numberOfGene, alpha, 'over', yesOrNo, yesAnswers)
+            dfJoinedOverRepresentation, significativeObjects = self.multipleTestingCorrection(dfJoinedOverRepresentation, numberOfGene, alpha)
+            self.writingOutput(dfJoinedOverRepresentation, significativeObjects, "over", yesOrNo, yesAnswers)
 
             dfJoinedUnderRepresentation = self.hypergeometricTestOnDataframe(dfJoined, numberOfGene, numberOfGenesInGenome, "under", 'CountsGenome')
-            self.multipleTestingCorrectionAndOutputWrting(dfJoinedUnderRepresentation, numberOfGene, alpha, 'under', yesOrNo, yesAnswers)
+            dfJoinedUnderRepresentation, significativeObjects = self.multipleTestingCorrection(dfJoinedUnderRepresentation, numberOfGene, alpha)
+            self.writingOutput(dfJoinedUnderRepresentation, significativeObjects, "under", yesOrNo, yesAnswers)
 
-goEnrichmentAnalysis = EnrichmentAnalysis('GOs')
+
+class GOEnrichmentAnalysis(EnrichmentAnalysis):
+
+    def __init__(self, columnName):
+        EnrichmentAnalysis.__init__(self, columnName)
+        self.outputColumns.append("GOLabel")
+
+    def tranlsationGONumberToGOLabel(self, goNumbers, d_GOLabelToNumber):
+        goLabels = []
+
+        for goNumber in goNumbers:
+            if goNumber in d_GOLabelToNumber:
+                goLabels.append(d_GOLabelToNumber[goNumber])
+
+        return goLabels
+
+    def multipleTestingCorrection(self, df, numberOfGeneOfInterest, alpha):
+        df = df.sort_values(['pValueHypergeometric'])
+
+        df = self.correctionBonferroni(df, numberOfGeneOfInterest)
+        df = self.correctionBenjaminiHochberg(df, numberOfGeneOfInterest)
+        df = self.correctionHolm(df, numberOfGeneOfInterest)
+        df = self.correctionSGoF(df, numberOfGeneOfInterest, alpha)
+
+        d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'inverse')
+
+        significativeObjects = {}
+
+        errorRateSidak = self.errorRateAdjustementBonferroni(alpha, df, numberOfGeneOfInterest)
+        objectSignificativesSidak = self.selectionObjectWithAdjustedErrorRate(errorRateSidak, df)
+        goLabelSignificativesSidak = self.tranlsationGONumberToGOLabel(objectSignificativesSidak, d_GOLabelToNumber)
+        significativeObjects['Sidak'] = goLabelSignificativesSidak
+
+        errorRateBonferroni = self.errorRateAdjustementBonferroni(alpha, df, numberOfGeneOfInterest)
+        objectSignificativesBonferroni = self.selectionObjectWithAdjustedErrorRate(errorRateBonferroni, df)
+        goLabelSignificativesBonferroni= self.tranlsationGONumberToGOLabel(objectSignificativesBonferroni, d_GOLabelToNumber)
+        significativeObjects['Bonferroni'] = goLabelSignificativesBonferroni
+
+        objectSignificativesHolm = self.selectionObjectWithAdjustedPValue("Holm", alpha, df)
+        goLabelSignificativesHolm = self.tranlsationGONumberToGOLabel(objectSignificativesHolm, d_GOLabelToNumber)
+        significativeObjects['Holm'] = goLabelSignificativesHolm
+
+        objectSignificativesSGoF = self.selectionObjectWithSGoF("SGoF", df)
+        goLabelSignificativesSGoF = self.tranlsationGONumberToGOLabel(objectSignificativesSGoF, d_GOLabelToNumber)
+        significativeObjects['SGoF'] = goLabelSignificativesSGoF
+
+        objectSignificativesBenjaminiHochberg = self.selectionObjectWithAdjustedPValue("BenjaminiHochberg", alpha, df)
+        goLabelSignificativesBenjaminiAndHochberg = self.tranlsationGONumberToGOLabel(objectSignificativesBenjaminiHochberg, d_GOLabelToNumber)
+        significativeObjects['BenjaminiHochberg'] = goLabelSignificativesBenjaminiAndHochberg
+
+        for GO, row in df.iterrows():
+            if GO in d_GOLabelToNumber:
+                df.set_value(GO, 'GOLabel', d_GOLabelToNumber[GO])
+
+        return df, significativeObjects
+
+goEnrichmentAnalysis = GOEnrichmentAnalysis('GOs')
 goEnrichmentAnalysis.enrichmentAnalysis()

@@ -437,7 +437,7 @@ def fixDashInExcess(listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSyno
 
 def cleaningValue(dataframe, value):
     valueDataframe = dataframe[dataframe.GOs.str.match(value) == True]
-    
+
     dataframe = dataframe.set_index("Gene_Name")
     for index in valueDataframe['Gene_Name'].tolist():
         dataframe = dataframe.drop(index)
@@ -509,8 +509,8 @@ def columnGOCleaning():
     translation = lambda x: translateGOTerm(x, d_GOLabelToNumber)
     resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(translation)
 
-    correctionProblesmSynonym = lambda x : fixProblemsWithSynonym(x,  d_GOLabelToNumber, d_GOLabelWithSynonym)
-    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionProblesmSynonym)
+    correctionProblemsSynonym = lambda x : fixProblemsWithSynonym(x,  d_GOLabelToNumber, d_GOLabelWithSynonym)
+    resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionProblemsSynonym)
 
     correctionObsolete = lambda x: fixObsoleteGOTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
     resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionObsolete)

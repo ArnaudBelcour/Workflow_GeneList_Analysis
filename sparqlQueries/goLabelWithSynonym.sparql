@@ -1,0 +1,18 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX go: <http://www.geneontology.org/formats/oboInOwl#>
+
+SELECT DISTINCT ?subject ?label ?NarrowSynonym ?BroadSynonym  ?RelatedSynonym
+WHERE {
+  ?subject ?predicate ?object .
+  ?subject rdfs:label ?label .
+    OPTIONAL{
+          ?subject go:hasNarrowSynonym ?NarrowSynonym .
+    }
+    OPTIONAL {
+        ?subject go:hasBroadSynonym ?BroadSynonym .
+    }
+    OPTIONAL {
+          ?subject go:hasRelatedSynonym ?RelatedSynonym .
+      }
+  FILTER (regex((str(?subject)), "GO_")) .
+}

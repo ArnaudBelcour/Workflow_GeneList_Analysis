@@ -1,10 +1,13 @@
-import pandas as pa
+import csv
 import math
+import pandas as pa
 import requests
+from ast import literal_eval
 from bs4 import BeautifulSoup
-from SPARQLWrapper import SPARQLWrapper, JSON, GET
+from SPARQLWrapper import SPARQLWrapper, JSON
 
-def sparqlQueryCreation():
+
+def genomeFileExtraction():
     df = pa.read_csv("BrowserPlasmoUniprot.tsv", skiprows = 1, sep = "\t", header=None)
     df = df[[0, 1, 2, 3]]
     df.columns = [["GenePlasmo", "PosDepart", "PosFin", "Uniprot"]]
@@ -18,7 +21,7 @@ def sparqlQueryCreation():
         listOfNumber.append(number)
     del listOfNumber[-1]
 
-    stringValuesProteinName = ""
+    stringValuesProteinNames = []
 
     for mnemonicNameOfProtein in df["Uniprot"].tolist():
         stringValuesProteinName = stringValuesProteinName + "'" + mnemonicNameOfProtein + "' "
@@ -29,52 +32,88 @@ def sparqlQueryCreation():
         if numberLimitationQuery != df["Uniprot"].tolist()[-1]:
             currentList = df["Uniprot"].tolist()[numberLimitationQuery:numberLimitationQuery+354]
         for mnemonicNameOfProtein in currentList:
-            stringValuesProteinName = stringValuesProteinName + "'" + mnemonicNameOfProtein + "' "
-        sparqlQuery = """
+            stringValuesProteinName = "'" + mnemonicNameOfProtein + "'"
+            stringValuesProteinNames.append(stringValuesProteinName)
+
+    return stringValuesProteinNames
+
+def createApproximationGOGenome(stringValuesProteinNames):
+    csvfile = open("test_genomeGO.tsv", "w", newline = "")
+    writer = csv.writer(csvfile, delimiter="\t")
+    writer.writerow(("uniprotID", 'GOs'))
+
+    for stringValuesProteinName in stringValuesProteinNames:
+        sparql = SPARQLWrapper("http://beta.sparql.uniprot.org/sparql")
+        sparql.setQuery("""
         PREFIX up:<http://purl.uniprot.org/core/>
 
         SELECT ?protein ?go
         WHERE
         {
-            ?protein a up:Protein .
-            ?protein up:mnemonic ?proteinNamed .
-            ?protein up:classifiedWith ?go .
-            FILTER (regex(str(?go), "GO")) .
-            VALUES ?proteinNamed {""" + stringValuesProteinName + """}}
-        """
+                ?protein a up:Protein .
+                ?protein up:mnemonic ?proteinNamed .
+                ?protein up:classifiedWith ?go .
+                FILTER (regex(str(?go), "GO")) .
+                VALUES ?proteinNamed {""" + stringValuesProteinName + """}
+        }
+        """)
 
-        if "?proteinNamed {}" in sparqlQuery:
-            continue
-        else :
-            sparqlQueries.append(sparqlQuery)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
 
-    return sparqlQueries
+        goFounds = []
+        for result in results["results"]["bindings"]:
+            uniprotID = result["protein"]["value"][32:]
+            goFounds.append(result["go"]["value"][31:])
+        writer.writerow((uniprotID, goFounds))
 
-def sparqlQueryOnUniprot(sparqlQueries):
-    stringValuesProteinName = 'IPO4_MOUSE'
+    csvfile.close()
 
-    sparqlQuery = """
-    PREFIX up:<http://purl.uniprot.org/core/>
+    df = pa.read_csv('test_genomeGO.tsv', '\t')
 
-    SELECT ?protein ?go
-    WHERE
-    {
-        ?protein a up:Protein .
-        ?protein up:mnemonic ?proteinNamed .
-        ?protein up:classifiedWith ?go .
-        FILTER (regex(str(?go), "GO")) .
-        VALUES ?proteinNamed {""" + stringValuesProteinName + """}}
-    """
+    for index, row in df.iterrows():
+        row['GOs'] = unionGOAndTheirAncestors(literal_eval(row['GOs']))
+    df.to_csv('test_genomeGO_edit.tsv', '\t')
 
-    sparql = SPARQLWrapper("http://beta.sparql.uniprot.org/sparql")
+def goTermAncestors(go):
+    goAncestors = []
+    sparql = SPARQLWrapper("http://localhost:3030/datanase/query")
+    sparql.setQuery("""
+    PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX uniprot: <http://bio2rdf.org/uniprot:>
+    PREFIX go: <http://purl.obolibrary.org/obo/GO_>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-    sparql.setQuery(sparqlQuery)
-    sparql.setMethod(GET)
+    SELECT DISTINCT ?goAnc ?goAncLabel
+    WHERE {
+      go:""" + go[3:] + """ (rdfs:subClassOf|(rdfs:subClassOf/owl:someValuesFrom))*
+    ?goAnc .
+      OPTIONAL { ?goAnc rdfs:label ?goAncLabel .}
+        FILTER ((str(?goAnc) != "b")) .
+    }
+    """)
+
     sparql.setReturnFormat(JSON)
-
     results = sparql.query().convert()
 
-def httprequestGOTermForAProtein(uniprotID):
+    for result in results["results"]["bindings"]:
+        goAncestors.append(result["goAnc"]["value"][31:])
+
+    return goAncestors
+
+def unionGOAndTheirAncestors(gos):
+    goAncestorsForGolists = []
+
+    for go in gos:
+        goAncestors = goTermAncestors(go)
+        goAncestorsForGolists.append(goAncestors)
+
+    golistForEntity = list(set().union(*goAncestorsForGolists))
+
+    return golistForEntity
+
+def requestGOTermForAProtein(uniprotID):
     r = requests.get('http://www.uniprot.org/uniprot/' + uniprotID + '.xml')
     soup = BeautifulSoup(r.text)
     l = soup.findAll({"type", "GO"} )
@@ -83,12 +122,12 @@ def httprequestGOTermForAProtein(uniprotID):
                     lambda tag:tag.name == "dbreference" and
                     tag["type"] == "GO")
 
-    GONumberList = []
+    l_GOTerms = []
 
     for index in range(len(td_tag_list)):
-        GONumberList.append(td_tag_list[index]["id"])
+        l_GOTerms.append(td_tag_list[index]["id"])
 
-    return GONumberList
+    return l_GOTerms
 
 def main():
     df = pa.read_csv("BrowserPlasmoUniprot.tsv", skiprows = 1, sep = "\t", header=None)

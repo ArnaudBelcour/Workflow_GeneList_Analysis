@@ -24,13 +24,13 @@ This R package :
 
 # Enrichment Analysis
 
-Actually, the first scripts are for GO terms enrichment analysis.
+This workflow performs enrichment analysis (especially on GO terms).
 
 primaryFileManagement.py translates GO label from Blast2Go files into GO number.
 
-enrichmentAnalysis.py computes an hypergeometric test for variables (now it works for GO terms, in the future it will worked for pathway), it also calculates different multiple tests corrections (Bonferroni, Holm, Sidak, Benjamini & Hochberg and SGoF).
+enrichmentAnalysis.py is dividied in tow class. The first class ("EnrichmentAnalysis") is the basic method, which computes an hypergeometric test for variables (now it works for GO terms, in the future it will work for pathway) and calculates different multiple tests corrections (Bonferroni, Holm, Sidak, Benjamini & Hochberg and SGoF). The second class ("GOEnrichmentAnalysis") inherits from "EnrichmentAnalysis" and overrides a function to add GO label to the results.
 
-goTermExtractionUniprot.py queries Uniprot to obtain GO terms associated with Uniprot ID (actually the SPARQL queries don't work, only the http requests work).
+goTermExtractionUniprot.py queries Uniprot to obtain GO terms associated with Uniprot ID.
 
 This workflow works with three directories (inputFiles, temporaryFiles and outputFiles) :
 
@@ -46,15 +46,15 @@ Test used :
 
 And multiple testing corrections :
 
-* [Bonferroni Correction](http://www.jstor.org/stable/2282330?seq=1#page_scan_tab_contents)
+* [Bonferroni Correction](http://www.jstor.org/stable/2282330?seq=1#page_scan_tab_contents) (Jean Dunn, 1961)
 
-* [Sidak](https://www.jstor.org/stable/2283989?seq=1#page_scan_tab_contents)
+* [Sidak](https://www.jstor.org/stable/2283989?seq=1#page_scan_tab_contents) (Sidak, 1967)
 
-* [Holm](http://www.jstor.org/stable/4615733?seq=1#page_scan_tab_contents)
+* [Holm](http://www.jstor.org/stable/4615733?seq=1#page_scan_tab_contents) (Holm, 1979)
 
-* [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents)
+* [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents) (Benjamini and Hochberg, 1995)
 
-* [SGoF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2719628/)
+* [SGoF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2719628/) (Carvajal-Rodríguez, Uña-Alvarez and Rolán-Alvarez, 2009)
 
 # Network Enrichment Analysis
 
@@ -65,4 +65,4 @@ enzymeToPathway.R translates Enzyme Commission number (ec) into pathway using KE
 ## Launch GO terms Enrichment Analysis
 
 First, create a directory named "inputFiles". Put your data on it (see part "GO terms Enrichment Analysis" for more details on the needed files).
-To launch the analysis, just launch the "goEnrichmentAnalysis.py" script with python.
+To launch the analysis, just launch the "enrichmentAnalysis.py" script with python.

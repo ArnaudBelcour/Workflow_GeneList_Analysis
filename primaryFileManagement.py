@@ -1,8 +1,10 @@
 import csv
+import goTermExtractionUniprot
 import math
 import os
 import pandas as pa
 import sys
+from ast import literal_eval
 from collections import defaultdict
 
 inputDirectory = "inputFiles/"
@@ -525,3 +527,63 @@ def columnGOCleaning():
     resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionDashIssue)
 
     rewritingFile(resultsDataframe, "queryResultsGOsTranslatedAndFixed.tsv")
+
+def createGeneObjectAnalysisFile(fileName, columnsNames, columnAnalyzedObject):
+    df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
+    df = df[columnsNames]
+    df = df.set_index(columnsNames[0])
+
+    csvfile = open(temporaryDirectory + "Gene_" + columnAnalyzedObject + ".tsv", "w", newline = "")
+    writer = csv.writer(csvfile, delimiter="\t")
+    writer.writerow((columnsNames[0], columnsNames[1]))
+
+    for gene, listOflistOfAnalyzedObjects in df.iterrows():
+        for listOfAnalyzedObjects in listOflistOfAnalyzedObjects:
+            for analyzedObject in literal_eval(listOfAnalyzedObjects):
+                writer.writerow((gene, analyzedObject))
+
+    csvfile.close()
+
+def goAncestorsListOfInterest(columnAnalyzedObject):
+    df = pa.read_csv(temporaryDirectory + 'queryResultsGOsTranslatedAndFixed.tsv', '\t')
+
+    for index, row in df.iterrows():
+        row[columnAnalyzedObject] = goTermExtractionUniprot.unionGOAndTheirAncestors(literal_eval(row[columnAnalyzedObject]))
+    df.to_csv(temporaryDirectory + 'queryResultsGOsTranslatedAndFixed.tsv', '\t')
+
+def countingGeneList(fileName, columnName, columnAnalyzedObject):
+    analyzedObjects = []
+    df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
+    for index, row in df.iterrows():
+        for analyzedObject in literal_eval(row[columnAnalyzedObject]):
+            analyzedObjects.append(analyzedObject)
+
+    counts_df = pa.DataFrame(analyzedObjects)
+    counts_df.columns = [columnAnalyzedObject]
+    counts_df = counts_df.groupby(columnAnalyzedObject).size().rename(columnName)
+    counts_df = counts_df.to_frame()
+
+    numberOfGene = len(df["Gene_Name"].unique())
+
+    counts_df = counts_df.reset_index()
+    rewritingFile(counts_df, "countingObjectsInInterest.tsv")
+
+    return "countingObjectsInInterest", numberOfGene
+
+def countingGenome(fileName, columnName, columnAnalyzedObject):
+    analyzedObjects = []
+    df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep="\t")
+    for index, row in df.iterrows():
+        for analyzedObject in literal_eval(row[columnAnalyzedObject]):
+            analyzedObjects.append(analyzedObject)
+
+    counts_df_Genome = pa.DataFrame(analyzedObjects)
+    counts_df_Genome.columns = [columnAnalyzedObject]
+    counts_df_Genome = counts_df_Genome.groupby(columnAnalyzedObject).size().rename(columnName)
+    counts_df_Genome = counts_df_Genome.to_frame()
+
+
+    counts_df_Genome = counts_df_Genome.reset_index()
+    rewritingFile(counts_df_Genome, "countingObjectsInGenome.tsv")
+
+    return "countingObjectsInGenome"

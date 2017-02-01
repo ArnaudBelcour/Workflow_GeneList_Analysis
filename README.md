@@ -46,15 +46,15 @@ Test used :
 
 And multiple testing corrections :
 
-* [Bonferroni Correction](http://www.jstor.org/stable/2282330?seq=1#page_scan_tab_contents) (Jean Dunn, 1961)
+* [Bonferroni Correction](http://www.jstor.org/stable/2282330?seq=1#page_scan_tab_contents) Dunn, Olive Jean. “Multiple Comparisons Among Means.” Journal of the American Statistical Association, vol. 56, no. 293, 1961, pp. 52–64.
 
-* [Sidak](https://www.jstor.org/stable/2283989?seq=1#page_scan_tab_contents) (Sidak, 1967)
+* [Sidak](https://www.jstor.org/stable/2283989?seq=1#page_scan_tab_contents) Sidak, Zbynek. “Rectangular Confidence Regions for the Means of Multivariate Normal Distributions.” Journal of the American Statistical Association, vol. 62, no. 318, 1967, pp. 626–633.
 
-* [Holm](http://www.jstor.org/stable/4615733?seq=1#page_scan_tab_contents) (Holm, 1979)
+* [Holm](http://www.jstor.org/stable/4615733?seq=1#page_scan_tab_contents) Holm, Sture. “A Simple Sequentially Rejective Multiple Test Procedure.” Scandinavian Journal of Statistics, vol. 6, no. 2, 1979, pp. 65–70.
 
-* [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents) (Benjamini and Hochberg, 1995)
+* [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents) Benjamini, Yoav, and Yosef Hochberg. “Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing.” Journal of the Royal Statistical Society. Series B (Methodological), vol. 57, no. 1, 1995, pp. 289–300.
 
-* [SGoF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2719628/) (Carvajal-Rodríguez, Uña-Alvarez and Rolán-Alvarez, 2009)
+* [SGoF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2719628/) Carvajal-Rodríguez, Antonio, Jacobo de Uña-Alvarez, and Emilio Rolán-Alvarez. “A New Multitest Correction (SGoF) That Increases Its Statistical Power When Increasing the Number of Tests.” BMC Bioinformatics 10 (2009): 209.
 
 # Network Enrichment Analysis
 

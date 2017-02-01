@@ -15,6 +15,8 @@ class EnrichmentAnalysis():
     def __init__(self, columnName):
         self.objectToAnalyze = columnName
         self.outputColumns = ['Counts', 'CountsGenome', 'Percentage' + self.getObjectToAnalyze() + 'List', 'Percentage' + self.getObjectToAnalyze() + 'Genome', 'pValueHypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg']
+        self.fileOfInterest = ""
+        self.fileOfGenome = ""
 
     def getObjectToAnalyze(self):
         return self.objectToAnalyze
@@ -22,49 +24,20 @@ class EnrichmentAnalysis():
     def getOutputColumns(self):
         return self.outputColumns
 
+    def getFileOfInterest(self):
+        return self.fileOfInterest
+
+    def getFileOfGenome(self):
+        return self.fileOfGenome
+
+    def setFileOfInterest(self, fileName):
+        self.fileOfInterest = fileName
+
+    def setFileOfGenome(self, fileName):
+        self.fileOfGenome = fileName
+
     def setOutputColumns(self, index, value):
         self.outputColumns[index] = value
-
-    def createGeneObjectAnalysisFile(self, fileName, columnsNames):
-        df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
-        df = df[columnsNames]
-        df = df.set_index(columnsNames[0])
-
-        csvfile = open(temporaryDirectory + "Gene_" + self.getObjectToAnalyze() + ".tsv", "w", newline = "")
-        writer = csv.writer(csvfile, delimiter="\t")
-        writer.writerow((columnsNames[0], columnsNames[1]))
-
-        for gene, listOflistOfAnalyzedObjects in df.iterrows():
-            for listOfAnalyzedObjects in listOflistOfAnalyzedObjects:
-                for analyzedObject in literal_eval(listOfAnalyzedObjects):
-                    writer.writerow((gene, analyzedObject))
-
-        csvfile.close()
-
-    def countingGeneList(self, fileName, columnName):
-        df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
-        counts_df = pa.DataFrame(df.groupby(self.getObjectToAnalyze()).size().rename(columnName))
-
-        numberOfGene = len(df["Gene_Name"].unique())
-
-        counts_df = pa.DataFrame(df.groupby(self.getObjectToAnalyze()).size().rename(columnName))
-        counts_df = counts_df.sort_values([columnName], ascending=[False])
-        counts_df.reset_index()
-
-        numberOfAnnotations = counts_df[columnName].sum()
-
-        return counts_df, numberOfGene
-
-    def countingGenome(self, fileName, columnName):
-        df = pa.read_csv(inputDirectory + fileName + ".tsv", sep="\t")
-        df.columns = [self.getObjectToAnalyze()]
-        counts_df_Genome = pa.DataFrame(df.groupby(self.getObjectToAnalyze()).size().rename(columnName))
-
-        counts_df_Genome.reset_index(inplace=True)
-        counts_df_Genome[self.getObjectToAnalyze()] = counts_df_Genome[self.getObjectToAnalyze()].str.replace(":", "_")
-        counts_df_Genome = counts_df_Genome.set_index(self.getObjectToAnalyze())
-
-        return counts_df_Genome
 
     def hypergeometricTestOnDataframe(self, df, numberOfGeneOfInterest, numberOfGenesInGenome, overOrUnderRepresentation, genomeColumns):
         analyzedObjectsWithHyperGeoTestNAN = []
@@ -146,6 +119,7 @@ class EnrichmentAnalysis():
         return df, significativeObjects
 
     def writingOutput(self, df, significativeObjects, overOrUnderRepresentation, approximationYesOrNo, yesAnswers):
+        df = df.sort_values(['pValueBenjaminiHochberg'])
 
         if approximationYesOrNo in yesAnswers:
             self.setOutputColumns(1, "CountsTotal")
@@ -278,16 +252,26 @@ class EnrichmentAnalysis():
 
     def enrichmentAnalysis(self):
         pythonVersion = sys.version_info
+
+        #primaryFileManagement.goAncestorsListOfInterest(self.getObjectToAnalyze())
         primaryFileManagement.columnGOCleaning()
-        self.createGeneObjectAnalysisFile("queryResults" + self.getObjectToAnalyze() + "TranslatedAndFixed", ['Gene_Name', self.getObjectToAnalyze()])
+        primaryFileManagement.createGeneObjectAnalysisFile("queryResults" + self.getObjectToAnalyze() + "TranslatedAndFixed", ['Gene_Name', self.getObjectToAnalyze()], self.getObjectToAnalyze())
 
         sentenceChoiceNumberGene = "Enter the number of genes in the genome of your organism : "
         numberOfGenesInGenome = int(primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, pythonVersion))
 
-        counts_df, numberOfGene = self.countingGeneList("Gene_" + self.getObjectToAnalyze(), 'Counts')
-        counts_df_Genome = self.countingGenome("GOTermsPlasmoGenome", 'CountsGenome')
+        fileOfInterestName, numberOfGene = primaryFileManagement.countingGeneList("queryResults" + self.getObjectToAnalyze() + "TranslatedAndFixed", 'Counts', self.getObjectToAnalyze())
+        fileOfGenomeName = primaryFileManagement.countingGenome("test_genomeGO", 'CountsGenome', self.getObjectToAnalyze())
 
+        self.setFileOfInterest(fileOfInterestName)
+        self.setFileOfGenome(fileOfGenomeName)
+
+        counts_df = pa.read_csv(temporaryDirectory + self.getFileOfInterest() + ".tsv", sep = "\t")
+        counts_df_Genome = pa.read_csv(temporaryDirectory + self.getFileOfGenome() + ".tsv", sep = "\t")
+        counts_df = counts_df.set_index("GOs")
+        counts_df_Genome = counts_df_Genome.set_index("GOs")
         dfJoined = counts_df.join(counts_df_Genome)
+        dfJoined = dfJoined.reset_index()
 
         sentenceChoiceAlpha = "Enter the alpha risk : "
         alpha = float(primaryFileManagement.inputPythonFormat(sentenceChoiceAlpha, pythonVersion))

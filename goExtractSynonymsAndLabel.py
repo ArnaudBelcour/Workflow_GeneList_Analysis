@@ -1,8 +1,12 @@
+#!/usr/bin/env python3
+
 import csv
 from SPARQLWrapper import SPARQLWrapper, JSON
 
+inputDirectory = "inputFiles/"
+
 def goTermSynonyms(query):
-    csvfile = open("query_results.tsv", "w", newline = "")
+    csvfile = open(inputDirectory + "query_results.tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"])
 

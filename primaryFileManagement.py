@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
+
 import csv
-import goTermExtractionUniprot
 import math
 import os
 import pandas as pa
@@ -7,9 +8,10 @@ import sys
 from ast import literal_eval
 from collections import defaultdict
 
+import goTermExtractionUniprot
+
 inputDirectory = "inputFiles/"
 temporaryDirectory = 'temporaryFiles/'
-outputDirectory = 'outputFiles/'
 
 def GOLabelNumberDictionnaryCreation(fileName, specification):
     d_GOLabelToNumber = {}
@@ -467,16 +469,6 @@ def rewritingFile(newtable, fileName):
     newtable.to_csv(temporaryDirectory + fileName, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
 def columnGOCleaning():
-    if os.path.exists(inputDirectory[:-1]) == False :
-        os.makedirs(inputDirectory)
-        sys.exit("No input data, please put your data fiels in inputFiles directory.")
-    if os.path.exists(temporaryDirectory[:-1]) == False :
-        os.makedirs(temporaryDirectory)
-    if os.path.exists(outputDirectory[:-1]) == False :
-        os.makedirs(outputDirectory)
-
-    if not os.listdir(inputDirectory):
-        sys.exit("No input data, please put your data fiels in inputFiles directory.")
 
     pythonVersion = sys.version_info
 

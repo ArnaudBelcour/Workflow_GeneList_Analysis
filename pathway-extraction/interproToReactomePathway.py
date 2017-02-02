@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
+
 import gzip
 import urllib2
 from bs4 import BeautifulSoup
 
-temporaryDirectory = '../temporaryFiles/'
+temporaryDirectoryDatabase = '../temporaryFiles/databases/'
 
 def getInterproXMLCompressed(url, fileName):
     reponse = urllib2.urlopen(url, headers = {"Accept-Encoding": "gzip"})

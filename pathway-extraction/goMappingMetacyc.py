@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 import csv
 import pandas as pa
 import requests
 
-temporaryDirectory = '../temporaryFiles/'
+temporaryDirectory = 'temporaryFiles/'
+temporaryDirectoryDatabase = '../temporaryFiles/databases/'
 
 def httpRequestGeneOntology(url, fileName):
     r = requests.get('http://geneontology.org/external2go/metacyc2go')
@@ -24,11 +27,11 @@ def httpRequestGeneOntology(url, fileName):
     return r
 
 def cleaningFile(fileName):
-    df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
+    df = pa.read_csv(temporaryDirectoryDatabase + fileName + ".tsv", sep = "\t")
     df = df[:-1]
     df['metacycPathway'] = df['metacycPathway'].str.replace("MetaCyc:", "")
     df['goLabel'] = df['goLabel'].str.replace("GO:", "")
-    df.to_csv(temporaryDirectory + "output.tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    df.to_csv(temporaryDirectoryDatabase + fileName + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
 def main():
     fileName = 'metacycGOTranslation'

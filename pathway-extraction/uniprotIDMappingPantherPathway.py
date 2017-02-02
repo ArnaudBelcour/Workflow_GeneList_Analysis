@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 import csv
 import pandas as pa
 import urllib2
 
-temporaryDirectory = '../temporaryFiles/'
+temporaryDirectory = 'temporaryFiles/'
+temporaryDirectoryDatabase = '../temporaryFiles/databases/'
 
 def httpRequestGeneOntology(url, fileName):
     req = urllib2.Request(url)
@@ -26,7 +29,7 @@ def cleaningFile(fileName):
     df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
     df['metacycPathway'] = df['metacycPathway'].str.replace("MetaCyc:", "")
     df['goLabel'] = df['goLabel'].str.replace("GO:", "")
-    df.to_csv(temporaryDirectory + "output.tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    df.to_csv(temporaryDirectoryDatabase + fileName + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
 def main():
     fileName = 'uniprotPantherPathwayTranslation'

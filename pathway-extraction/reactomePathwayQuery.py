@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+
 import csv
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-temporaryDirectory = '../temporaryFiles/'
+temporaryDirectoryDatabase = '../temporaryFiles/databases/'
 
 def sparqlQuery(sparqlEndpoint, query, outputFile):
     sparql = SPARQLWrapper(sparqlEndpoint)
@@ -16,7 +18,7 @@ def sparqlQuery(sparqlEndpoint, query, outputFile):
             if key not in columnNames:
                 columnNames.append(key.encode("utf-8"))
 
-    csvfile = open(temporaryDirectory + outputFile + ".tsv", "w")
+    csvfile = open(temporaryDirectoryDatabase + outputFile + ".tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
 
     writer.writerow((columnNames))

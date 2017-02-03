@@ -171,5 +171,3 @@ def main():
     if yesOrNo.lower() in yesAnswers:
         stringValuesProteinNames = genomeFileExtraction()
         createApproximationGOGenome(stringValuesProteinNames)
-
-main()

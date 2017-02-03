@@ -23,6 +23,7 @@ class EnrichmentAnalysis():
         self.numberOfGeneOfInterest = 0
         self.numberOfGeneInGenome = 0
         self.alpha = 0.00
+        self.pythonVersion = sys.version_info
 
     def getObjectToAnalyze(self):
         return self.objectToAnalyze
@@ -44,6 +45,9 @@ class EnrichmentAnalysis():
 
     def getAlpha(self):
         return self.alpha
+
+    def getPythonVersion(self):
+        return self.pythonVersion
 
     def setFileOfInterest(self, fileName):
         self.fileOfInterest = fileName
@@ -287,7 +291,7 @@ class EnrichmentAnalysis():
 
         yesAnswers = ['yes', 'y', 'oui', 'o']
         sentenceChoiceNumberGene = "Is this an approximation of the genome? "
-        yesOrNo = primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, pythonVersion)
+        yesOrNo = primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, self.getPythonVersion())
 
         for analyzedObject, row in dfJoined.iterrows():
             dfJoined.set_value(analyzedObject, 'Percentage' + self.getObjectToAnalyze() + 'List', self.percentageCalculation(row['Counts'], self.getNumberOfGeneOfInterest()))

@@ -4,7 +4,6 @@ import csv
 import math
 import os
 import pandas as pa
-import sys
 from ast import literal_eval
 from collections import defaultdict
 
@@ -468,9 +467,9 @@ def inputPythonFormat(sentenceChoice, pythonVersion):
 def rewritingFile(newtable, fileName):
     newtable.to_csv(temporaryDirectory + fileName, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
-def columnGOCleaning():
+def columnGOCleaning(instanceEnrichmentAnalysis):
 
-    pythonVersion = sys.version_info
+    pythonVersion = instanceEnrichmentAnalysis.getPythonVersion()
 
     sentenceChoice = "Write the name of your input file : "
     nameInputFile = inputPythonFormat(sentenceChoice, pythonVersion)

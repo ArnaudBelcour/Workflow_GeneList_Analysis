@@ -23,28 +23,29 @@ def workflowMainager():
     if not os.listdir(inputDirectory):
         sys.exit("No input data, please put your data fiels in inputFiles directory.")
 
-    pythonVersion = sys.version_info
+    goEnrichmentAnalysis = GOEnrichmentAnalysis('GOs')
+    objectToAnalyze = goEnrichmentAnalysis.getObjectToAnalyze()
+    pythonVersion = goEnrichmentAnalysis.getPythonVersion()
 
-    sentenceChoice = "Do you want to download database datas?"
+    sentenceChoice = "Do you want to download database datas? "
     yesOrNo = primaryFileManagement.inputPythonFormat(sentenceChoice, pythonVersion)
     yesAnswers = ['yes', 'y', 'oui', 'o']
 
     if yesOrNo in yesAnswers:
-        primaryFileManagement.goAncestorsListOfInterest(self.getObjectToAnalyze())
+        primaryFileManagement.goAncestorsListOfInterest(objectToAnalyze)
 
-    primaryFileManagement.columnGOCleaning()
-    primaryFileManagement.createGeneObjectAnalysisFile("queryResults" + self.getObjectToAnalyze() + "TranslatedAndFixed", ['Gene_Name', self.getObjectToAnalyze()], self.getObjectToAnalyze())
+    primaryFileManagement.columnGOCleaning(goEnrichmentAnalysis)
+    primaryFileManagement.createGeneObjectAnalysisFile("queryResults" + objectToAnalyze + "TranslatedAndFixed", ['Gene_Name', objectToAnalyze], objectToAnalyze)
 
     sentenceChoiceNumberGene = "Enter the number of genes in the genome of your organism : "
     numberOfGenesInGenome = int(primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, pythonVersion))
 
-    fileOfInterestName, numberOfGene = primaryFileManagement.countingGeneList("queryResults" + self.getObjectToAnalyze() + "TranslatedAndFixed", 'Counts', self.getObjectToAnalyze())
-    fileOfGenomeName = primaryFileManagement.countingGenome("test_genomeGO", 'CountsGenome', self.getObjectToAnalyze())
+    fileOfInterestName, numberOfGene = primaryFileManagement.countingGeneList("queryResults" + objectToAnalyze + "TranslatedAndFixed", 'Counts', objectToAnalyze)
+    fileOfGenomeName = primaryFileManagement.countingGenome("test_genomeGO", 'CountsGenome', objectToAnalyze)
 
     sentenceChoiceAlpha = "Enter the alpha risk : "
     alpha = float(primaryFileManagement.inputPythonFormat(sentenceChoiceAlpha, pythonVersion))
 
-    goEnrichmentAnalysis = GOEnrichmentAnalysis('GOs')
     goEnrichmentAnalysis.setFileOfInterest(fileOfInterestName)
     goEnrichmentAnalysis.setFileOfGenome(fileOfGenomeName)
     goEnrichmentAnalysis.setNumberOfGeneOfInterest(numberOfGene)

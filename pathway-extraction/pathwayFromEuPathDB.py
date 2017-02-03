@@ -19,7 +19,7 @@ def requestEuPathDB(dbDatabase):
     for row in r.text.split("\n"):
         if '<img src="/icons/unknown.gif" alt="[   ]"> <a href=' in row:
             keggPathways.append(row[len('<img src="/icons/unknown.gif" alt="[   ]"> <a href="'):].split('"')[0])
-     
+
      if dbDatabase == 'tritrypdb':
         leishCycPathways = []
         trypanoCycPathways = []

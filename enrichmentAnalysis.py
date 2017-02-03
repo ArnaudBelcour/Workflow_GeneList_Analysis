@@ -4,10 +4,9 @@ import csv
 import math
 import pandas as pa
 import scipy.stats as stats
+import six
 import sys
 from ast import literal_eval
-
-import primaryFileManagement
 
 inputDirectory = "inputFiles/"
 temporaryDirectory = 'temporaryFiles/'
@@ -23,7 +22,6 @@ class EnrichmentAnalysis():
         self.numberOfGeneOfInterest = 0
         self.numberOfGeneInGenome = 0
         self.alpha = 0.00
-        self.pythonVersion = sys.version_info
 
     def getObjectToAnalyze(self):
         return self.objectToAnalyze
@@ -45,9 +43,6 @@ class EnrichmentAnalysis():
 
     def getAlpha(self):
         return self.alpha
-
-    def getPythonVersion(self):
-        return self.pythonVersion
 
     def setFileOfInterest(self, fileName):
         self.fileOfInterest = fileName
@@ -291,7 +286,7 @@ class EnrichmentAnalysis():
 
         yesAnswers = ['yes', 'y', 'oui', 'o']
         sentenceChoiceNumberGene = "Is this an approximation of the genome? "
-        yesOrNo = primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, self.getPythonVersion())
+        yesOrNo = input(sentenceChoiceNumberGene)
 
         for analyzedObject, row in dfJoined.iterrows():
             dfJoined.set_value(analyzedObject, 'Percentage' + self.getObjectToAnalyze() + 'List', self.percentageCalculation(row['Counts'], self.getNumberOfGeneOfInterest()))
@@ -324,9 +319,13 @@ class EnrichmentAnalysis():
 
 class GOEnrichmentAnalysis(EnrichmentAnalysis):
 
-    def __init__(self, columnName):
+    def __init__(self, columnName, inputDEFileManagement):
         EnrichmentAnalysis.__init__(self, columnName)
         self.outputColumns.append("GOLabel")
+        self.inputDEFileInstance = inputDEFileManagement
+
+    def getInputDEFileInstance(self):
+        return self.inputDEFileInstance
 
     def tranlsationGONumberToGOLabel(self, goNumbers, d_GOLabelToNumber):
         goLabels = []
@@ -345,7 +344,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         df = self.correctionHolm(df)
         df = self.correctionSGoF(df)
 
-        d_GOLabelToNumber, d_GOLabelWithSynonym = primaryFileManagement.GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'inverse')
+        d_GOLabelToNumber, d_GOLabelWithSynonym = self.getInputDEFileInstance().GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'inverse')
 
         significativeObjects = {}
 

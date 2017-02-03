@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import os
+import six
 
-import primaryFileManagement
 from enrichmentAnalysis import GOEnrichmentAnalysis
+from fileManagement import FileManagement
 
 inputDirectory = "inputFiles/"
 temporaryDirectory = 'temporaryFiles/'
@@ -19,32 +20,46 @@ def workflowMainager():
         os.makedirs(temporaryDirectoryDatabase)
     if os.path.exists(outputDirectory[:-1]) == False :
         os.makedirs(outputDirectory)
- 
+
     if not os.listdir(inputDirectory):
         sys.exit("No input data, please put your data fiels in inputFiles directory.")
 
-    goEnrichmentAnalysis = GOEnrichmentAnalysis('GOs')
-    objectToAnalyze = goEnrichmentAnalysis.getObjectToAnalyze()
-    pythonVersion = goEnrichmentAnalysis.getPythonVersion()
-
     sentenceChoice = "Do you want to download database datas? "
-    yesOrNo = primaryFileManagement.inputPythonFormat(sentenceChoice, pythonVersion)
+    yesOrNo = input(sentenceChoice)
     yesAnswers = ['yes', 'y', 'oui', 'o']
 
     if yesOrNo in yesAnswers:
-        primaryFileManagement.goAncestorsListOfInterest(objectToAnalyze)
+        inputDEFileManagement.goAncestorsListOfInterest(objectToAnalyze)
 
-    primaryFileManagement.columnGOCleaning(goEnrichmentAnalysis)
-    primaryFileManagement.createGeneObjectAnalysisFile("queryResults" + objectToAnalyze + "TranslatedAndFixed", ['Gene_Name', objectToAnalyze], objectToAnalyze)
+    sentenceChoice = "Write the name of your input file containing differentially expressed gene : "
+    nameDEInputFile = input(sentenceChoice)
+    inputDEFileManagement = FileManagement(nameDEInputFile)
+    fileDENameInput = inputDEFileManagement.getFileName()
+
+    goEnrichmentAnalysis = GOEnrichmentAnalysis('GOs', inputDEFileManagement)
+    objectToAnalyze = goEnrichmentAnalysis.getObjectToAnalyze()
+
+    inputDEFileManagement.columnGOCleaning(goEnrichmentAnalysis)
+    inputDEFileManagement.createGeneObjectAnalysisFile(fileDENameInput + objectToAnalyze + "TranslatedAndFixed.tsv", ['Gene_Name', objectToAnalyze], objectToAnalyze)
+    inputDEFileManagement.goAncestorsListOfInterest(objectToAnalyze)
+
+    sentenceChoice = "Write the name of your input file containing genome : "
+    nameGenomeInputFile = input(sentenceChoice)
+    inputGenomeFileManagement = FileManagement(nameGenomeInputFile)
+    fileGenomeNameInput = inputGenomeFileManagement.getFileName()
+
+    inputGenomeFileManagement.columnGOCleaning(goEnrichmentAnalysis)
+    inputGenomeFileManagement.createGeneObjectAnalysisFile(fileGenomeNameInput + objectToAnalyze + "TranslatedAndFixed.tsv", ['Gene_Name', objectToAnalyze], objectToAnalyze)
+    inputGenomeFileManagement.goAncestorsListOfInterest(objectToAnalyze)
+
+    fileOfInterestName, numberOfGene = inputDEFileManagement.countingGeneList(fileDENameInput, 'Counts', objectToAnalyze)
+    fileOfGenomeName = inputGenomeFileManagement.countingGenome(fileGenomeNameInput, 'CountsGenome', objectToAnalyze)
 
     sentenceChoiceNumberGene = "Enter the number of genes in the genome of your organism : "
-    numberOfGenesInGenome = int(primaryFileManagement.inputPythonFormat(sentenceChoiceNumberGene, pythonVersion))
-
-    fileOfInterestName, numberOfGene = primaryFileManagement.countingGeneList("queryResults" + objectToAnalyze + "TranslatedAndFixed", 'Counts', objectToAnalyze)
-    fileOfGenomeName = primaryFileManagement.countingGenome("test_genomeGO", 'CountsGenome', objectToAnalyze)
+    numberOfGenesInGenome = int(input(sentenceChoiceNumberGene))
 
     sentenceChoiceAlpha = "Enter the alpha risk : "
-    alpha = float(primaryFileManagement.inputPythonFormat(sentenceChoiceAlpha, pythonVersion))
+    alpha = float(input(sentenceChoiceAlpha))
 
     goEnrichmentAnalysis.setFileOfInterest(fileOfInterestName)
     goEnrichmentAnalysis.setFileOfGenome(fileOfGenomeName)

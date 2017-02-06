@@ -4,467 +4,460 @@ import csv
 import math
 import os
 import pandas as pa
+import re
 import six
 from ast import literal_eval
 from collections import defaultdict
 
 import goTermExtractionUniprot
 
-inputDirectory = "inputFiles/"
-temporaryDirectory = 'temporaryFiles/'
+input_directory = "inputFiles/"
+temporary_directory = 'temporaryFiles/'
 
 class FileManagement():
 
-    def __init__(self, nameOftheFile):
-        self.fileName = os.path.splitext(nameOftheFile)[0]
-        self.fileExtension = os.path.splitext(nameOftheFile)[1]
+    def __init__(self, name_of_the_file):
+        self.file_name, self.file_extension = os.path.splitext(name_of_the_file)
 
-    def getFileName(self):
-        return self.fileName
+    def get_file_name(self):
+        return self.file_name
 
-    def getFileExtension(self):
-        return self.fileExtension
+    def get_file_extension(self):
+        return self.file_extension
 
-    def setFileExtension(self, extension):
-        self.fileExtension = extension
+    def go_label_number_dictionnary_creation(self, file_name, specification):
+        d_go_label_to_number = {}
 
-    def GOLabelNumberDictionnaryCreation(self, fileName, specification):
-        d_GOLabelToNumber = {}
+        with open (file_name, 'r') as file:
+            query_results_file = file.read()
+            query_results_file = query_results_file.replace(" ,\n", "\n")
+            query_results_file = query_results_file.replace(" , ", "\t")
+            query_results_modified = open(temporary_directory + "queryResults.tsv", "w")
+            query_results_modified.write(query_results_file)
+            query_results_modified.close()
 
-        with open (fileName, 'r') as file:
-            queryResultsFile = file.read()
-            queryResultsFile = queryResultsFile.replace(" ,\n", "\n")
-            queryResultsFile = queryResultsFile.replace(" , ", "\t")
-            queryResultsModified = open(temporaryDirectory + "queryResults.tsv", "w")
-            queryResultsModified.write(queryResultsFile)
-            queryResultsModified.close()
+        query_results_dataframe = pa.read_csv(temporary_directory + "queryResults.tsv", sep = "\t")
 
-        queryResultsDataframe = pa.read_csv(temporaryDirectory + "queryResults.tsv", sep = "\t")
+        query_results_dataframe.columns = [["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"]]
 
-        queryResultsDataframe.columns = [["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"]]
+        quote_deletion = lambda x: x.replace('"', '')
+        query_results_dataframe["subject"] = query_results_dataframe["subject"].apply(quote_deletion)
 
-        quoteDeletion = lambda x: x.replace('"', '')
-        queryResultsDataframe["subject"] = queryResultsDataframe["subject"].apply(quoteDeletion)
+        go_isolation = lambda x: x[32:]
+        query_results_dataframe["subject"] = query_results_dataframe["subject"].apply(go_isolation)
 
-        goIsolation = lambda x: x[32:]
-        queryResultsDataframe["subject"] = queryResultsDataframe["subject"].apply(goIsolation)
+        space_deletion = lambda x: x.replace(" ", "")
+        query_results_dataframe["label"] = query_results_dataframe["label"].apply(space_deletion)
 
-        spaceDeletion = lambda x: x.replace(" ", "")
-        queryResultsDataframe["label"] = queryResultsDataframe["label"].apply(spaceDeletion)
-
-        spaceDeletion = lambda x: str(x).replace(" ", "")
-        queryResultsDataframe["NarrowSynonym"] = queryResultsDataframe["NarrowSynonym"].apply(spaceDeletion)
-
-        spaceDeletion = lambda x: str(x).replace(" ", "")
-        queryResultsDataframe["BroadSynonym"] = queryResultsDataframe["BroadSynonym"].apply(spaceDeletion)
-
-        spaceDeletion = lambda x: str(x).replace(" ", "")
-        queryResultsDataframe["RelatedSynonym"] = queryResultsDataframe["RelatedSynonym"].apply(spaceDeletion)
+        space_deletion = lambda x: str(x).replace(" ", "")
+        query_results_dataframe["NarrowSynonym"] = query_results_dataframe["NarrowSynonym"].apply(space_deletion)
+        query_results_dataframe["BroadSynonym"] = query_results_dataframe["BroadSynonym"].apply(space_deletion)
+        query_results_dataframe["RelatedSynonym"] = query_results_dataframe["RelatedSynonym"].apply(space_deletion)
 
         if specification == "inverse":
-            d_GOLabelToNumber = dict(zip(queryResultsDataframe['subject'], queryResultsDataframe['label']))
+            d_go_label_to_number = dict(zip(query_results_dataframe['subject'], query_results_dataframe['label']))
 
         else:
-            d_GOLabelToNumber = dict(zip(queryResultsDataframe['label'], queryResultsDataframe['subject']))
+            d_go_label_to_number = dict(zip(query_results_dataframe['label'], query_results_dataframe['subject']))
 
-        d_GOLabelWithSynonym = {}
+        d_go_label_with_synonym = {}
 
-        queryResultsDataframe = queryResultsDataframe.set_index(queryResultsDataframe['subject'])
+        query_results_dataframe = query_results_dataframe.set_index(query_results_dataframe['subject'])
 
-        for index, row in queryResultsDataframe.iterrows():
-            if row['NarrowSynonym'] not in d_GOLabelWithSynonym and row['BroadSynonym'] not in d_GOLabelWithSynonym\
-            and row['RelatedSynonym'] not in d_GOLabelWithSynonym:
+        for index, row in query_results_dataframe.iterrows():
+            if row['NarrowSynonym'] not in d_go_label_with_synonym and row['BroadSynonym'] not in d_go_label_with_synonym\
+            and row['RelatedSynonym'] not in d_go_label_with_synonym:
                 if row['NarrowSynonym'] != 'nan':
-                    d_GOLabelWithSynonym[row['NarrowSynonym']] = index
+                    d_go_label_with_synonym[row['NarrowSynonym']] = index
                 if row['BroadSynonym'] != 'nan':
-                    d_GOLabelWithSynonym[row['BroadSynonym']] = index
+                    d_go_label_with_synonym[row['BroadSynonym']] = index
                 if row['RelatedSynonym'] != 'nan':
-                    d_GOLabelWithSynonym[row['RelatedSynonym']] = index
+                    d_go_label_with_synonym[row['RelatedSynonym']] = index
 
-        keysTodelete = []
+        keys_to_delete = []
 
-        for key, values in d_GOLabelWithSynonym.items():
+        for key, values in d_go_label_with_synonym.items():
             if values == []:
-                keysTodelete.append(key)
+                keys_to_delete.append(key)
 
-        for key in keysTodelete:
-            del d_GOLabelWithSynonym[key]
+        for key in keys_to_delete:
+            del d_go_label_with_synonym[key]
 
-        return d_GOLabelToNumber, d_GOLabelWithSynonym
+        return d_go_label_to_number, d_go_label_with_synonym
 
-    def translateGOTerm(self, listOfGOLabel, d_GOLabelToNumber):
-        listOfGONumber = []
+    def translate_go_label_into_go_number(self, gos_labels, d_go_label_to_number):
+        gos_numbers = []
 
-        if type(listOfGOLabel) is float:
-            if math.isnan(listOfGOLabel):
-                listOfGOLabel = [str(listOfGOLabel)]
+        if type(gos_labels) is float:
+            if math.isnan(gos_labels):
+                gos_labels = [str(gos_labels)]
 
-        listOfGOLabel = [GO.replace(" ", "") for GO in listOfGOLabel]
+        gos_labels = [go.replace(" ", "") for go in gos_labels]
 
-        for GOLabel in listOfGOLabel:
-            if GOLabel in d_GOLabelToNumber:
-                GONumber = d_GOLabelToNumber[GOLabel]
-                listOfGONumber.append(GONumber)
+        for go_label in gos_labels:
+            if go_label in d_go_label_to_number:
+                go_number = d_go_label_to_number[go_label]
+                gos_numbers.append(go_number)
             else:
-                listOfGONumber.append(GOLabel)
+                gos_numbers.append(go_label)
 
-        return listOfGONumber
+        return gos_numbers
 
-    def fixObsoleteGOTerm(self, listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSynonym):
-        listOfGONumber = []
+    def fix_obsolete_go_term(self, gos_labels_and_numbers, d_go_label_to_number, d_go_label_with_synonym):
+        gos_numbers = []
 
-        listOfGOLabelAndNumber = [GO.replace(" ", "") for GO in listOfGOLabelAndNumber]
+        gos_labels_and_numbers = [go.replace(" ", "") for go in gos_labels_and_numbers]
 
-        for GOLabelAndNumber in listOfGOLabelAndNumber:
-            if GOLabelAndNumber == "-":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] == "GO":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] != 'GO' and GOLabelAndNumber[0:2] != "-":
-                GOLabelObsolete = "obsolete" + GOLabelAndNumber
-                if GOLabelObsolete in d_GOLabelToNumber:
-                    GONumber = d_GOLabelToNumber[GOLabelObsolete]
-                    listOfGONumber.append(GONumber)
-                elif GOLabelObsolete in d_GOLabelWithSynonym:
-                    GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                    listOfGONumber.append(GONumber)
+        for go_label_and_number in gos_labels_and_numbers:
+            if go_label_and_number == "-":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] == "GO":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] != 'GO' and go_label_and_number[0:2] != "-":
+                go_labelObsolete = "obsolete" + go_label_and_number
+                if go_labelObsolete in d_go_label_to_number:
+                    go_number = d_go_label_to_number[go_labelObsolete]
+                    gos_numbers.append(go_number)
+                elif go_labelObsolete in d_go_label_with_synonym:
+                    go_number = d_go_label_with_synonym[go_label_fixed]
+                    gos_numbers.append(go_number)
                 else:
-                    listOfGONumber.append(GOLabelAndNumber)
+                    gos_numbers.append(go_label_and_number)
 
-        return listOfGONumber
+        return gos_numbers
 
-    def fixWrongNorLTerm(self, listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSynonym):
-        listOfGONumber = []
+    def fix_wrong_n_or_l_term(self, gos_labels_and_numbers, d_go_label_to_number, d_go_label_with_synonym):
+        gos_numbers = []
 
-        listOfGOLabelAndNumber = [GO.replace(" ", "") for GO in listOfGOLabelAndNumber]
+        gos_labels_and_numbers = [go.replace(" ", "") for go in gos_labels_and_numbers]
 
-        for GOLabelAndNumber in listOfGOLabelAndNumber:
-            if GOLabelAndNumber == "-":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] == "GO":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] != 'GO' and GOLabelAndNumber[0:2] != "-":
-                if "N" in GOLabelAndNumber :
-                    GOLabelNWrong = GOLabelAndNumber.replace("N", "L")
-                    if GOLabelNWrong in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelNWrong]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelNWrong in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
+        for go_label_and_number in gos_labels_and_numbers:
+            if go_label_and_number == "-":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] == "GO":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] != 'GO' and go_label_and_number[0:2] != "-":
+                if "N" in go_label_and_number :
+                    go_label_n_wrong = go_label_and_number.replace("N", "L")
+                    if go_label_n_wrong in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_n_wrong]
+                        gos_numbers.append(go_number)
+                    elif go_label_n_wrong in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
                     else:
-                        listOfGONumber.append(GOLabelAndNumber)
+                        gos_numbers.append(go_label_and_number)
 
-                elif "L" in GOLabelAndNumber :
-                    GOLabelLWrong = GOLabelAndNumber.replace("L", "N")
-                    if GOLabelLWrong in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelLWrong]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelLWrong in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
+                elif "L" in go_label_and_number :
+                    go_label_l_wrong = go_label_and_number.replace("L", "N")
+                    if go_label_l_wrong in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_l_wrong]
+                        gos_numbers.append(go_number)
+                    elif go_label_l_wrong in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
 
                     else:
-                        listOfGONumber.append(GOLabelAndNumber)
+                        gos_numbers.append(go_label_and_number)
                 else:
-                    listOfGONumber.append(GOLabelAndNumber)
+                    gos_numbers.append(go_label_and_number)
 
-        return listOfGONumber
+        return gos_numbers
 
-    def fixProblemsWithSynonym(self, listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSynonym):
-        listOfGONumber = []
+    def fix_problems_with_synonym(self, gos_labels_and_numbers, d_go_label_to_number, d_go_label_with_synonym):
+        gos_numbers = []
 
-        listOfGOLabelAndNumber = [GO.replace(" ", "") for GO in listOfGOLabelAndNumber]
+        gos_labels_and_numbers = [go.replace(" ", "") for go in gos_labels_and_numbers]
 
-        for GOLabelAndNumber in listOfGOLabelAndNumber:
-            if GOLabelAndNumber == "-":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] == "GO":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] != 'GO' and GOLabelAndNumber[0:2] != "-":
-                if GOLabelAndNumber in d_GOLabelWithSynonym :
-                        GONumber = d_GOLabelWithSynonym[GOLabelAndNumber]
-                        listOfGONumber.append(GONumber)
+        for go_label_and_number in gos_labels_and_numbers:
+            if go_label_and_number == "-":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] == "GO":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] != 'GO' and go_label_and_number[0:2] != "-":
+                if go_label_and_number in d_go_label_with_synonym :
+                        go_number = d_go_label_with_synonym[go_label_and_number]
+                        gos_numbers.append(go_number)
                 else:
-                    listOfGONumber.append(GOLabelAndNumber)
+                    gos_numbers.append(go_label_and_number)
 
-        return listOfGONumber
+        return gos_numbers
 
-    def fixTermsIssue(self, listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSynonym):
-        listOfGONumber = []
+    def fix_terms_issue(self, gos_labels_and_numbers, d_go_label_to_number, d_go_label_with_synonym):
+        gos_numbers = []
 
-        listOfGOLabelAndNumber = [GO.replace(" ", "") for GO in listOfGOLabelAndNumber]
+        gos_labels_and_numbers = [go.replace(" ", "") for go in gos_labels_and_numbers]
 
-        for GOLabelAndNumber in listOfGOLabelAndNumber:
-            if GOLabelAndNumber == "-":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] == "GO":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] != 'GO' and GOLabelAndNumber[0:2] != "-":
-                if "hydrogen" in GOLabelAndNumber :
-                    GOLabelFixed = GOLabelAndNumber.replace("hydrogen", "proton")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "al" in GOLabelAndNumber :
-                    GOLabelFixed = GOLabelAndNumber.replace("al", "")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "dependent" in GOLabelAndNumber :
-                    GOLabelFixed = GOLabelAndNumber.replace("dependent", "templated")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "sequence-specific" in GOLabelAndNumber :
-                    GOLabelFixed = GOLabelAndNumber.replace("sequence-specific", "") + ",sequence-specific"
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "homocysteineS-methyltransferaseactivity" in GOLabelAndNumber:
-                    GOLabelFixed = "S-adenosylmethionine-" + GOLabelAndNumber
-                    if GOLabelFixed in d_GOLabelToNumber[GOLabelFixed]:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "Cul4-RINGubiquitinligasecomplex" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber[:9] + "E3" + GOLabelAndNumber[9:]
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "organ" in GOLabelAndNumber:
-                    GOLabelFixed = "animal" + GOLabelAndNumber
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "mitosis" in GOLabelAndNumber:
-                    GOLabelFixed = "mitoticnucleardivision"
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "stimulus" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber[:-len("stimulus")]
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "tailtipmorphogenesis" in GOLabelAndNumber:
-                    GOLabelFixed = "nematodemale" + GOLabelAndNumber
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "carboxylesteraseactivity" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber[0:len('carboxyl')] + 'icesterhydrolaseactivity'
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "homophiliccelladhesion" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber + 'viaplasmamembraneadhesionmolecules'
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "LSUrRNAbinding" in GOLabelAndNumber:
-                    GOLabelFixed = 'largeribosomalsubunit' + GOLabelAndNumber[0:-len('LSU')]
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "threonylcarbamoyladenosine" in GOLabelAndNumber:
-                    GOLabelFixed = 'cyclic' + GOLabelAndNumber
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "intraflagellartransportparticleB" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("flagellar", "ciliary")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "intraflagellartransportparticleA" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("flagellar", "ciliary")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "extracellularvesicularexosome" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("vesicular", "")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "Mphaseofmitoticcellcycle" in GOLabelAndNumber:
-                    GOLabelFixed = 'mitoticMphase'
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "ATADPantiporteractivity" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber[0:len('AT')] + 'P:' + GOLabelAndNumber[len('AT'):]
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "ribonucleaseHactivity" in GOLabelAndNumber:
-                    GOLabelFixed = "RNA-DNAhybridribonucleaseactivity"
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "methylatedhistoneresiduebinding" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("residue", "")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "ciliumaxonemeassembly" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("axoneme", "")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "telomerictemplateRNAreversetranscriptaseactivity" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("ictemplate", "ase")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "ciliumaxoneme" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("cilium", "")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "autophagicvacuolemembrane" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("icvacuole", "osome")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "autophagicvacuoleassembly" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("icvacuole", "osome")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "methylenetetrahydrofolatereductase(NADPH)activity" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber.replace("P", "(P)")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                elif "cytoplasmictransport" in GOLabelAndNumber:
-                    GOLabelFixed = GOLabelAndNumber + ",nursecelltooocyte"
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
+        for go_label_and_number in gos_labels_and_numbers:
+            if go_label_and_number == "-":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] == "GO":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] != 'GO' and go_label_and_number[0:2] != "-":
+                if "hydrogen" in go_label_and_number :
+                    go_label_fixed = go_label_and_number.replace("hydrogen", "proton")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "al" in go_label_and_number :
+                    go_label_fixed = go_label_and_number.replace("al", "")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "dependent" in go_label_and_number :
+                    go_label_fixed = go_label_and_number.replace("dependent", "templated")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "sequence-specific" in go_label_and_number :
+                    go_label_fixed = go_label_and_number.replace("sequence-specific", "") + ",sequence-specific"
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "homocysteineS-methyltransferaseactivity" in go_label_and_number:
+                    go_label_fixed = "S-adenosylmethionine-" + go_label_and_number
+                    if go_label_fixed in d_go_label_to_number[go_label_fixed]:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "Cul4-RINGubiquitinligasecomplex" in go_label_and_number:
+                    go_label_fixed = go_label_and_number[:9] + "E3" + go_label_and_number[9:]
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "organ" in go_label_and_number:
+                    go_label_fixed = "animal" + go_label_and_number
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "mitosis" in go_label_and_number:
+                    go_label_fixed = "mitoticnucleardivision"
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "stimulus" in go_label_and_number:
+                    go_label_fixed = go_label_and_number[:-len("stimulus")]
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "tailtipmorphogenesis" in go_label_and_number:
+                    go_label_fixed = "nematodemale" + go_label_and_number
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "carboxylesteraseactivity" in go_label_and_number:
+                    go_label_fixed = go_label_and_number[0:len('carboxyl')] + 'icesterhydrolaseactivity'
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "homophiliccelladhesion" in go_label_and_number:
+                    go_label_fixed = go_label_and_number + 'viaplasmamembraneadhesionmolecules'
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "LSUrRNAbinding" in go_label_and_number:
+                    go_label_fixed = 'largeribosomalsubunit' + go_label_and_number[0:-len('LSU')]
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "threonylcarbamoyladenosine" in go_label_and_number:
+                    go_label_fixed = 'cyclic' + go_label_and_number
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "intraflagellartransportparticleB" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("flagellar", "ciliary")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "intraflagellartransportparticleA" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("flagellar", "ciliary")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "extracellularvesicularexosome" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("vesicular", "")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "Mphaseofmitoticcellcycle" in go_label_and_number:
+                    go_label_fixed = 'mitoticMphase'
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "ATADPantiporteractivity" in go_label_and_number:
+                    go_label_fixed = go_label_and_number[0:len('AT')] + 'P:' + go_label_and_number[len('AT'):]
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "ribonucleaseHactivity" in go_label_and_number:
+                    go_label_fixed = "RNA-DNAhybridribonucleaseactivity"
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "methylatedhistoneresiduebinding" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("residue", "")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "ciliumaxonemeassembly" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("axoneme", "")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "telomerictemplateRNAreversetranscriptaseactivity" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("ictemplate", "ase")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "ciliumaxoneme" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("cilium", "")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "autophagicvacuolemembrane" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("icvacuole", "osome")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "autophagicvacuoleassembly" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("icvacuole", "osome")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "methylenetetrahydrofolatereductase(NADPH)activity" in go_label_and_number:
+                    go_label_fixed = go_label_and_number.replace("P", "(P)")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
+                elif "cytoplasmictransport" in go_label_and_number:
+                    go_label_fixed = go_label_and_number + ",nursecelltooocyte"
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
                 else:
-                    listOfGONumber.append(GOLabelAndNumber)
+                    gos_numbers.append(go_label_and_number)
 
-        return listOfGONumber
+        return gos_numbers
 
-    def fixDashInExcess(self, listOfGOLabelAndNumber, d_GOLabelToNumber, d_GOLabelWithSynonym):
-        listOfGONumber = []
+    def fix_dash_in_excess(self, gos_labels_and_numbers, d_go_label_to_number, d_go_label_with_synonym):
+        gos_numbers = []
 
-        listOfGOLabelAndNumber = [GO.replace(" ", "") for GO in listOfGOLabelAndNumber]
+        gos_labels_and_numbers = [go.replace(" ", "") for go in gos_labels_and_numbers]
 
-        for GOLabelAndNumber in listOfGOLabelAndNumber:
-            if GOLabelAndNumber == "-":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] == "GO":
-                listOfGONumber.append(GOLabelAndNumber)
-            elif GOLabelAndNumber[0:2] != 'GO' and GOLabelAndNumber[0:2] != "-":
-                if "-" in GOLabelAndNumber :
-                    GOLabelFixed = GOLabelAndNumber.replace("-", "")
-                    if GOLabelFixed in d_GOLabelToNumber:
-                        GONumber = d_GOLabelToNumber[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
-                    elif GOLabelFixed in d_GOLabelWithSynonym:
-                        GONumber = d_GOLabelWithSynonym[GOLabelFixed]
-                        listOfGONumber.append(GONumber)
+        for go_label_and_number in gos_labels_and_numbers:
+            if go_label_and_number == "-":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] == "GO":
+                gos_numbers.append(go_label_and_number)
+            elif go_label_and_number[0:2] != 'GO' and go_label_and_number[0:2] != "-":
+                if "-" in go_label_and_number :
+                    go_label_fixed = go_label_and_number.replace("-", "")
+                    if go_label_fixed in d_go_label_to_number:
+                        go_number = d_go_label_to_number[go_label_fixed]
+                        gos_numbers.append(go_number)
+                    elif go_label_fixed in d_go_label_with_synonym:
+                        go_number = d_go_label_with_synonym[go_label_fixed]
+                        gos_numbers.append(go_number)
                 else:
-                    listOfGONumber.append(GOLabelAndNumber)
+                    gos_numbers.append(go_label_and_number)
 
-        return listOfGONumber
+        return gos_numbers
 
-    def cleaningValue(self, dataframe, value):
-        valueDataframe = dataframe[dataframe.GOs.str.match(value) == True]
+    def cleaning_value(self, dataframe, value):
+        value_dataframe = dataframe[dataframe.GOs.str.match(value) == True]
 
         dataframe = dataframe.set_index("Gene_Name")
-        for index in valueDataframe['Gene_Name'].tolist():
+        for index in value_dataframe['Gene_Name'].tolist():
             dataframe = dataframe.drop(index)
         dataframe = dataframe.reset_index()
 
         return dataframe
 
-    def cleaningNanValue(self, dataframe, column):
+    def cleaning_nan_value(self, dataframe, column):
         for index, row in dataframe.iterrows():
             if type(row[column]) is float:
                 if math.isnan(dataframe.get_value(index, column)):
@@ -472,170 +465,181 @@ class FileManagement():
 
         return dataframe
 
-    def rewritingFile(self, newtable, fileName):
-        newtable.to_csv(temporaryDirectory + fileName, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    def rewriting_file(self, newtable, file_name):
+        newtable.to_csv(temporary_directory + file_name, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
-    def findColumnOfInterest(self, df):
+    def find_column_of_interest(self, df):
         columns = []
+
+        go_label_expression = r"[FPC]{1}:[\w]*"
+        go_number_expression = r"[FPC]{1}:GO:[\d]{7}"
+        ec_expression = r"EC:[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,2}"
+        ipr_expression = r"IPR[\d]{6}"
+        ko_kegg_expression = r"K[\d]{5}"
 
         for column in df:
             columns.append(column)
 
-        columnsToDeletes = []
+        go_label_columns = {}
+        go_number_columns = {}
+        ec_columns = {}
+        ipr_columns = {}
+        ko_keggs = {}
 
         for column in columns:
-            for columnValue in df[column]:
-                if "no GO terms" in str(columnValue):
-                    if column not in columnsToDeletes:
-                        columnsToDeletes.append(column)
-                if "[EC:" in str(columnValue):
-                    if column not in columnsToDeletes:
-                        columnsToDeletes.append(column)
-
-        for columnToDelete in columnsToDeletes:
-            columns.remove(columnToDelete)
-
-        goColumn = ""
-        ecColumn = ""
-        iprColumn = ""
-
-        for column in columns:
-            for columnValue in df[column]:
-                if type(columnValue) is not str:
+            for column_values in df[column]:
+                if type(column_values) is not str:
                     continue
-                if ("P:" in columnValue or "F:" in columnValue) and "GO:" not in columnValue:
-                    if goColumn == "":
-                        goColumn = column
+                if re.match(go_label_expression, column_values):
+                    if column in go_label_columns:
+                        go_label_columns[column] += 1
                     else:
-                        break
-                if "EC:" in columnValue:
-                    if ecColumn == "":
-                        ecColumn = column
+                        go_label_columns[column] = 1
+                if re.match(go_number_expression, column_values):
+                    if column in go_number_columns:
+                        go_number_columns[column] += 1
                     else:
-                        break
-                if "IPR" in columnValue:
-                    if iprColumn == "":
-                        iprColumn = column
+                        go_number_columns[column] = 1
+                if re.match(ec_expression, column_values):
+                    if column in ec_columns:
+                        ec_columns[column] += 1
                     else:
-                        break
+                        ec_columns[column] = 1
+                if re.match(ipr_expression, column_values):
+                    if column in ipr_columns:
+                        ipr_columns[column] += 1
+                    else:
+                        ipr_columns[column] = 1
+                if re.match(ko_kegg_expression, column_values):
+                    if column in ko_keggs:
+                        ko_keggs[column] += 1
+                    else:
+                        ko_keggs[column] = 1
 
-        return goColumn, ecColumn, iprColumn
+        go_number_column = max(go_number_columns, key = go_number_columns.get)
+        go_label_columns.pop(go_number_column, None)
+        go_label_column = max(go_label_columns, key = go_label_columns.get)
+        ec_column = max(ec_columns, key = ec_columns.get)
+        ipr_column = max(ipr_columns, key = ipr_columns.get)
+        ko_kegg = max(ko_keggs, key = ko_keggs.get)
 
-    def columnGOCleaning(self, instanceEnrichmentAnalysis):
+        dataframe_columns = [go_number_column, go_label_column, ec_column, ipr_column, ko_kegg]
 
-        nameInputFile = self.getFileName()
-        extensionInputFile = self.getFileExtension()
+        return go_number_column, ec_column, ipr_column,
 
-        if extensionInputFile == '.xls':
-            resultsDataframe = pa.read_excel(inputDirectory + nameInputFile + extensionInputFile, sep = None, na_values = "")
+    def column_go_cleaning(self):
+
+        name_input_file = self.get_file_name()
+        extension_input_file = self.get_file_extension()
+
+        if extension_input_file == '.xls':
+            results_dataframe = pa.read_excel(input_directory + name_input_file + extension_input_file, sep = None, na_values = "")
         else:
-            resultsDataframe = pa.read_csv(inputDirectory + nameInputFile + extensionInputFile, sep = None, engine = "python", na_values = "")
+            results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, sep = None, engine = "python", na_values = "")
 
-        sentenceChoice = "Is the first columns of your file, the column containing gene name? "
-        yesOrNo = input(sentenceChoice)
+        yes_or_no = input("Is the first columns of your file, the column containing gene name? ")
 
-        yesAnswers = ['yes', 'y', 'oui', 'o']
-        if yesOrNo.lower() in yesAnswers :
-            nameGeneColumn = resultsDataframe.columns[0]
+        yes_answers = ['yes', 'y', 'oui', 'o']
+        if yes_or_no.lower() in yes_answers :
+            name_gene_column = results_dataframe.columns[0]
         else :
-            sentenceChoice = "Write the name of the column containing the gene names : "
-            nameGeneColumn = input(sentenceChoice)
+            name_gene_column = input("Write the name of the column containing the gene names : ")
 
-        goColumn, ecColumn, iprColumn = self.findColumnOfInterest(resultsDataframe)
-        resultsDataframe = resultsDataframe[[nameGeneColumn, goColumn, ecColumn, iprColumn]]
-        resultsDataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
+        go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)
+        results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
+        results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
 
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].str.replace("C:", "")
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].str.replace("P:", "")
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].str.replace("F:", "")
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].str.replace(":", "_")
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].str.split(";")
+        results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("C:", "")
+        results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("P:", "")
+        results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("F:", "")
+        results_dataframe['GOs'] = results_dataframe['GOs'].str.replace(":", "_")
+        results_dataframe['GOs'] = results_dataframe['GOs'].str.split(";")
 
-        d_GOLabelToNumber, d_GOLabelWithSynonym = self.GOLabelNumberDictionnaryCreation(inputDirectory + "queryResults.csv", 'normal')
+        d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'normal')
 
-        resultsDataframe = self.cleaningValue(resultsDataframe, '-')
-        resultsDataframe = self.cleaningNanValue(resultsDataframe, 'GOs')
+        results_dataframe = self.cleaning_value(results_dataframe, '-')
+        results_dataframe = self.cleaning_nan_value(results_dataframe, 'GOs')
 
-        translation = lambda x: self.translateGOTerm(x, d_GOLabelToNumber)
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(translation)
+        translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
 
-        correctionProblemsSynonym = lambda x : self.fixProblemsWithSynonym(x,  d_GOLabelToNumber, d_GOLabelWithSynonym)
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionProblemsSynonym)
+        correction_Synonym_Issues = lambda x : self.fix_problems_with_synonym(x,  d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_Synonym_Issues)
 
-        correctionObsolete = lambda x: self.fixObsoleteGOTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionObsolete)
+        correction_obsolete_go = lambda x: self.fix_obsolete_go_term(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_obsolete_go)
 
-        correctionNorL = lambda x: self.fixWrongNorLTerm(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionNorL)
+        correction_n_or_l = lambda x: self.fix_wrong_n_or_l_term(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_n_or_l)
 
-        correctionTermsIssue = lambda x : self.fixTermsIssue(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionTermsIssue)
+        correction_terms_issue = lambda x : self.fix_terms_issue(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_terms_issue)
 
-        correctionDashIssue = lambda x : self.fixDashInExcess(x, d_GOLabelToNumber, d_GOLabelWithSynonym)
-        resultsDataframe['GOs'] = resultsDataframe['GOs'].apply(correctionDashIssue)
+        correction_dash_issue = lambda x : self.fix_dash_in_excess(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_dash_issue)
 
-        self.rewritingFile(resultsDataframe, nameInputFile + "GOsTranslatedAndFixed.tsv")
+        self.rewriting_file(results_dataframe, name_input_file + "GOsTranslatedAndFixed.tsv")
 
-    def createGeneObjectAnalysisFile(self, fileName, columnsNames, columnAnalyzedObject):
-        df = pa.read_csv(temporaryDirectory + fileName, sep = "\t")
-        df = df[columnsNames]
-        df = df.set_index(columnsNames[0])
+    def create_gene_object_analysis_file(self, file_name, columns_names, column_analyzed_object):
+        df = pa.read_csv(temporary_directory + file_name, sep = "\t")
+        df = df[columns_names]
+        df = df.set_index(columns_names[0])
 
-        csvfile = open(temporaryDirectory + "Gene_" + fileName + columnAnalyzedObject + ".tsv", "w", newline = "")
+        csvfile = open(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", "w", newline = "")
         writer = csv.writer(csvfile, delimiter="\t")
-        writer.writerow((columnsNames[0], columnsNames[1]))
+        writer.writerow((columns_names[0], columns_names[1]))
 
-        for gene, listOflistOfAnalyzedObjects in df.iterrows():
-            for listOfAnalyzedObjects in listOflistOfAnalyzedObjects:
-                for analyzedObject in literal_eval(listOfAnalyzedObjects):
-                    writer.writerow((gene, analyzedObject))
+        for gene, list_of_list_of_analyzed_objects in df.iterrows():
+            for list_of_analyzed_objects in list_of_list_of_analyzed_objects:
+                for analyzed_object in literal_eval(list_of_analyzed_objects):
+                    writer.writerow((gene, analyzed_object))
 
         csvfile.close()
 
-    def goAncestorsListOfInterest(self, columnAnalyzedObject):
-        nameInputFile = self.getFileName()
+    def go_ancestors_list_of_interest(self, column_analyzed_object):
+        name_input_file = self.get_file_name()
 
-        df = pa.read_csv(temporaryDirectory + nameInputFile + "GOsTranslatedAndFixed.tsv", '\t')
+        df = pa.read_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
 
         for index, row in df.iterrows():
-            row[columnAnalyzedObject] = goTermExtractionUniprot.unionGOAndTheirAncestors(literal_eval(row[columnAnalyzedObject]))
+            row[column_analyzed_object] = goTermExtractionUniprot.union_go_and_their_ancestor(literal_eval(row[column_analyzed_object]))
 
-        df.to_csv(temporaryDirectory + nameInputFile + "GOsTranslatedAndFixed.tsv", '\t')
+        df.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
 
-    def countingGeneList(self, fileName, columnName, columnAnalyzedObject):
-        analyzedObjects = []
-        df = pa.read_csv(temporaryDirectory + "Gene_" + fileName + columnAnalyzedObject + ".tsv", sep = "\t")
+    def counting_gene_list(self, file_name, column_name, column_analyzed_object):
+        analyzed_objects = []
+        df = pa.read_csv(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", sep = "\t")
         for index, row in df.iterrows():
-            for analyzedObject in literal_eval(row[columnAnalyzedObject]):
-                analyzedObjects.append(analyzedObject)
+            for analyzed_object in literal_eval(row[column_analyzed_object]):
+                analyzed_objects.append(analyzed_object)
 
-        counts_df = pa.DataFrame(analyzedObjects)
-        counts_df.columns = [columnAnalyzedObject]
-        counts_df = counts_df.groupby(columnAnalyzedObject).size().rename(columnName)
+        counts_df = pa.DataFrame(analyzed_objects)
+        counts_df.columns = [column_analyzed_object]
+        counts_df = counts_df.groupby(column_analyzed_object).size().rename(column_name)
         counts_df = counts_df.to_frame()
 
         numberOfGene = len(df["Gene_Name"].unique())
 
         counts_df = counts_df.reset_index()
-        self.rewritingFile(counts_df, "countingObjectsInInterest.tsv")
+        self.rewriting_file(counts_df, "countingObjectsInInterest.tsv")
 
         return "countingObjectsInInterest", numberOfGene
 
-    def countingGenome(self, fileName, columnName, columnAnalyzedObject):
-        analyzedObjects = []
-        df = pa.read_csv(temporaryDirectory + "Gene_" + fileName + columnAnalyzedObject + ".tsv", sep="\t")
+    def counting_genome(self, file_name, column_name, column_analyzed_object):
+        analyzed_objects = []
+        df = pa.read_csv(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", sep="\t")
 
         for index, row in df.iterrows():
-            for analyzedObject in literal_eval(row[columnAnalyzedObject]):
-                analyzedObjects.append(analyzedObject)
+            for analyzed_object in literal_eval(row[column_analyzed_object]):
+                analyzed_objects.append(analyzed_object)
 
-        counts_df_Genome = pa.DataFrame(analyzedObjects)
-        counts_df_Genome.columns = [columnAnalyzedObject]
-        counts_df_Genome = counts_df_Genome.groupby(columnAnalyzedObject).size().rename(columnName)
+        counts_df_Genome = pa.DataFrame(analyzed_objects)
+        counts_df_Genome.columns = [column_analyzed_object]
+        counts_df_Genome = counts_df_Genome.groupby(column_analyzed_object).size().rename(column_name)
         counts_df_Genome = counts_df_Genome.to_frame()
 
 
         counts_df_Genome = counts_df_Genome.reset_index()
-        self.rewritingFile(counts_df_Genome, "countingObjectsInGenome.tsv")
+        self.rewriting_file(counts_df_Genome, "countingObjectsInGenome.tsv")
 
         return "countingObjectsInGenome"

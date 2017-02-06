@@ -4,36 +4,36 @@ import csv
 import pandas as pa
 import urllib2
 
-temporaryDirectory = 'temporaryFiles/'
-temporaryDirectoryDatabase = '../temporaryFiles/databases/'
+temporary_directory = 'temporaryFiles/'
+temporary_directory_database = '../temporaryFiles/databases/'
 
-def httpRequestGeneOntology(url, fileName):
+def http_request_gene_ontology(url, file_name):
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
     page = response.read()
     page = page.split("\n")
 
-    csvfile = open(temporaryDirectory + fileName + ".tsv", "w")
+    csvfile = open(temporary_directory + file_name + ".tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['pathwayAccession', 'pathwayName', 'uniProtID', 'pantherSubfamilyID', 'pantherSubfamilyName'])
 
     for i in page[:-1]:
-        columnSeparation = i.split("\t")
-        writer.writerow([columnSeparation[0], columnSeparation[1], columnSeparation[4], columnSeparation[9], columnSeparation[10].replace('\r', '')])
+        column_separation = i.split("\t")
+        writer.writerow([column_separation[0], column_separation[1], column_separation[4], column_separation[9], column_separation[10].replace('\r', '')])
 
     csvfile.close()
 
     return page
 
-def cleaningFile(fileName):
-    df = pa.read_csv(temporaryDirectory + fileName + ".tsv", sep = "\t")
+def cleaning_file(file_name):
+    df = pa.read_csv(temporary_directory + file_name + ".tsv", sep = "\t")
     df['metacycPathway'] = df['metacycPathway'].str.replace("MetaCyc:", "")
     df['goLabel'] = df['goLabel'].str.replace("GO:", "")
-    df.to_csv(temporaryDirectoryDatabase + fileName + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
 def main():
-    fileName = 'uniprotPantherPathwayTranslation'
-    test = httpRequestGeneOntology('ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt', fileName)
-    cleaningFile(fileName)
+    file_name = 'uniprotPantherPathwayTranslation'
+    test = http_request_gene_ontology('ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt', file_name)
+    cleaning_file(file_name)
 
 main()

@@ -2,13 +2,13 @@
 
 import requests
 
-def httpRequestReactome(code):
+def http_request_reactome(code):
     try:
         r = requests.get('http://www.reactome.org/ContentService/search/query?query=' + code +'&cluster=true')
         results = r.json()
-        resultId = results['results'][0]['entries'][0]['stId']
+        result_id = results['results'][0]['entries'][0]['stId']
 
-        r = requests.get('http://www.reactome.org/ContentService/data/pathways/low/entity/' + resultId)
+        r = requests.get('http://www.reactome.org/ContentService/data/pathways/low/entity/' + result_id)
         print(r.json())
     except:
         print(r.json()['messages'][0])
@@ -16,6 +16,6 @@ def httpRequestReactome(code):
     return r.text
 
 def main():
-    test = httpRequestReactome('0007264')
+    test = http_request_reactome('0007264')
 
 main()

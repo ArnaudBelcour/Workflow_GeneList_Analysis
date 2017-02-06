@@ -6,66 +6,66 @@ import six
 from enrichmentAnalysis import GOEnrichmentAnalysis
 from fileManagement import FileManagement
 
-inputDirectory = "inputFiles/"
-temporaryDirectory = 'temporaryFiles/'
-temporaryDirectoryDatabase = '../temporaryFiles/databases/'
-outputDirectory = 'outputFiles/'
+input_directory = "inputFiles/"
+temporary_directory = 'temporaryFiles/'
+temporary_directory_database = '../temporaryFiles/databases/'
+output_directory = 'outputFiles/'
 
-def workflowMainager():
-    if os.path.exists(inputDirectory[:-1]) == False :
-        os.makedirs(inputDirectory)
+def workflow_mainager():
+    if os.path.exists(input_directory[:-1]) == False :
+        os.makedirs(input_directory)
         sys.exit("No input data, please put your data fiels in inputFiles directory.")
-    if os.path.exists(temporaryDirectory[:-1]) == False :
-        os.makedirs(temporaryDirectory)
-        os.makedirs(temporaryDirectoryDatabase)
-    if os.path.exists(outputDirectory[:-1]) == False :
-        os.makedirs(outputDirectory)
+    if os.path.exists(temporary_directory[:-1]) == False :
+        os.makedirs(temporary_directory)
+        os.makedirs(temporary_directory_database)
+    if os.path.exists(output_directory[:-1]) == False :
+        os.makedirs(output_directory)
 
-    if not os.listdir(inputDirectory):
+    if not os.listdir(input_directory):
         sys.exit("No input data, please put your data fiels in inputFiles directory.")
 
-    sentenceChoice = "Do you want to download database datas? "
-    yesOrNo = input(sentenceChoice)
-    yesAnswers = ['yes', 'y', 'oui', 'o']
+    sentence_choice = "Do you want to download database datas? "
+    yes_or_no = input(sentence_choice)
+    yes_answers = ['yes', 'y', 'oui', 'o']
 
-    if yesOrNo in yesAnswers:
-        inputDEFileManagement.goAncestorsListOfInterest(objectToAnalyze)
+    if yes_or_no in yes_answers:
+        input_file_of_interest_management.go_ancestors_list_of_interest(object_to_analyze)
 
-    sentenceChoice = "Write the name of your input file containing differentially expressed gene : "
-    nameDEInputFile = input(sentenceChoice)
-    inputDEFileManagement = FileManagement(nameDEInputFile)
-    fileDENameInput = inputDEFileManagement.getFileName()
+    sentence_choice = "Write the name of your input file containing differentially expressed gene : "
+    nameDEInputFile = input(sentence_choice)
+    input_file_of_interest_management = FileManagement(nameDEInputFile)
+    file_of_interest_name_input = input_file_of_interest_management.get_file_name()
 
-    goEnrichmentAnalysis = GOEnrichmentAnalysis('GOs', inputDEFileManagement)
-    objectToAnalyze = goEnrichmentAnalysis.getObjectToAnalyze()
+    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', input_file_of_interest_management)
+    object_to_analyze = go_enrichment_analysis.get_object_to_analyze()
 
-    inputDEFileManagement.columnGOCleaning(goEnrichmentAnalysis)
-    inputDEFileManagement.createGeneObjectAnalysisFile(fileDENameInput + objectToAnalyze + "TranslatedAndFixed.tsv", ['Gene_Name', objectToAnalyze], objectToAnalyze)
-    inputDEFileManagement.goAncestorsListOfInterest(objectToAnalyze)
+    input_file_of_interest_management.column_go_cleaning()
+    input_file_of_interest_management.create_gene_object_analysis_file(file_of_interest_name_input + object_to_analyze + "TranslatedAndFixed.tsv", ['Gene_Name', object_to_analyze], object_to_analyze)
+    input_file_of_interest_management.go_ancestors_list_of_interest(object_to_analyze)
 
-    sentenceChoice = "Write the name of your input file containing genome : "
-    nameGenomeInputFile = input(sentenceChoice)
-    inputGenomeFileManagement = FileManagement(nameGenomeInputFile)
-    fileGenomeNameInput = inputGenomeFileManagement.getFileName()
+    sentence_choice = "Write the name of your input file containing genome : "
+    name_reference_input_file = input(sentence_choice)
+    input_reference_file_management = FileManagement(name_reference_input_file)
+    file_referene_name_input = input_reference_file_management.get_file_name()
 
-    inputGenomeFileManagement.columnGOCleaning(goEnrichmentAnalysis)
-    inputGenomeFileManagement.createGeneObjectAnalysisFile(fileGenomeNameInput + objectToAnalyze + "TranslatedAndFixed.tsv", ['Gene_Name', objectToAnalyze], objectToAnalyze)
-    inputGenomeFileManagement.goAncestorsListOfInterest(objectToAnalyze)
+    input_reference_file_management.column_go_cleaning(go_enrichment_analysis)
+    input_reference_file_management.create_gene_object_analysis_file(file_referene_name_input + object_to_analyze + "TranslatedAndFixed.tsv", ['Gene_Name', object_to_analyze], object_to_analyze)
+    input_reference_file_management.go_ancestors_list_of_interest(object_to_analyze)
 
-    fileOfInterestName, numberOfGene = inputDEFileManagement.countingGeneList(fileDENameInput, 'Counts', objectToAnalyze)
-    fileOfGenomeName = inputGenomeFileManagement.countingGenome(fileGenomeNameInput, 'CountsGenome', objectToAnalyze)
+    file_of_interest_name, number_of_gene = input_file_of_interest_management.counting_gene_list(file_of_interest_name_input, 'Counts', object_to_analyze)
+    fileOfGenomeName = input_reference_file_management.counting_genome(file_referene_name_input, 'CountsGenome', object_to_analyze)
 
-    sentenceChoiceNumberGene = "Enter the number of genes in the genome of your organism : "
-    numberOfGenesInGenome = int(input(sentenceChoiceNumberGene))
+    sentence_choice_number_gene = "Enter the number of genes in the genome of your organism : "
+    number_of_genesInGenome = int(input(sentence_choice_number_gene))
 
-    sentenceChoiceAlpha = "Enter the alpha risk : "
-    alpha = float(input(sentenceChoiceAlpha))
+    sentence_choice_alpha = "Enter the alpha risk : "
+    alpha = float(input(sentence_choice_alpha))
 
-    goEnrichmentAnalysis.setFileOfInterest(fileOfInterestName)
-    goEnrichmentAnalysis.setFileOfGenome(fileOfGenomeName)
-    goEnrichmentAnalysis.setNumberOfGeneOfInterest(numberOfGene)
-    goEnrichmentAnalysis.setNumberOfGeneInGenome(numberOfGenesInGenome)
-    goEnrichmentAnalysis.setAlpha(alpha)
-    goEnrichmentAnalysis.enrichmentAnalysis()
+    go_enrichment_analysis.set_file_of_interest(file_of_interest_name)
+    go_enrichment_analysis.set_file_of_reference(fileOfGenomeName)
+    go_enrichment_analysis.set_number_of_analyzed_object_of_interest(number_of_gene)
+    go_enrichment_analysis.set_number_of_analyzed_object_of_reference(number_of_genesInGenome)
+    go_enrichment_analysis.set_alpha(alpha)
+    go_enrichment_analysis.enrichment_analysis()
 
-workflowMainager()
+workflow_mainager()

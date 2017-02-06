@@ -3,14 +3,13 @@
 import csv
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-inputDirectory = "inputFiles/"
+input_directory = "inputFiles/"
 
-def goTermSynonyms(query):
-    csvfile = open(inputDirectory + "query_results.tsv", "w", newline = "")
+def go_term_synonyms(query):
+    csvfile = open(input_directory + "query_results.tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"])
 
-    goAncestors = []
     sparql = SPARQLWrapper("http://localhost:3030/datanase/query")
     sparql.setQuery(query)
 
@@ -21,23 +20,23 @@ def goTermSynonyms(query):
         subject = result["subject"]["value"][31:]
         label = result["label"]["value"]
         if "NarrowSynonym" in result:
-            narrowSynonym = result["NarrowSynonym"]["value"]
+            narrow_synonym = result["NarrowSynonym"]["value"]
         else:
-            narrowSynonym = ""
+            narrow_synonym = ""
         if "BroadSynonym" in result:
-            broadSynonym = result["BroadSynonym"]["value"]
+            broad_synonym = result["BroadSynonym"]["value"]
         else:
-            broadSynonym = ""
+            broad_synonym = ""
         if "RelatedSynonym" in result:
-            relatedSynonym = result["RelatedSynonym"]["value"]
+            related_synonym = result["RelatedSynonym"]["value"]
         else:
-            relatedSynonym = ""
-        writer.writerow([subject, label, narrowSynonym, broadSynonym, relatedSynonym])
+            related_synonym = ""
+        writer.writerow([subject, label, narrow_synonym, broad_synonym, related_synonym])
 
     csvfile.close()
 
-queryFile = open('sparqlQueries/goLabelWithSynonym.sparql', 'r')
-query = queryFile.read()
-queryFile.close()
+query_file = open('sparqlQueries/goLabelWithSynonym.sparql', 'r')
+query = query_file.read()
+query_file.close()
 
-goTermSynonyms(query)
+go_term_synonyms(query)

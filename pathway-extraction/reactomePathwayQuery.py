@@ -3,25 +3,25 @@
 import csv
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-temporaryDirectoryDatabase = '../temporaryFiles/databases/'
+temporary_directory_database = '../temporaryFiles/databases/'
 
-def sparqlQuery(sparqlEndpoint, query, outputFile):
-    sparql = SPARQLWrapper(sparqlEndpoint)
+def sparql_query(sparql_endpoint, query, output_file):
+    sparql = SPARQLWrapper(sparql_endpoint)
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
 
     results = sparql.query().convert()
 
-    columnNames = []
+    column_names = []
     for result in results["results"]["bindings"]:
         for key in result:
-            if key not in columnNames:
-                columnNames.append(key.encode("utf-8"))
+            if key not in column_names:
+                column_names.append(key.encode("utf-8"))
 
-    csvfile = open(temporaryDirectoryDatabase + outputFile + ".tsv", "w")
+    csvfile = open(temporary_directory_database + output_file + ".tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
 
-    writer.writerow((columnNames))
+    writer.writerow((column_names))
 
     for result in results["results"]["bindings"]:
         writer.writerow((result["pathwayID"]["value"][len('http://identifiers.org/reactome/'):].encode("utf-8"), result["pathwayName"]["value"].encode("utf-8")))
@@ -29,10 +29,10 @@ def sparqlQuery(sparqlEndpoint, query, outputFile):
     csvfile.close()
 
 def main():
-    queryFile = open('../sparqlQueries/reactomePathwayQuery.sparql', 'r')
-    query = queryFile.read()
-    queryFile.close()
+    query_file = open('../sparqlQueries/reactomePathwayQuery.sparql', 'r')
+    query = query_file.read()
+    query_file.close()
 
-    sparqlQuery("https://www.ebi.ac.uk/rdf/services/reactome/sparql", query, "pathwayReactomeIDToPathwayName")
+    sparql_query("https://www.ebi.ac.uk/rdf/services/reactome/sparql", query, "pathwayReactomeIDToPathwayName")
 
 main()

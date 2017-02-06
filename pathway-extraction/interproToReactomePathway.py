@@ -4,24 +4,24 @@ import gzip
 import urllib2
 from bs4 import BeautifulSoup
 
-temporaryDirectoryDatabase = '../temporaryFiles/databases/'
+temporary_directory_database = '../temporaryFiles/databases/'
 
-def getInterproXMLCompressed(url, fileName):
+def get_interpro_xml_compressed(url, file_name):
     reponse = urllib2.urlopen(url, headers = {"Accept-Encoding": "gzip"})
     with GzipFile(fileobj = response) as xmlFile:
         soup = BeautifulSoup(xmlFile, 'lxml')
         print(soup.prettify())
 
-def uncompressInterproXML(fileCompressedName, outputFileName):
-    with gzip.open(temporaryDirectory + fileName + '.xml.gz', 'r') as interproFileCompressed:
-        file_content = interproFileCompressed.read()
-        #interproFile = open(temporaryDirectory + fileName+ '.xml','w')
+def uncompress_interpro_xml(file_compressed_name, outputFileName):
+    with gzip.open(temporaryDirectory + file_compressed_name + '.xml.gz', 'r') as interpro_file_compressed:
+        file_content = interpro_file_compressed.read()
+        #interproFile = open(temporaryDirectory + file_name+ '.xml','w')
         #interproFile.write(file_content)
         #interproFile.close()
         soup = BeautifulSoup(file_content, 'lxml')
         print(soup.prettify())
 
-def readXML(fileName):
+def read_xml(file_name):
     soup = BeautifulSoup(open(temporaryDirectory + 'interpro.xml', 'r'), 'lxml')
     print(soup.prettify())
     #with open(temporaryDirectory + 'interpro.xml','r') as interproFile:
@@ -30,6 +30,6 @@ def readXML(fileName):
         #print(soup)
 
 def main():
-    #getInterproXMLCompressed('ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro.xml.gz', 'interpro')
-    uncompressInterproXML('interpro', 'interpro')
-    readXML('interpro')
+    #get_interpro_xml_compressed('ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro.xml.gz', 'interpro')
+    uncompress_interpro_xml('interpro', 'interpro')
+    read_xml('interpro')

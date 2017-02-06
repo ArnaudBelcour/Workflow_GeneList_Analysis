@@ -4,13 +4,13 @@ import csv
 import pandas as pa
 import requests
 
-temporaryDirectory = 'temporaryFiles/'
-temporaryDirectoryDatabase = '../temporaryFiles/databases/'
+temporary_directory = 'temporaryFiles/'
+temporary_directory_database = '../temporaryFiles/databases/'
 
-def httpRequestGeneOntology(url, fileName):
+def http_request_gene_ontology(url, file_name):
     r = requests.get('http://geneontology.org/external2go/metacyc2go')
     r = r.text.encode("utf-8")
-    csvfile = open(temporaryDirectory + fileName + ".tsv", "w")
+    csvfile = open(temporary_directory + file_name + ".tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
     ar = r.split("\n")
     writer.writerow(('metacycPathway', 'goLabel', 'goNumber'))
@@ -26,16 +26,16 @@ def httpRequestGeneOntology(url, fileName):
 
     return r
 
-def cleaningFile(fileName):
-    df = pa.read_csv(temporaryDirectoryDatabase + fileName + ".tsv", sep = "\t")
+def cleaning_file(file_name):
+    df = pa.read_csv(temporary_directory_database + file_name + ".tsv", sep = "\t")
     df = df[:-1]
     df['metacycPathway'] = df['metacycPathway'].str.replace("MetaCyc:", "")
     df['goLabel'] = df['goLabel'].str.replace("GO:", "")
-    df.to_csv(temporaryDirectoryDatabase + fileName + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
 def main():
-    fileName = 'metacycGOTranslation'
-    test = httpRequestGeneOntology('http://geneontology.org/external2go/metacyc2go', fileName)
-    cleaningFile(fileName)
+    file_name = 'metacycGOTranslation'
+    test = http_request_gene_ontology('http://geneontology.org/external2go/metacyc2go', file_name)
+    cleaning_file(file_name)
 
 main()

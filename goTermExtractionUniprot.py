@@ -4,18 +4,19 @@ import csv
 import math
 import pandas as pa
 import requests
+import six
 import sys
 from ast import literal_eval
 from bs4 import BeautifulSoup
 from functools import lru_cache
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-inputDirectory = "inputFiles/"
-temporaryDirectory = 'temporaryFiles/'
-outputDirectory = 'outputFiles/'
+input_directory = "inputFiles/"
+temporary_directory = 'temporaryFiles/'
+output_directory = 'outputFiles/'
 
-def genomeFileExtraction():
-    df = pa.read_csv(inputDirectory + "BrowserPlasmoUniprot.tsv", skiprows = 1, sep = "\t", header=None)
+def genome_file_extraction():
+    df = pa.read_csv(input_directory + "BrowserPlasmoUniprot.tsv", skiprows = 1, sep = "\t", header=None)
     df = df[[0, 1, 2, 3]]
     df.columns = [["GenePlasmo", "PosDepart", "PosFin", "Uniprot"]]
 
@@ -26,33 +27,33 @@ def genomeFileExtraction():
         #listOfNumber.append(number)
     #del listOfNumber[-1]
 
-    stringValuesProteinNames = []
-    #stringValuesProteinName = ""
+    string_values_protein_names = []
+    #string_values_protein_name = ""
 
-    #for mnemonicNameOfProtein in df["Uniprot"].tolist():
-        #stringValuesProteinName = stringValuesProteinName + "'" + mnemonicNameOfProtein + "' "
+    #for mnemonic_name_of_protein in df["Uniprot"].tolist():
+        #string_values_protein_name = string_values_protein_name + "'" + mnemonic_name_of_protein + "' "
 
     #for numberLimitationQuery in listOfNumber:
-        #stringValuesProteinName = ""
+        #string_values_protein_name = ""
 
         #if numberLimitationQuery != df["Uniprot"].tolist()[-1]:
             #currentList = df["Uniprot"].tolist()[numberLimitationQuery:numberLimitationQuery+354]
-        #for mnemonicNameOfProtein in currentList:
-            #stringValuesProteinName = "'" + mnemonicNameOfProtein + "'"
-            #stringValuesProteinNames.append(stringValuesProteinName)
+        #for mnemonic_name_of_protein in currentList:
+            #string_values_protein_name = "'" + mnemonic_name_of_protein + "'"
+            #string_values_protein_names.append(string_values_protein_name)
 
-    for mnemonicNameOfProtein in df["Uniprot"].tolist():
-        stringValuesProteinName = "'" + mnemonicNameOfProtein + "'"
-        stringValuesProteinNames.append(stringValuesProteinName)
+    for mnemonic_name_of_protein in df["Uniprot"].tolist():
+        string_values_protein_name = "'" + mnemonic_name_of_protein + "'"
+        string_values_protein_names.append(string_values_protein_name)
 
-    return stringValuesProteinNames
+    return string_values_protein_names
 
-def createApproximationGOGenome(stringValuesProteinNames):
-    csvfile = open(temporaryDirectory + "test_genomeGO.tsv", "w", newline = "")
+def create_approximation_go_genome(string_values_protein_names):
+    csvfile = open(temporary_directory + "test_genomeGO.tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
-    writer.writerow(("mnemonicNameOfProtein", "uniprotID", 'GOs'))
+    writer.writerow(("mnemonic_name_of_protein", "uniprot_id", 'GOs'))
 
-    for stringValuesProteinName in stringValuesProteinNames:
+    for string_values_protein_name in string_values_protein_names:
         sparql = SPARQLWrapper("http://beta.sparql.uniprot.org/sparql")
         sparql.setQuery("""
         PREFIX up:<http://purl.uniprot.org/core/>
@@ -64,31 +65,31 @@ def createApproximationGOGenome(stringValuesProteinNames):
                 ?protein up:mnemonic ?proteinNamed .
                 ?protein up:classifiedWith ?go .
                 FILTER (regex(str(?go), "GO")) .
-                VALUES ?proteinNamed {""" + stringValuesProteinName + """}
+                VALUES ?proteinNamed {""" + string_values_protein_name + """}
         }
         """)
 
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
 
-        goFounds = []
+        go_founds = []
         for result in results["results"]["bindings"]:
-            mnemonicNameOfProtein = stringValuesProteinName
-            uniprotID = result["protein"]["value"][32:]
-            goFounds.append(result["go"]["value"][31:])
-        writer.writerow((mnemonicNameOfProtein, uniprotID, goFounds))
+            mnemonic_name_of_protein = string_values_protein_name
+            uniprot_id = result["protein"]["value"][32:]
+            go_founds.append(result["go"]["value"][31:])
+        writer.writerow((mnemonic_name_of_protein, uniprot_id, go_founds))
 
     csvfile.close()
 
-    df = pa.read_csv(temporaryDirectory + 'test_genomeGO.tsv', '\t')
+    df = pa.read_csv(temporary_directory + 'test_genomeGO.tsv', '\t')
 
     for index, row in df.iterrows():
-        row['GOs'] = unionGOAndTheirAncestors(literal_eval(row['GOs']))
-    df.to_csv(temporaryDirectory + 'test_genomeGO_edit.tsv', '\t')
+        row['GOs'] = union_go_and_their_ancestor(literal_eval(row['GOs']))
+    df.to_csv(temporary_directory + 'test_genomeGO_edit.tsv', '\t')
 
 @lru_cache(maxsize = 12400)
-def goTermAncestors(go):
-    goAncestors = []
+def go_term_ancestor(go):
+    go_ancestors = []
     sparql = SPARQLWrapper("http://localhost:3030/datanase/query")
     sparql.setQuery("""
     PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
@@ -110,23 +111,23 @@ def goTermAncestors(go):
     results = sparql.query().convert()
 
     for result in results["results"]["bindings"]:
-        goAncestors.append(result["goAnc"]["value"][31:])
+        go_ancestors.append(result["goAnc"]["value"][31:])
 
-    return goAncestors
+    return go_ancestors
 
-def unionGOAndTheirAncestors(gos):
-    goAncestorsForGolists = []
+def union_go_and_their_ancestor(gos):
+    go_ancestors_for_go_lists = []
 
     for go in gos:
-        goAncestors = goTermAncestors(go)
-        goAncestorsForGolists.append(goAncestors)
+        go_ancestors = go_term_ancestor(go)
+        go_ancestors_for_go_lists.append(go_ancestors)
 
-    golistForEntity = list(set().union(*goAncestorsForGolists))
+    go_list_for_entity = list(set().union(*go_ancestors_for_go_lists))
 
-    return golistForEntity
+    return go_list_for_entity
 
-def requestGOTermForAProtein(uniprotID):
-    r = requests.get('http://www.uniprot.org/uniprot/' + uniprotID + '.xml')
+def request_go_term_for_a_protein(uniprot_id):
+    r = requests.get('http://www.uniprot.org/uniprot/' + uniprot_id + '.xml')
     soup = BeautifulSoup(r.text)
     l = soup.findAll({"type", "GO"} )
 
@@ -134,20 +135,12 @@ def requestGOTermForAProtein(uniprotID):
                     lambda tag:tag.name == "dbreference" and
                     tag["type"] == "GO")
 
-    l_GOTerms = []
+    go_terms = []
 
     for index in range(len(td_tag_list)):
-        l_GOTerms.append(td_tag_list[index]["id"])
+        go_terms.append(td_tag_list[index]["id"])
 
-    return l_GOTerms
-
-def inputPythonFormat(sentenceChoice, pythonVersion):
-    if pythonVersion  < (3,0,0):
-        choice = raw_input(sentenceChoice)
-    if pythonVersion  > (3,0,0):
-        choice = input(sentenceChoice)
-
-    return choice
+    return go_terms
 
 def main():
     #df = pa.read_csv("BrowserPlasmoUniprot.tsv", skiprows = 1, sep = "\t", header=None)
@@ -156,18 +149,16 @@ def main():
 
     #GOTerms = []
 
-    #for uniprotID in df["Uniprot"].tolist():
-        #GOTerms.extend(requestGOTermForAProtein(uniprotID))
+    #for uniprot_id in df["Uniprot"].tolist():
+        #GOTerms.extend(requestGOTermForAProtein(uniprot_id))
 
     #df = pa.DataFrame(GOTerms)
     #df.columns = [["GOs"]]
-    #df.to_csv(inputDirectory + "GOTermsPlasmoGenome.tsv", sep="\t", index = False, header = True, quoting = csv.QUOTE_NONE)
-    pythonVersion = sys.version_info
-    yesAnswers = ['y', 'yes']
+    #df.to_csv(input_directory + "GOTermsPlasmoGenome.tsv", sep="\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    yes_answers = ['y', 'yes']
 
-    sentenceChoice = "Do you want to update the uniprotID from the genome? "
-    yesOrNo = inputPythonFormat(sentenceChoice, pythonVersion)
+    yes_or_no = input("Do you want to update the uniprot_id from the genome? ")
 
-    if yesOrNo.lower() in yesAnswers:
-        stringValuesProteinNames = genomeFileExtraction()
-        createApproximationGOGenome(stringValuesProteinNames)
+    if yes_or_no.lower() in yes_answers:
+        string_values_protein_names = genome_file_extraction()
+        create_approximation_go_genome(string_values_protein_names)

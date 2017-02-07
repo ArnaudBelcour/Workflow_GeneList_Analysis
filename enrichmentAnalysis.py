@@ -318,13 +318,13 @@ class EnrichmentAnalysis():
 
 class GOEnrichmentAnalysis(EnrichmentAnalysis):
 
-    def __init__(self, column_name, input_interest_file_management):
+    def __init__(self, column_name, d_go_label_to_number):
         EnrichmentAnalysis.__init__(self, column_name)
         self.output_columns.append("GOLabel")
-        self.input_interest_file_instance = input_interest_file_management
+        self.gos_labels_to_numbers = d_go_label_to_number
 
-    def get_input_de_file_instance(self):
-        return self.input_interest_file_instance
+    def get_gos_labels_to_numbers(self):
+        return self.gos_labels_to_numbers
 
     def tranlsation_go_number_to_go_label(self, go_numbers, d_go_label_to_number):
         go_labels = []
@@ -343,30 +343,28 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         df = self.correction_holm(df)
         df = self.correction_sgof(df)
 
-        d_go_label_to_number, d_go_label_with_synonym = self.get_input_de_file_instance().go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'inverse')
-
         significative_objects = {}
 
         error_rate_sidak = self.error_rate_adjustement_sidak(df)
         object_significatives_Sidak = self.selection_object_with_adjusted_error_rate(error_rate_sidak, df)
-        go_label_significatives_sidak = self.tranlsation_go_number_to_go_label(object_significatives_Sidak, d_go_label_to_number)
+        go_label_significatives_sidak = self.tranlsation_go_number_to_go_label(object_significatives_Sidak, self.get_gos_labels_to_numbers())
         significative_objects['Sidak'] = go_label_significatives_sidak
 
         error_rate_bonferroni = self.error_rate_adjustement_bonferroni(df)
         object_significatives_bonferroni = self.selection_object_with_adjusted_error_rate(error_rate_bonferroni, df)
-        go_label_significatives_bonferroni= self.tranlsation_go_number_to_go_label(object_significatives_bonferroni, d_go_label_to_number)
+        go_label_significatives_bonferroni= self.tranlsation_go_number_to_go_label(object_significatives_bonferroni, self.get_gos_labels_to_numbers())
         significative_objects['Bonferroni'] = go_label_significatives_bonferroni
 
         object_significatives_holm = self.selection_object_with_adjusted_pvalue("Holm", df)
-        go_label_significatives_holm = self.tranlsation_go_number_to_go_label(object_significatives_holm, d_go_label_to_number)
+        go_label_significatives_holm = self.tranlsation_go_number_to_go_label(object_significatives_holm, self.get_gos_labels_to_numbers())
         significative_objects['Holm'] = go_label_significatives_holm
 
         object_significatives_sgof = self.selection_object_with_sgof("SGoF", df)
-        go_label_significatives_sgof = self.tranlsation_go_number_to_go_label(object_significatives_sgof, d_go_label_to_number)
+        go_label_significatives_sgof = self.tranlsation_go_number_to_go_label(object_significatives_sgof, self.get_gos_labels_to_numbers())
         significative_objects['SGoF'] = go_label_significatives_sgof
 
         object_significatives_benjamini_hochberg = self.selection_object_with_adjusted_pvalue("BenjaminiHochberg", df)
-        go_label_significatives_benjamini_hochberg = self.tranlsation_go_number_to_go_label(object_significatives_benjamini_hochberg, d_go_label_to_number)
+        go_label_significatives_benjamini_hochberg = self.tranlsation_go_number_to_go_label(object_significatives_benjamini_hochberg, self.get_gos_labels_to_numbers())
         significative_objects['BenjaminiHochberg'] = go_label_significatives_benjamini_hochberg
 
         for go, row in df.iterrows():

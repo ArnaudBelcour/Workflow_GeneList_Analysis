@@ -36,7 +36,9 @@ def workflow_mainager():
     input_file_of_interest_management = FileManagement(nameDEInputFile)
     file_of_interest_name_input = input_file_of_interest_management.get_file_name()
 
-    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', input_file_of_interest_management)
+    d_go_label_to_number, d_go_label_with_synonym = input_file_of_interest_management.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'inverse')
+
+    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', d_go_label_to_number)
     object_to_analyze = go_enrichment_analysis.get_object_to_analyze()
 
     input_file_of_interest_management.column_go_cleaning()

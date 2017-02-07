@@ -10,7 +10,7 @@ from ast import literal_eval
 
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
-output_Directory = 'outputFiles/'
+output_directory = 'outputFiles/'
 
 class EnrichmentAnalysis():
 
@@ -70,7 +70,10 @@ class EnrichmentAnalysis():
                 if math.isnan(df.get_value(analyzed_object, genome_columns)):
                     df = df.drop([analyzed_object])
                 else:
-                    self.compute_hypergeometric_test_overrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
+                    if row['Counts'] < 10000:
+                        self.compute_hypergeometric_test_overrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
+                    elif row['Counts'] > 10000:
+                        self.compute_normal_approximation_overrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
                     if math.isnan(df.get_value(analyzed_object, 'pvalue_hypergeometric')):
                         analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)
                         df = df.drop([analyzed_object])
@@ -80,7 +83,10 @@ class EnrichmentAnalysis():
                 if math.isnan(df.get_value(analyzed_object, genome_columns)):
                     df = df.drop([analyzed_object])
                 else:
-                    self.compute_hypergeometric_test_underrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
+                    if row['Counts'] < 10000:
+                        self.compute_hypergeometric_test_underrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
+                    elif row['Counts'] > 10000:
+                        self.compute_normal_approximation_underrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
                     if math.isnan(df.get_value(analyzed_object, 'pvalue_hypergeometric')):
                         analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)
                         df = df.drop([analyzed_object])
@@ -100,6 +106,31 @@ class EnrichmentAnalysis():
         df.set_value(analyzed_object, 'pvalue_hypergeometric', pvalue_hypergeo)
 
         return df
+
+    def compute_normal_approximation_overrepresentation(self, analyzedObject, number_of_object_in_interest, number_of_object_in_reference, df):
+        p = number_of_object_in_reference / self.get_number_of_analyzed_object_of_reference()
+        q = 1 - p
+        t = self.get_number_of_analyzed_object_of_interest() / self.get_number_of_analyzed_object_of_reference()
+
+        mu = self.get_number_of_analyzed_object_of_interest()  * p
+        sigma = math.sqrt(self.get_number_of_analyzed_object_of_interest()  * p * q * (1 - t))
+        pValueNormal = stats.norm.sf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
+        df.set_value(analyzedObject, 'pvalue_hypergeometric', pValueNormal)
+
+        return df
+
+    def compute_normal_approximation_representation(self, analyzedObject, number_of_object_in_interest, number_of_object_in_reference, df):
+        p = number_of_object_in_reference / self.get_number_of_analyzed_object_of_reference()
+        q = 1 - p
+        t = self.get_number_of_analyzed_object_of_interest() / self.get_number_of_analyzed_object_of_reference()
+
+        mu = self.get_number_of_analyzed_object_of_interest()  * p
+        sigma = math.sqrt(self.get_number_of_analyzed_object_of_interest()  * p * q * (1 - t))
+        pValueNormal = stats.norm.cdf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
+        df.set_value(analyzedObject, 'pvalue_hypergeometric', pValueNormal)
+
+        return df
+
 
     def counting_approximation(self, df):
         for analyzed_object, row in df.iterrows():
@@ -151,14 +182,14 @@ class EnrichmentAnalysis():
             df = df[self.get_output_columns()]
 
         if over_or_underrepresentation == 'over':
-            df.to_csv(output_Directory + "pValuesOf" + self.get_object_to_analyze() + "_over.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
+            df.to_csv(output_directory + "pValuesOf" + self.get_object_to_analyze() + "_over.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
         elif over_or_underrepresentation == 'under':
-            df.to_csv(output_Directory + "pValuesOf" + self.get_object_to_analyze() + "_under.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
+            df.to_csv(output_directory + "pValuesOf" + self.get_object_to_analyze() + "_under.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
 
         if over_or_underrepresentation == 'over':
-            csvfile = open(output_Directory + "significatives" + self.get_object_to_analyze() + "_over.tsv", "w", newline = "")
+            csvfile = open(output_directory + "significatives" + self.get_object_to_analyze() + "_over.tsv", "w", newline = "")
         elif over_or_underrepresentation == 'under':
-            csvfile = open(output_Directory + "significatives" + self.get_object_to_analyze() + "_under.tsv", "w", newline = "")
+            csvfile = open(output_directory + "significatives" + self.get_object_to_analyze() + "_under.tsv", "w", newline = "")
 
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow([self.get_object_to_analyze() + 'Sidak', self.get_object_to_analyze() + 'Bonferroni', self.get_object_to_analyze() + 'Holm', self.get_object_to_analyze() + 'SGoF', self.get_object_to_analyze() + 'BenjaminiHochberg'])

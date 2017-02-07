@@ -46,18 +46,20 @@ class FileManagement():
         go_isolation = lambda x: x[32:]
         query_results_dataframe["subject"] = query_results_dataframe["subject"].apply(go_isolation)
 
-        space_deletion = lambda x: x.replace(" ", "")
-        query_results_dataframe["label"] = query_results_dataframe["label"].apply(space_deletion)
-
-        space_deletion = lambda x: str(x).replace(" ", "")
-        query_results_dataframe["NarrowSynonym"] = query_results_dataframe["NarrowSynonym"].apply(space_deletion)
-        query_results_dataframe["BroadSynonym"] = query_results_dataframe["BroadSynonym"].apply(space_deletion)
-        query_results_dataframe["RelatedSynonym"] = query_results_dataframe["RelatedSynonym"].apply(space_deletion)
-
         if specification == "inverse":
             d_go_label_to_number = dict(zip(query_results_dataframe['subject'], query_results_dataframe['label']))
 
+            return d_go_label_to_number
+
         else:
+            space_deletion = lambda x: x.replace(" ", "")
+            query_results_dataframe["label"] = query_results_dataframe["label"].apply(space_deletion)
+
+            space_deletion = lambda x: str(x).replace(" ", "")
+            query_results_dataframe["NarrowSynonym"] = query_results_dataframe["NarrowSynonym"].apply(space_deletion)
+            query_results_dataframe["BroadSynonym"] = query_results_dataframe["BroadSynonym"].apply(space_deletion)
+            query_results_dataframe["RelatedSynonym"] = query_results_dataframe["RelatedSynonym"].apply(space_deletion)
+
             d_go_label_to_number = dict(zip(query_results_dataframe['label'], query_results_dataframe['subject']))
 
         d_go_label_with_synonym = {}

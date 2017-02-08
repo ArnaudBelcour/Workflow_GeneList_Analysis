@@ -22,6 +22,7 @@ class EnrichmentAnalysis():
         self.number_of_analyzed_object_of_interest = 0
         self.number_of_analyzed_object_of_reference = 0
         self.alpha = 0.00
+        self.statistic_method = ""
 
     def get_object_to_analyze(self):
         return self.object_to_analyze
@@ -44,6 +45,9 @@ class EnrichmentAnalysis():
     def get_alpha(self):
         return self.alpha
 
+    def get_statistic_method(self):
+        return self.statistic_method
+
     def set_file_of_interest(self, fileName):
         self.file_of_interest = fileName
 
@@ -62,75 +66,60 @@ class EnrichmentAnalysis():
     def set_alpha(self, value):
         self.alpha = value
 
+    def set_statistic_method(self, method_name):
+        self.statistic_method = method_name
+
     def hypergeometric_test_on_dataframe(self, df, over_or_underrepresentation, genome_columns):
         analyzed_objects_with_hypergeo_test_nan = []
 
-        if over_or_underrepresentation == "over":
-            for analyzed_object, row in df.iterrows():
-                if math.isnan(df.get_value(analyzed_object, genome_columns)):
+        for analyzed_object, row in df.iterrows():
+            if math.isnan(df.get_value(analyzed_object, genome_columns)):
+                df = df.drop([analyzed_object])
+            else:
+                if row['Counts'] < 10000:
+                    self.compute_hypergeometric_test(analyzed_object, row['Counts'], row[genome_columns], df, over_or_underrepresentation)
+
+                elif row['Counts'] > 10000:
+                    self.compute_normal_approximation(analyzed_object, row['Counts'], row[genome_columns], df, over_or_underrepresentation)
+
+                if math.isnan(df.get_value(analyzed_object, self.get_statistic_method())):
+                    analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)
                     df = df.drop([analyzed_object])
-                else:
-                    if row['Counts'] < 10000:
-                        self.compute_hypergeometric_test_overrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
-                    elif row['Counts'] > 10000:
-                        self.compute_normal_approximation_overrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
-                    if math.isnan(df.get_value(analyzed_object, 'pvalue_hypergeometric')):
-                        analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)
-                        df = df.drop([analyzed_object])
+                df = df.sort_values(self.get_statistic_method())
+
+        return df
+
+    def compute_hypergeometric_test(self, analyzed_object, number_of_object_in_interest, number_of_object_in_reference, df, over_or_underrepresentation):
+        if over_or_underrepresentation == "over":
+            pvalue_hypergeo = stats.hypergeom.sf(number_of_object_in_interest - 1, self.get_number_of_analyzed_object_of_reference(), number_of_object_in_reference, self.get_number_of_analyzed_object_of_interest())
 
         if over_or_underrepresentation == "under":
-            for analyzed_object, row in df.iterrows():
-                if math.isnan(df.get_value(analyzed_object, genome_columns)):
-                    df = df.drop([analyzed_object])
-                else:
-                    if row['Counts'] < 10000:
-                        self.compute_hypergeometric_test_underrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
-                    elif row['Counts'] > 10000:
-                        self.compute_normal_approximation_underrepresentation(analyzed_object, row['Counts'], row[genome_columns], df)
-                    if math.isnan(df.get_value(analyzed_object, 'pvalue_hypergeometric')):
-                        analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)
-                        df = df.drop([analyzed_object])
+            pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest + 1, self.get_number_of_analyzed_object_of_reference(), number_of_object_in_reference, self.get_number_of_analyzed_object_of_interest())
 
-        df = df.sort_values("pvalue_hypergeometric")
-
-        return df
-
-    def compute_hypergeometric_test_overrepresentation(self, analyzed_object, number_of_object_in_interest, number_of_object_in_reference, df):
-        pvalue_hypergeo = stats.hypergeom.sf(number_of_object_in_interest - 1, self.get_number_of_analyzed_object_of_reference(), number_of_object_in_reference, self.get_number_of_analyzed_object_of_interest())
         df.set_value(analyzed_object, 'pvalue_hypergeometric', pvalue_hypergeo)
+        self.set_statistic_method("pvalue_hypergeometric")
 
         return df
 
-    def compute_hypergeometric_test_underrepresentation(self, analyzed_object, number_of_object_in_interest, number_of_object_in_reference, df):
-        pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest + 1, self.get_number_of_analyzed_object_of_reference(), number_of_object_in_reference, self.get_number_of_analyzed_object_of_interest())
-        df.set_value(analyzed_object, 'pvalue_hypergeometric', pvalue_hypergeo)
-
-        return df
-
-    def compute_normal_approximation_overrepresentation(self, analyzedObject, number_of_object_in_interest, number_of_object_in_reference, df):
+    def compute_normal_approximation(self, analyzedObject, number_of_object_in_interest, number_of_object_in_reference, df, over_or_underrepresentation):
         p = number_of_object_in_reference / self.get_number_of_analyzed_object_of_reference()
         q = 1 - p
         t = self.get_number_of_analyzed_object_of_interest() / self.get_number_of_analyzed_object_of_reference()
 
         mu = self.get_number_of_analyzed_object_of_interest()  * p
         sigma = math.sqrt(self.get_number_of_analyzed_object_of_interest()  * p * q * (1 - t))
-        pValueNormal = stats.norm.sf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
-        df.set_value(analyzedObject, 'pvalue_hypergeometric', pValueNormal)
+
+        if over_or_underrepresentation == "over":
+            pValueNormal = stats.norm.sf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
+
+        if over_or_underrepresentation == "under":
+            pValueNormal = stats.norm.cdf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
+
+        df.set_value(analyzedObject, 'pvalue_normal_approximation', pValueNormal)
+        self.set_output_columns(4, 'pvalue_normal_approximation')
+        self.set_statistic_method('pvalue_normal_approximation')
 
         return df
-
-    def compute_normal_approximation_representation(self, analyzedObject, number_of_object_in_interest, number_of_object_in_reference, df):
-        p = number_of_object_in_reference / self.get_number_of_analyzed_object_of_reference()
-        q = 1 - p
-        t = self.get_number_of_analyzed_object_of_interest() / self.get_number_of_analyzed_object_of_reference()
-
-        mu = self.get_number_of_analyzed_object_of_interest()  * p
-        sigma = math.sqrt(self.get_number_of_analyzed_object_of_interest()  * p * q * (1 - t))
-        pValueNormal = stats.norm.cdf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
-        df.set_value(analyzedObject, 'pvalue_hypergeometric', pValueNormal)
-
-        return df
-
 
     def counting_approximation(self, df):
         for analyzed_object, row in df.iterrows():
@@ -144,7 +133,7 @@ class EnrichmentAnalysis():
         return percentage
 
     def multiple_testing_correction(self, df):
-        df = df.sort_values(['pvalue_hypergeometric'])
+        df = df.sort_values([self.get_statistic_method()])
 
         df = self.correction_bonferroni(df)
         df = self.correction_benjamini_hochberg(df)
@@ -219,37 +208,38 @@ class EnrichmentAnalysis():
 
     def correction_bonferroni(self, df):
         pvalue_correction_bonferroni = lambda x: x * len(df.index)
-        df['pValueBonferroni'] = df['pvalue_hypergeometric'].apply(pvalue_correction_bonferroni)
+        df['pValueBonferroni'] = df[self.get_statistic_method()].apply(pvalue_correction_bonferroni)
 
         return df
 
     def correction_benjamini_hochberg(self, df):
         for analyzed_object, row in df.iterrows():
-            pvalue_correction_benjamini_hochberg = row['pvalue_hypergeometric'] * (len(df.index)/(df.index.get_loc(analyzed_object)+1))
+            pvalue_correction_benjamini_hochberg = row[self.get_statistic_method()] * (len(df.index)/(df.index.get_loc(analyzed_object)+1))
             df.set_value(analyzed_object, 'pValueBenjaminiHochberg', pvalue_correction_benjamini_hochberg)
 
         return df
 
     def correction_holm(self, df):
         for analyzed_object, row in df.iterrows():
-            pvalue_correction_holm = row['pvalue_hypergeometric'] * (len(df.index) - df.index.get_loc(analyzed_object))
+            pvalue_correction_holm = row[self.get_statistic_method()] * (len(df.index) - df.index.get_loc(analyzed_object))
             df.set_value(analyzed_object, 'pValueHolm', pvalue_correction_holm)
 
         return df
 
     def correction_sgof(self, df):
         F = len(df.index) * self.get_alpha()
-        df = df.sort_values("pvalue_hypergeometric")
+        df = df.sort_values(self.get_statistic_method())
         R = 0
 
         for analyzed_object, row in df.iterrows():
-            if row['pvalue_hypergeometric'] < self.get_alpha():
+            if row[self.get_statistic_method()] < self.get_alpha():
                 R += 1
 
         df = df.reset_index()
 
         object_significatives = []
         row_number = 0
+
         while stats.chi2.sf(R, F) < self.get_alpha():
             df.set_value(row_number, 'pValueSGoF', 'significant')
             object_significatives.append(df.iloc[row_number][self.get_object_to_analyze()])
@@ -281,7 +271,7 @@ class EnrichmentAnalysis():
         object_significatives = []
 
         for analyzed_object, row in df.iterrows():
-            if row['pvalue_hypergeometric'] < error_rate :
+            if row[self.get_statistic_method()] < error_rate :
                 object_significatives.append(analyzed_object)
 
         return object_significatives
@@ -366,7 +356,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         return go_labels
 
     def multiple_testing_correction(self, df):
-        df = df.sort_values(['pvalue_hypergeometric'])
+        df = df.sort_values([self.get_statistic_method()])
 
         df = self.correction_bonferroni(df)
         df = self.correction_benjamini_hochberg(df)

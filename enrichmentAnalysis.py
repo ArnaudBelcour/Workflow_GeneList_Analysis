@@ -94,7 +94,7 @@ class EnrichmentAnalysis():
             pvalue_hypergeo = stats.hypergeom.sf(number_of_object_in_interest - 1, self.get_number_of_analyzed_object_of_reference(), number_of_object_in_reference, self.get_number_of_analyzed_object_of_interest())
 
         if over_or_underrepresentation == "under":
-            pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest + 1, self.get_number_of_analyzed_object_of_reference(), number_of_object_in_reference, self.get_number_of_analyzed_object_of_interest())
+            pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest, self.get_number_of_analyzed_object_of_reference(), number_of_object_in_reference, self.get_number_of_analyzed_object_of_interest())
 
         df.set_value(analyzed_object, 'pvalue_hypergeometric', pvalue_hypergeo)
         self.set_statistic_method("pvalue_hypergeometric")
@@ -113,7 +113,7 @@ class EnrichmentAnalysis():
             pValueNormal = stats.norm.sf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
 
         if over_or_underrepresentation == "under":
-            pValueNormal = stats.norm.cdf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
+            pValueNormal = stats.norm.cdf(number_of_object_in_interest, loc = mu, scale = sigma)
 
         df.set_value(analyzedObject, 'pvalue_normal_approximation', pValueNormal)
         self.set_output_columns(4, 'pvalue_normal_approximation')
@@ -228,19 +228,16 @@ class EnrichmentAnalysis():
 
     def correction_sgof(self, df):
         F = len(df.index) * self.get_alpha()
-        df = df.sort_values(self.get_statistic_method())
+        df = df.sort_values("pvalue_hypergeometric")
         R = 0
 
-        for analyzed_object, row in df.iterrows():
-            if row[self.get_statistic_method()] < self.get_alpha():
-                R += 1
+        R = (df['pvalue_hypergeometric'] < 0.05).sum()
 
         df = df.reset_index()
 
         object_significatives = []
         row_number = 0
-
-        while stats.chi2.sf(R, F) < self.get_alpha():
+        while stats.binom_test(R, len(df), p = self.get_alpha()) < self.get_alpha() and R > 0:
             df.set_value(row_number, 'pValueSGoF', 'significant')
             object_significatives.append(df.iloc[row_number][self.get_object_to_analyze()])
             R = R - 1

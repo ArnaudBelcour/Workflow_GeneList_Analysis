@@ -16,14 +16,21 @@ temporary_directory = 'temporaryFiles/'
 
 class FileManagement():
 
-    def __init__(self, name_of_the_file):
-        self.file_name, self.file_extension = os.path.splitext(name_of_the_file)
+    def __init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference):
+        self.file_name_of_interest, self.file_extension_of_interest = os.path.splitext(name_of_the_file_of_interest)
+        self.file_name_of_reference, self.file_extension_of_reference = os.path.splitext(name_of_the_file_of_reference)
 
-    def get_file_name(self):
-        return self.file_name
+    def get_file_name_of_interest(self):
+        return self.file_name_of_interest
 
-    def get_file_extension(self):
-        return self.file_extension
+    def get_file_extension_of_interest(self):
+        return self.file_extension_of_interest
+
+    def get_file_name_of_reference(self):
+        return self.file_name_of_reference
+
+    def get_file_extension_of_reference(self):
+        return self.file_extension_of_reference
 
     def go_label_number_dictionnary_creation(self, file_name, specification):
         d_go_label_to_number = {}
@@ -518,21 +525,23 @@ class FileManagement():
                     else:
                         ko_keggs[column] = 1
 
-        go_number_column = max(go_number_columns, key = go_number_columns.get)
-        go_label_columns.pop(go_number_column, None)
+        if go_number_columns:
+            go_number_column = max(go_number_columns, key = go_number_columns.get)
+            go_label_columns.pop(go_number_column, None)
         go_label_column = max(go_label_columns, key = go_label_columns.get)
         ec_column = max(ec_columns, key = ec_columns.get)
         ipr_column = max(ipr_columns, key = ipr_columns.get)
-        ko_kegg = max(ko_keggs, key = ko_keggs.get)
+        if ko_keggs:
+            ko_kegg = max(ko_keggs, key = ko_keggs.get)
 
-        dataframe_columns = [go_number_column, go_label_column, ec_column, ipr_column, ko_kegg]
+        if go_number_columns:
+            go_column = go_number_column
+        elif not go_number_columns:
+            go_column = go_label_column
 
-        return go_number_column, ec_column, ipr_column,
+        return go_column, ec_column, ipr_column
 
-    def column_go_cleaning(self):
-
-        name_input_file = self.get_file_name()
-        extension_input_file = self.get_file_extension()
+    def column_go_cleaning(self, name_input_file, extension_input_file):
 
         if extension_input_file == '.xls':
             results_dataframe = pa.read_excel(input_directory + name_input_file + extension_input_file, sep = None, na_values = "")
@@ -582,6 +591,24 @@ class FileManagement():
 
         self.rewriting_file(results_dataframe, name_input_file + "GOsTranslatedAndFixed.tsv")
 
+class FileManagementGeneGOs(FileManagement):
+
+    def __init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference, column_name):
+        FileManagement.__init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference,)
+        self.analyzed_object = column_name
+
+    def get_analyzed_object_name(self):
+        return self.analyzed_object
+
+    def go_ancestors_list_of_interest(self, column_analyzed_object, name_input_file):
+
+        df = pa.read_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
+
+        for index, row in df.iterrows():
+            row[column_analyzed_object] = goTermExtractionUniprot.union_go_and_their_ancestor(literal_eval(row[column_analyzed_object]))
+
+        df.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
+
     def create_gene_object_analysis_file(self, file_name, columns_names, column_analyzed_object):
         df = pa.read_csv(temporary_directory + file_name, sep = "\t")
         df = df[columns_names]
@@ -598,19 +625,9 @@ class FileManagement():
 
         csvfile.close()
 
-    def go_ancestors_list_of_interest(self, column_analyzed_object):
-        name_input_file = self.get_file_name()
-
-        df = pa.read_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
-
-        for index, row in df.iterrows():
-            row[column_analyzed_object] = goTermExtractionUniprot.union_go_and_their_ancestor(literal_eval(row[column_analyzed_object]))
-
-        df.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
-
     def counting_gene_list(self, file_name, column_name, column_analyzed_object):
         analyzed_objects = []
-        df = pa.read_csv(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", sep = "\t")
+        df = pa.read_csv(temporary_directory + file_name + "GOsTranslatedAndFixed.tsv", sep = "\t")
         for index, row in df.iterrows():
             for analyzed_object in literal_eval(row[column_analyzed_object]):
                 analyzed_objects.append(analyzed_object)
@@ -623,13 +640,13 @@ class FileManagement():
         numberOfGene = len(df["Gene_Name"].unique())
 
         counts_df = counts_df.reset_index()
-        self.rewriting_file(counts_df, "countingObjectsInInterest.tsv")
+        self.rewriting_file(counts_df, "counting_objects_in_interest.tsv")
 
-        return "countingObjectsInInterest", numberOfGene
+        return "counting_objects_in_interest", numberOfGene
 
     def counting_genome(self, file_name, column_name, column_analyzed_object):
         analyzed_objects = []
-        df = pa.read_csv(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", sep="\t")
+        df = pa.read_csv(temporary_directory + file_name + "GOsTranslatedAndFixed.tsv", sep="\t")
 
         for index, row in df.iterrows():
             for analyzed_object in literal_eval(row[column_analyzed_object]):
@@ -640,8 +657,107 @@ class FileManagement():
         counts_df_Genome = counts_df_Genome.groupby(column_analyzed_object).size().rename(column_name)
         counts_df_Genome = counts_df_Genome.to_frame()
 
-
         counts_df_Genome = counts_df_Genome.reset_index()
-        self.rewriting_file(counts_df_Genome, "countingObjectsInGenome.tsv")
+        self.rewriting_file(counts_df_Genome, "counting_objects_in_genome.tsv")
 
-        return "countingObjectsInGenome"
+        return "counting_objects_in_genome"
+
+    def file_gene_gos_gestion(self):
+        analyzed_object_name = self.get_analyzed_object_name()
+        file_of_interest_name = self.get_file_name_of_interest()
+        file_of_reference_name = self.get_file_name_of_reference()
+
+        self.column_go_cleaning(file_of_interest_name, self.get_file_extension_of_interest())
+        self.column_go_cleaning(file_of_reference_name, self.get_file_extension_of_reference())
+
+        self.go_ancestors_list_of_interest(analyzed_object_name, file_of_interest_name)
+        self.go_ancestors_list_of_interest(analyzed_object_name, file_of_reference_name)
+
+        self.counting_gene_list(file_of_interest_name, 'Counts', analyzed_object_name)
+        self.counting_genome(file_of_reference_name, 'CountsReference', analyzed_object_name)
+
+class FileManagementGeneGO(FileManagement):
+
+    def __init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference, column_name):
+        FileManagement.__init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference)
+        self.analyzed_object = column_name
+
+    def genome_file_processing(self, genome_file_name):
+        df = pa.read_csv(temporary_directory + self.get_file_name() + self.get_file_extension(), sep = "\t", header = None)
+        df.columns = [['Gene', 'GOs']]
+
+        df = df .set_index("Gene")
+
+        genes_gos_ancestors = {}
+        for gene, row in df.iterrows():
+            go_with_ancestor = goTermExtractionUniprot.union_go_and_their_ancestor([row['GOs']])
+            if gene not in genes_gos_ancestors:
+                genes_gos_ancestors[gene] = go_with_ancestor
+            else:
+                genes_gos_ancestors[gene].extend(go_with_ancestor)
+
+        csvfile = open(temporary_directory + self.get_file_name() + "_with_ancestor.tsv", "w", newline = "")
+        writer = csv.writer(csvfile, delimiter="\t")
+        writer.writerow(["Gene", "GO"])
+
+        for gene in genes_gos_ancestors:
+            gene_go_unique = []
+            for go in genes_gos_ancestors[gene]:
+                if go not in gene_go_unique:
+                    writer.writerow([gene, go])
+                    gene_go_unique.append(go)
+
+        csvfile.close()
+
+        df = pa.read_csv(temporary_directory + self.get_file_name() + "_with_ancestor.tsv", sep = "\t", header = None)
+        df.columns = [['Gene', 'GOs']]
+        df = df.set_index("Gene")
+        go_counts = {}
+        for gene, row in df.iterrows():
+            if row["GOs"] not in go_counts:
+                go_counts[row["GOs"]] = 1
+            elif row["GOs"] in go_counts:
+                go_counts[row["GOs"]] += 1
+
+        csvfile = open(temporary_directory + "number_go_in_genome.tsv", "w", newline = "")
+        writer = csv.writer(csvfile, delimiter="\t")
+        writer.writerow(["GOs", "CountsReference"])
+
+        for go in go_counts:
+            writer.writerow([go, go_counts[go]])
+
+        csvfile.close()
+
+    def file_of_interest_processing(self):
+        df = pa.read_csv(temporary_directory + self.get_file_name_of_interest() + self.get_file_extension_of_interest(), sep = "\t", header = None)
+        df.columns = [['Gene']]
+        df = df.set_index("Gene")
+
+        df_genome = pa.read_csv(temporary_directory + self.get_file_name() + "_with_ancestor.tsv", sep = "\t", header = None)
+        df_genome.columns = [['Gene', 'GOs']]
+        df_genome = df_genome.set_index("Gene")
+
+        df_joined = df.join(df_genome)
+        go_counts = {}
+        for gene, row in df_joined.iterrows():
+            if row["GOs"] not in go_counts:
+                go_counts[row["GOs"]] = 1
+            elif row["GOs"] in go_counts:
+                go_counts[row["GOs"]] += 1
+
+        csvfile = open(temporary_directory + "number_go_in_interest.tsv", "w", newline = "")
+        writer = csv.writer(csvfile, delimiter="\t")
+        writer.writerow(["GOs", "Counts"])
+
+        for go in go_counts:
+            writer.writerow([go, go_counts[go]])
+
+        csvfile.close()
+
+    def file_gene_gos_gestion():
+        analyzed_object_name = self.get_analyzed_object_name()
+        file_of_interest_name = self.get_file_name_of_interest()
+        file_of_reference_name = self.get_file_name_of_reference()
+
+        self.genome_file_processing(file_of_reference_name)
+        self.file_of_interest_processing(file_of_interest_name)

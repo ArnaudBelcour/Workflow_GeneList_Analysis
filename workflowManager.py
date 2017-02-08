@@ -4,7 +4,7 @@ import os
 import six
 
 from enrichmentAnalysis import GOEnrichmentAnalysis
-from fileManagement import FileManagement
+from fileManagement import FileManagementGeneGOs
 
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
@@ -32,30 +32,19 @@ def workflow_mainager():
         input_file_of_interest_management.go_ancestors_list_of_interest(object_to_analyze)
 
     sentence_choice = "Write the name of your input file containing differentially expressed gene : "
-    nameDEInputFile = input(sentence_choice)
-    input_file_of_interest_management = FileManagement(nameDEInputFile)
-    file_of_interest_name_input = input_file_of_interest_management.get_file_name()
-
-    d_go_label_to_number = input_file_of_interest_management.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'inverse')
-
-    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', d_go_label_to_number)
-    object_to_analyze = go_enrichment_analysis.get_object_to_analyze()
-
-    input_file_of_interest_management.column_go_cleaning()
-    input_file_of_interest_management.create_gene_object_analysis_file(file_of_interest_name_input + object_to_analyze + "TranslatedAndFixed.tsv", ['Gene_Name', object_to_analyze], object_to_analyze)
-    input_file_of_interest_management.go_ancestors_list_of_interest(object_to_analyze)
+    name_de_input_file = input(sentence_choice)
 
     sentence_choice = "Write the name of your input file containing genome : "
     name_reference_input_file = input(sentence_choice)
-    input_reference_file_management = FileManagement(name_reference_input_file)
-    file_referene_name_input = input_reference_file_management.get_file_name()
 
-    input_reference_file_management.column_go_cleaning(go_enrichment_analysis)
-    input_reference_file_management.create_gene_object_analysis_file(file_referene_name_input + object_to_analyze + "TranslatedAndFixed.tsv", ['Gene_Name', object_to_analyze], object_to_analyze)
-    input_reference_file_management.go_ancestors_list_of_interest(object_to_analyze)
+    input_file_gestion = FileManagementGeneGOs(name_de_input_file, name_reference_input_file, 'GOs')
 
-    file_of_interest_name, number_of_gene = input_file_of_interest_management.counting_gene_list(file_of_interest_name_input, 'Counts', object_to_analyze)
-    fileOfGenomeName = input_reference_file_management.counting_genome(file_referene_name_input, 'CountsGenome', object_to_analyze)
+    input_file_gestion.file_gene_gos_gestion()
+
+    d_go_label_to_number = input_file_gestion.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'inverse')
+
+    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', d_go_label_to_number)
+    object_to_analyze = go_enrichment_analysis.get_object_to_analyze()
 
     sentence_choice_number_gene = "Enter the number of genes in the genome of your organism : "
     number_of_genesInGenome = int(input(sentence_choice_number_gene))

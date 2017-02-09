@@ -23,6 +23,7 @@ class EnrichmentAnalysis():
         self.number_of_analyzed_object_of_reference = 0
         self.alpha = 0.00
         self.statistic_method = ""
+        self.normal_approximation_threshold = 0
 
     def get_object_to_analyze(self):
         return self.object_to_analyze
@@ -48,6 +49,9 @@ class EnrichmentAnalysis():
     def get_statistic_method(self):
         return self.statistic_method
 
+    def get_normal_approximation_threshold(self):
+        return self.normal_approximation_threshold
+
     def set_file_of_interest(self, fileName):
         self.file_of_interest = fileName
 
@@ -69,17 +73,22 @@ class EnrichmentAnalysis():
     def set_statistic_method(self, method_name):
         self.statistic_method = method_name
 
+    def set_normal_approximation_threshold(self, value):
+        self.normal_approximation_threshold = value
+
     def hypergeometric_test_on_dataframe(self, df, over_or_underrepresentation, genome_columns):
         analyzed_objects_with_hypergeo_test_nan = []
+
+        approximation_threshold = self.get_normal_approximation_threshold()
 
         for analyzed_object, row in df.iterrows():
             if math.isnan(df.get_value(analyzed_object, genome_columns)):
                 df = df.drop([analyzed_object])
             else:
-                if row['Counts'] < 10000:
+                if row['Counts'] < approximation_threshold:
                     self.compute_hypergeometric_test(analyzed_object, row['Counts'], row[genome_columns], df, over_or_underrepresentation)
 
-                elif row['Counts'] > 10000:
+                elif row['Counts'] > approximation_threshold:
                     self.compute_normal_approximation(analyzed_object, row['Counts'], row[genome_columns], df, over_or_underrepresentation)
 
                 if math.isnan(df.get_value(analyzed_object, self.get_statistic_method())):

@@ -57,6 +57,7 @@ def workflow_mainager():
     go_enrichment_analysis.set_number_of_analyzed_object_of_interest(number_of_gene)
     go_enrichment_analysis.set_number_of_analyzed_object_of_reference(number_of_genesInGenome)
     go_enrichment_analysis.set_alpha(alpha)
+    go_enrichment_analysis.set_normal_approximation_threshold(10000)
     go_enrichment_analysis.enrichment_analysis()
 
 workflow_mainager()

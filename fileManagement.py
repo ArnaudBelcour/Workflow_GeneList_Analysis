@@ -16,21 +16,14 @@ temporary_directory = 'temporaryFiles/'
 
 class FileManagement():
 
-    def __init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference):
-        self.file_name_of_interest, self.file_extension_of_interest = os.path.splitext(name_of_the_file_of_interest)
-        self.file_name_of_reference, self.file_extension_of_reference = os.path.splitext(name_of_the_file_of_reference)
+    def __init__(self, name_of_the_file):
+        self.file_name, self.file_extension = os.path.splitext(name_of_the_file)
 
-    def get_file_name_of_interest(self):
-        return self.file_name_of_interest
+    def get_file_name(self):
+        return self.file_name
 
-    def get_file_extension_of_interest(self):
-        return self.file_extension_of_interest
-
-    def get_file_name_of_reference(self):
-        return self.file_name_of_reference
-
-    def get_file_extension_of_reference(self):
-        return self.file_extension_of_reference
+    def get_file_extension(self):
+        return self.file_extension
 
     def go_label_number_dictionnary_creation(self, file_name, specification):
         d_go_label_to_number = {}
@@ -541,7 +534,10 @@ class FileManagement():
 
         return go_column, ec_column, ipr_column
 
-    def column_go_cleaning(self, name_input_file, extension_input_file):
+    def column_go_cleaning(self):
+
+        name_input_file = self.get_file_name()
+        extension_input_file = self.get_file_extension()
 
         if extension_input_file == '.xls':
             results_dataframe = pa.read_excel(input_directory + name_input_file + extension_input_file, sep = None, na_values = "")
@@ -593,12 +589,16 @@ class FileManagement():
 
 class FileManagementGeneGOs(FileManagement):
 
-    def __init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference, column_name):
-        FileManagement.__init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference,)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagement.__init__(self, name_of_the_file)
         self.analyzed_object = column_name
+        self.type_file = type_of_the_file
 
     def get_analyzed_object_name(self):
         return self.analyzed_object
+
+    def get_type_file(self):
+        return self.type_file
 
     def go_ancestors_list_of_interest(self, column_analyzed_object, name_input_file):
 
@@ -625,24 +625,26 @@ class FileManagementGeneGOs(FileManagement):
 
         csvfile.close()
 
-    def counting_gene_list(self, file_name, column_name, column_analyzed_object):
-        analyzed_objects = []
-        df = pa.read_csv(temporary_directory + file_name + "GOsTranslatedAndFixed.tsv", sep = "\t")
-        for index, row in df.iterrows():
-            for analyzed_object in literal_eval(row[column_analyzed_object]):
-                analyzed_objects.append(analyzed_object)
+    def file_gene_gos_gestion(self):
+        analyzed_object_name = self.get_analyzed_object_name()
+        name_of_the_file = self.get_file_name()
+        extension_of_the_file  = self.get_file_extension()
 
-        counts_df = pa.DataFrame(analyzed_objects)
-        counts_df.columns = [column_analyzed_object]
-        counts_df = counts_df.groupby(column_analyzed_object).size().rename(column_name)
-        counts_df = counts_df.to_frame()
+        self.column_go_cleaning()
 
-        numberOfGene = len(df["Gene_Name"].unique())
+        self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
 
-        counts_df = counts_df.reset_index()
-        self.rewriting_file(counts_df, "counting_objects_in_interest.tsv")
+        if self.get_type_file() == 'gene_list':
+            genome_file_temporary_name, number_of_gene = self.counting_gene_list(name_of_the_file, 'Counts', analyzed_object_name)
+            return genome_file_temporary_name, number_of_gene
+        if self.get_type_file() == 'genome':
+            genome_file_temporary_name = self.counting_genome(name_of_the_file, 'CountsReference', analyzed_object_name)
+            return genome_file_temporary_name
 
-        return "counting_objects_in_interest", numberOfGene
+class FileManagementGeneGOsGenome(FileManagementGeneGOs):
+
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
     def counting_genome(self, file_name, column_name, column_analyzed_object):
         analyzed_objects = []
@@ -662,25 +664,58 @@ class FileManagementGeneGOs(FileManagement):
 
         return "counting_objects_in_genome"
 
-    def file_gene_gos_gestion(self):
-        analyzed_object_name = self.get_analyzed_object_name()
-        file_of_interest_name = self.get_file_name_of_interest()
-        file_of_reference_name = self.get_file_name_of_reference()
+class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
-        self.column_go_cleaning(file_of_interest_name, self.get_file_extension_of_interest())
-        self.column_go_cleaning(file_of_reference_name, self.get_file_extension_of_reference())
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
-        self.go_ancestors_list_of_interest(analyzed_object_name, file_of_interest_name)
-        self.go_ancestors_list_of_interest(analyzed_object_name, file_of_reference_name)
+    def counting_gene_list(self, file_name, column_name, column_analyzed_object):
+        analyzed_objects = []
+        df = pa.read_csv(temporary_directory + file_name + "GOsTranslatedAndFixed.tsv", sep = "\t")
+        for index, row in df.iterrows():
+            for analyzed_object in literal_eval(row[column_analyzed_object]):
+                analyzed_objects.append(analyzed_object)
 
-        self.counting_gene_list(file_of_interest_name, 'Counts', analyzed_object_name)
-        self.counting_genome(file_of_reference_name, 'CountsReference', analyzed_object_name)
+        counts_df = pa.DataFrame(analyzed_objects)
+        counts_df.columns = [column_analyzed_object]
+        counts_df = counts_df.groupby(column_analyzed_object).size().rename(column_name)
+        counts_df = counts_df.to_frame()
+
+        numberOfGene = len(df["Gene_Name"].unique())
+
+        counts_df = counts_df.reset_index()
+        self.rewriting_file(counts_df, "counting_objects_in_interest.tsv")
+
+        return "counting_objects_in_interest", numberOfGene
 
 class FileManagementGeneGO(FileManagement):
 
-    def __init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference, column_name):
-        FileManagement.__init__(self, name_of_the_file_of_interest, name_of_the_file_of_reference)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagement.__init__(self, name_of_the_file)
         self.analyzed_object = column_name
+        self.type_file = type_of_the_file
+
+    def get_analyzed_object_name(self):
+        return self.analyzed_object
+
+    def get_type_file(self):
+        return self.type_file
+
+    def file_gene_gos_gestion():
+        analyzed_object_name = self.get_analyzed_object_name()
+        name_of_file = self.get_file_name()
+
+        self.column_go_cleaning()
+
+        if self.get_type_file() == 'gene_list':
+            self.genome_file_processing(name_of_file)
+        if self.get_type_file() == 'genome':
+            self.file_of_interest_processing(name_of_file)
+
+class FileManagementGeneGOGenome(FileManagementGeneGO):
+
+    def __init__(self, column_name):
+        FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file)
 
     def genome_file_processing(self, genome_file_name):
         df = pa.read_csv(temporary_directory + self.get_file_name() + self.get_file_extension(), sep = "\t", header = None)
@@ -728,8 +763,14 @@ class FileManagementGeneGO(FileManagement):
 
         csvfile.close()
 
+class FileManagementGeneGOInterest(FileManagementGeneGO):
+
+    def __init__(self, column_name, file_name_genome):
+        FileManagement.__init__(self, name_of_the_file, type_of_the_file)
+        self.file_genome_reference_name = file_name_genome
+
     def file_of_interest_processing(self):
-        df = pa.read_csv(temporary_directory + self.get_file_name_of_interest() + self.get_file_extension_of_interest(), sep = "\t", header = None)
+        df = pa.read_csv(temporary_directory + self.get_file_name() + self.get_file_extension(), sep = "\t", header = None)
         df.columns = [['Gene']]
         df = df.set_index("Gene")
 
@@ -753,11 +794,3 @@ class FileManagementGeneGO(FileManagement):
             writer.writerow([go, go_counts[go]])
 
         csvfile.close()
-
-    def file_gene_gos_gestion():
-        analyzed_object_name = self.get_analyzed_object_name()
-        file_of_interest_name = self.get_file_name_of_interest()
-        file_of_reference_name = self.get_file_name_of_reference()
-
-        self.genome_file_processing(file_of_reference_name)
-        self.file_of_interest_processing(file_of_interest_name)

@@ -8,7 +8,7 @@ from fileManagement import FileManagementGeneGOsGenome, FileManagementGeneGOsInt
 
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
-temporary_directory_database = '../temporaryFiles/databases/'
+temporary_directory_database = 'temporaryFiles/databases/'
 output_directory = 'outputFiles/'
 
 def workflow_mainager():

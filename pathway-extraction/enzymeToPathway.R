@@ -13,7 +13,7 @@ temporaryFilesDatabases <- '../temporaryFiles/databases'
 
 print(getwd())
 
-write.table(enzymePathwayTable, file <- file.path('temporaryFiles', 'databases', 'enzymeToPathway.tsv'), append = FALSE, row.names = FALSE, col.names = TRUE, sep ="\t")
+write.table(enzymePathwayTable, file <- file.path('temporaryFiles', 'databases', 'enzyme_pathway_kegg.tsv'), append = FALSE, row.names = FALSE, col.names = TRUE, sep ="\t")
 
 for(enzymeCode in enzymeCodes)
 {
@@ -22,7 +22,7 @@ for(enzymeCode in enzymeCodes)
     {
         enzymePathwayTable <- matrix(c(enzymeCode, NA, NA), ncol = 3)
 
-        write.table(enzymePathwayTable, file <- file.path('temporaryFiles', 'databases', 'enzymeToPathway.tsv'), append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
+        write.table(enzymePathwayTable, file <- file.path('temporaryFiles', 'databases', 'enzyme_pathway_kegg.tsv'), append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
     }
 
     for (pathwayID in pathwayLinkedToEnzyme)
@@ -33,7 +33,7 @@ for(enzymeCode in enzymeCodes)
         {
             enzymePathwayTable <- matrix(c(enzymeCode, pathwayName, pathwayID), ncol = 3)
 
-            write.table(enzymePathwayTable, file <- file.path('temporaryFiles', 'databases', 'enzymeToPathway.tsv'), append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
+            write.table(enzymePathwayTable, file <- file.path('temporaryFiles', 'databases', 'enzyme_pathway_kegg.tsv'), append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
         }
     }
 }

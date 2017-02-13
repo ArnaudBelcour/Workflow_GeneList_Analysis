@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import math
+import os
 import pandas as pa
 import re
 import subprocess
@@ -43,7 +44,9 @@ def r_keggrest_ec(ecs_requests):
 def main():
     if os.path.exists(temporary_directory_database[:-1]) == False :
         os.makedirs(temporary_directory_database)
-    name_reference_file = 'Annotation_blast2go_PROT_eHGOs'
+    name_reference_file = 'Annotation_blast2go_PROT_eH'
     df_genome = pa.read_csv(temporary_directory + name_reference_file + 'GOsTranslatedAndFixed.tsv', sep = "\t")
     ecs_requests = ec_extraction(df_genome)
     r_keggrest_ec(ecs_requests)
+
+main()

@@ -18,6 +18,8 @@ These python modules :
 
 * [scipy](https://pypi.python.org/pypi/scipy)
 
+* [SPARQLWrapper](https://rdflib.github.io/sparqlwrapper/)
+
 This R package :
 
 * [KEGGREST](https://bioconductor.org/packages/release/bioc/html/KEGGREST.html)
@@ -26,11 +28,13 @@ This R package :
 
 This workflow performs enrichment analysis (especially on GO terms).
 
-primaryFileManagement.py translates GO label from Blast2Go files into GO number.
+fileManagement.py translates GO label from Blast2Go files into GO number.
 
 enrichmentAnalysis.py is dividied in tow class. The first class ("EnrichmentAnalysis") is the basic method, which computes an hypergeometric test for variables (now it works for GO terms, in the future it will work for pathway) and calculates different multiple tests corrections (Bonferroni, Holm, Sidak, Benjamini & Hochberg and SGoF). The second class ("GOEnrichmentAnalysis") inherits from "EnrichmentAnalysis" and overrides a function to add GO label to the results.
 
-goTermExtractionUniprot.py queries Uniprot to obtain GO terms associated with Uniprot ID.
+go_term_extraction_uniprot.py queries Uniprot to obtain GO terms associated with Uniprot ID.
+
+workflow_manager.py is the main script.
 
 This workflow works with three directories (inputFiles, temporaryFiles and outputFiles) :
 
@@ -43,6 +47,8 @@ This workflow works with three directories (inputFiles, temporaryFiles and outpu
 Test used :
 
 * Hypergeometric test to compare the distribution of GO terms in your list and in the complete organism.
+
+* Normal approximation when using big numbers.
 
 And multiple testing corrections :
 
@@ -58,11 +64,11 @@ And multiple testing corrections :
 
 # Network Enrichment Analysis
 
-enzymeToPathway.R translates Enzyme Commission number (ec) into pathway using KEGGREST, it creates a tsv file (in temporaryFiles directory) containing ec number associated with the pathway name and the pathway ID on KEGG.
+enzyme_to_pathway.R translates Enzyme Commission number (ec) into pathway using KEGGREST, it creates a tsv file (in temporaryFiles directory) containing ec number associated with the pathway name and the pathway ID on KEGG.
 
 # Launch the analysis
 
 ## Launch GO terms Enrichment Analysis
 
 First, create a directory named "inputFiles". Put your data on it (see part "GO terms Enrichment Analysis" for more details on the needed files).
-To launch the analysis, just launch the "enrichmentAnalysis.py" script with python.
+To launch the analysis, just launch the "workflow_manager.py" script with python.

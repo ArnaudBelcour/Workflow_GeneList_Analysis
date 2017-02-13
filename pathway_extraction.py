@@ -34,7 +34,7 @@ def ec_extraction(df_genome):
 
 def r_keggrest_ec(ecs_requests):
     command = 'Rscript'
-    path_script = 'pathway-extraction/enzymeToPathway.R'
+    path_script = 'pathway-extraction/enzyme_to_pathway.R'
     cmd = [command, path_script] + ecs_requests
     try:
         subprocess.check_output(cmd, universal_newlines=True,stderr=subprocess.STDOUT)

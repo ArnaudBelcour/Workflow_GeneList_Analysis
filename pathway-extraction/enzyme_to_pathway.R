@@ -11,8 +11,6 @@ colnames(enzymePathwayTable) <- c('ecCode', 'Pathway', 'PathwayID')
 
 temporaryFilesDatabases <- '../temporaryFiles/databases'
 
-print(getwd())
-
 write.table(enzymePathwayTable, file <- file.path('temporaryFiles', 'databases', 'enzyme_pathway_kegg.tsv'), append = FALSE, row.names = FALSE, col.names = TRUE, sep ="\t")
 
 for(enzymeCode in enzymeCodes)

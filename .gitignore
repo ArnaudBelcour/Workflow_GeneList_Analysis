@@ -89,6 +89,6 @@ ENV/
 .ropeproject
 
 # Data directories
-inputfiles/
+inputFiles/
 temporaryFiles/
 outputFiles/

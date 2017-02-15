@@ -4,9 +4,9 @@ import csv
 import pandas as pa
 import re
 
-input_directory = "inputFiles/"
-temporary_directory = 'temporaryFiles/'
-temporary_directory_database = 'temporaryFiles/databases/'
+input_directory = "../inputFiles/"
+temporary_directory = '../temporaryFiles/'
+temporary_directory_database = '../temporaryFiles/databases/'
 
 def ghost_koala_file_gestion(file_name):
     title_expression = r'\s+([A-Z]{1}[\D]+$)'
@@ -21,22 +21,22 @@ def ghost_koala_file_gestion(file_name):
 
     with open(input_directory + file_name) as file:
         for line in file:
-            if re.match(gene_expression, line):
-                genes_extracted = line.strip().split(",")
-                for gene in genes_extracted:
-                    genes.append(gene)
-            if re.match(ko_expression, line):
-                ko = line.strip()
-                genes = []
-                ko_genes[ko] = genes
-            if re.match(pathway_expression, line):
-                pathway = line.strip()
-                ko_genes = {}
-                pathway_kos[pathway] = ko_genes
             if re.match(title_expression, line):
                 title = line.strip()
                 pathway_kos = {}
                 title_pathways[title] = pathway_kos
+            if re.match(pathway_expression, line):
+                pathway = line.strip()
+                ko_genes = {}
+                pathway_kos[pathway] = ko_genes
+            if re.match(ko_expression, line):
+                ko = line.strip()
+                genes = []
+                ko_genes[ko] = genes
+            if re.match(gene_expression, line):
+                genes_extracted = line.strip().split(",")
+                for gene in genes_extracted:
+                    genes.append(gene)
 
     title_pathways['Development']
 

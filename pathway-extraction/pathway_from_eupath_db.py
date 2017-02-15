@@ -20,7 +20,7 @@ def request_eupathdb(db_database):
         if '<img src="/icons/unknown.gif" alt="[   ]"> <a href=' in row:
             kegg_pathways.append(row[len('<img src="/icons/unknown.gif" alt="[   ]"> <a href="'):].split('"')[0])
 
-     if db_database == 'tritrypdb':
+    if db_database == 'tritrypdb':
         leishcyc_pathways = []
         trypanocyc_pathways = []
         r = requests.get('http://' + db_database + '.org/common/downloads/pathwayFiles//LeishCyc/')

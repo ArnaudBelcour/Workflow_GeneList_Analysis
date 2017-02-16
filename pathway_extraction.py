@@ -43,14 +43,14 @@ def r_keggrest_ec(ecs_requests):
 
         temporary_directory_database = "temporaryFiles/databases/"
 
-def translation_go_data(selected_gos, df_mapping, data_column):
+def translation_go_data(selected_datas, df_mapping, data_column):
     datas = []
-    for selected_go in literal_eval(selected_gos):
-        if selected_go in df_mapping.index:
-            if type(df_mapping.loc[selected_go][data_column]) == str :
-                datas.append(df_mapping.loc[selected_go][data_column])
-            if type(df_mapping.loc[selected_go][data_column]) == list :
-                datas.extend(df_mapping.loc[selected_go][data_column].tolist())
+    for selected_data in literal_eval(selected_datas):
+        if selected_data in df_mapping.index:
+            if type(df_mapping.loc[selected_data][data_column]) == str :
+                datas.append(df_mapping.loc[selected_data][data_column])
+            if type(df_mapping.loc[selected_data][data_column]) == list :
+                datas.extend(df_mapping.loc[selected_data][data_column].tolist())
 
     return set(datas)
 
@@ -73,5 +73,5 @@ def main():
     for file_name in os.listdir(temporary_directory_database):
         if "mapping" in file_name:
             df_genome = mapping_data(file_name, df_genome)
-    print(df_genome)
+
 main()

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 import csv
+import re
 import requests
 
 temporary_directory_database = '../temporaryFiles/databases/'
 
-def request_eupathdb(db_database):
+def request_database_eupathdb(db_database):
     db_database_pathways = {}
     metacyc_pathways = []
     kegg_pathways = []
@@ -41,30 +42,52 @@ def request_eupathdb(db_database):
 
     return db_database_pathways
 
-def link_pathway_id_request_eupathdb(db_database, database, pathways):
+def request_and_parse_pathway_file(db_database, database, pathways_file_name):
     csvfile = open(temporary_directory_database + "ecChebiToPathway_" + db_database + database + ".tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(('pathway', 'ecChebis'))
 
-    for pathway in pathways:
-        if '.xgmml' in pathway:
-            ec_and_chebis = []
-            r = requests.get('http://' + db_database + '.org/common/downloads/pathwayFiles//' + database + '/' + pathway)
+    label_node_pathec = r'[\D]{3,}'
+    label_node_chebi = r'C[\d]{5}'
+    label_node_pathec_check = False
+    label_node_chebi_check = False
+
+    for pathway_file_name in pathways_file_name:
+        if '.xgmml' in pathway_file_name:
+            r = requests.get('http://' + db_database + '.org/common/downloads/pathwayFiles//' + database + '/' + pathway_file_name)
+
+            pathway = pathway_file_name[:-len('.xgmml')]
+
             for row in r.text.split("\n"):
                 if "node label" in row:
-                    ec_and_chebis.append(row[len('  <node label="'):].split('"')[0])
-            writer.writerow((pathway[:-len('.xgmml')], ec_and_chebis))
+                    label = row[len('  <node label="'):].split('"')[0]
+
+                    if re.match(label_node_chebi, label):
+                        label_node_chebi_check = True
+                    elif re.match(label_node_pathec, label):
+                        label_node_pathec_check = True
+                    else:
+                        ec_chebi = label
+                        writer.writerow((pathway, ec_and_chebi))
+                        label_node_pathec_check = False
+                        label_node_chebi_check = False
+                if '    <att name=Description" value=' in row and label_sentence_check == True:
+                    ec_chebi = row[len('    <att name=Description" value="'):].split('"')[0]
+                    writer.writerow((pathway, ec_and_chebi))
+                if '    <att name="CID" value=' in row and label_node_chebi_check == True:
+                    ec_chebi = row[len('    <att name="CID" value="'):].split('"')[0]
+                    writer.writerow((pathway, ec_and_chebi))
 
     csvfile.close()
 
 def main():
     db_databases = ['amoebadb', 'cryptodb', 'fungidb', 'giardiadb', 'microsporidiadb', 'piroplasmadb', 'plasmodb', 'toxodb', 'trichdb', 'tritrypdb']
     for db_database in db_databases:
-        db_database_pathways = request_eupathdb(db_database)
-        link_pathway_id_request_eupathdb(db_database, 'KEGG', db_database_pathways['KEGG'])
-        link_pathway_id_request_eupathdb(db_database, 'MetaCyc', db_database_pathways['MetaCyc'])
+        db_database_pathways = request_database_eupathdb(db_database)
+        request_and_parse_pathway_file(db_database, 'KEGG', db_database_pathways['KEGG'])
+        request_and_parse_pathway_file(db_database, 'MetaCyc', db_database_pathways['MetaCyc'])
         if db_database == 'tritrypdb':
-            link_pathway_id_request_eupathdb(db_database, 'LeishCyc', db_database_pathways['LeishCyc'])
-            link_pathway_id_request_eupathdb(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'])
+            request_and_parse_pathway_file(db_database, 'LeishCyc', db_database_pathways['LeishCyc'])
+            request_and_parse_pathway_file(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'])
 
 main()

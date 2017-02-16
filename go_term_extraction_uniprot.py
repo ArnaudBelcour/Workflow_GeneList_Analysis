@@ -89,6 +89,9 @@ def create_approximation_go_genome(string_values_protein_names):
 
 @lru_cache(maxsize = 12400)
 def go_term_ancestor(go):
+'''
+    Requests a SPARQL Endpoint (which contains the go.owl file from the Gene Ontology) to retrieve GO ancestors of a specific go term.
+'''
     go_ancestors = []
     sparql = SPARQLWrapper("http://localhost:3030/datanase/query")
     sparql.setQuery("""
@@ -116,6 +119,11 @@ def go_term_ancestor(go):
     return go_ancestors
 
 def union_go_and_their_ancestor(gos):
+'''
+    Takes a list of GO terms corresponding to the value of a dataframe column as input (here the GO terms associated with a gene).
+    Uses go_term_ancestor() function to retrieve all the ancestors of the go term.
+    Makes the union of the results and return the result to replace the former list in the dataframe.
+'''
     go_ancestors_for_go_lists = []
 
     for go in gos:
@@ -127,6 +135,9 @@ def union_go_and_their_ancestor(gos):
     return go_list_for_entity
 
 def request_go_term_for_a_protein(uniprot_id):
+'''
+    Request Uniprot to extract GO terms associated with a Uniprot ID.
+'''
     r = requests.get('http://www.uniprot.org/uniprot/' + uniprot_id + '.xml')
     soup = BeautifulSoup(r.text)
     l = soup.findAll({"type", "GO"} )

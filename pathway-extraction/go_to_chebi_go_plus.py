@@ -6,6 +6,11 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def go_to_chebi():
+'''
+    Requests a SPARQL endpoint in which the go-plus.owl file (from the Gene Ontology site) has been load into it.
+    The query looks for all the ChEBI ID associated with a GO term.
+    Then the results are writed into a csv file.
+'''
     sparql = SPARQLWrapper('http://localhost:3030/go_chebi/query')
     sparql.setQuery("""
     PREFIX owl: <http://www.w3.org/2002/07/owl#>

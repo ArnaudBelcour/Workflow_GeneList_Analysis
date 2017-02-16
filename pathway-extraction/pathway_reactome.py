@@ -4,6 +4,9 @@ import csv
 import requests
 
 def http_request_reactome(code, writer):
+'''
+    Requests Reactome to retrieve pathway associated with an ID (GO terms, Reactome ID, CHEBI ID and Enzyme Code ID).
+'''
     try:
         r = requests.get('http://www.reactome.org/ContentService/search/query?query=' + code +'&cluster=true')
         results = r.json()

@@ -8,6 +8,10 @@ temporary_directory = 'temporaryFiles/'
 temporary_directory_database = 'temporaryFiles/databases/'
 
 def http_request_gene_ontology(url, file_name):
+"""
+    Requests the Gene Ontology server to obtain mapping file between GO and Interpro, KEGG, Enzyme Code, MetaCyc.
+    Rewrites each file into a correct tsv file.
+"""
     response = requests.get(url)
     results = response.text
     csvfile = open(temporary_directory_database + file_name + ".tsv", "w")

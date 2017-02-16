@@ -7,6 +7,11 @@ import requests
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def request_database_eupathdb(db_database):
+'''
+    Requests all the databases present in EuPathDB.
+    The requests retrieve all the file names which are present in the pathwayFiles folder of the download part of the database.
+    File names are stored in a dictionnary.
+'''
     db_database_pathways = {}
     metacyc_pathways = []
     kegg_pathways = []
@@ -43,6 +48,11 @@ def request_database_eupathdb(db_database):
     return db_database_pathways
 
 def request_and_parse_pathway_file(db_database, database, pathways_file_name):
+'''
+    Use the dictionnary containing all of the file names from a database.
+    For each file name a request is sent to EuPathDB to retrieve the file.
+    Then the file is parsed and the association between ID (ChEBI and Enzyme code) and pathway (MetaCyc, KEGG) are extracted and writed into a csv.
+'''
     csvfile = open(temporary_directory_database + "ecChebiToPathway_" + db_database + database + ".tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(('pathway', 'ecChebis'))

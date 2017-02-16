@@ -14,6 +14,17 @@ output_directory = 'outputFiles/'
 
 class EnrichmentAnalysis():
 
+'''
+    Performs an enrichment analysis using an hypergeometric test (also known as Fisher's exact test) and multiple correction testing.
+    To do this you need to enter some values (using the set_something() function) :
+        -file of interest : the name of your file (with the extension) containing the occurrences of each objects from a sample you want to analyze.
+        -file of reference : the name of your file (with the extentions) containing the occurrences of each objects from a population.
+        -number of analyzed object of interest : the number of objects in your sample (for example the number of differentially expressed genes in a list).
+        -number of analyzed object of reference : the number of objects in your population (for example the number of genes in the genome of your species).
+        -alpha : the alpha threshold also known as type I error.
+        -normal approximation threshold : the threshold separating the hypergeometric test (which runs very slowly when using big numbers) and normal approximation.
+'''
+
     def __init__(self, column_name):
         self.object_to_analyze = column_name
         self.output_columns = ['Counts', 'CountsReference', 'Percentage' + self.get_object_to_analyze() + 'InInterest', 'Percentage' + self.get_object_to_analyze() + 'InReference', 'pvalue_hypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg']

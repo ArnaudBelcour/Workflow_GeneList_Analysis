@@ -607,7 +607,7 @@ class FileManagementGeneGOs(FileManagement):
         for index, row in df.iterrows():
             row[column_analyzed_object] = go_term_extraction_uniprot.union_go_and_their_ancestor(literal_eval(row[column_analyzed_object]))
 
-        df.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
+        df.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t', index = False)
 
     def create_gene_object_analysis_file(self, file_name, columns_names, column_analyzed_object):
         df = pa.read_csv(temporary_directory + file_name, sep = "\t")

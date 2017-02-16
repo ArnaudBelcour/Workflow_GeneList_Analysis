@@ -49,6 +49,9 @@ def cleaning_file(file_name, id_name, id_prefix):
     df = pa.read_csv(temporary_directory_database + file_name + ".tsv", sep = "\t")
     df = df[:-1]
     df[id_name] = df[id_name].str.replace(id_prefix, "")
+    if id_name == "interpro":
+        df[id_name] = [[interpro[:9] for interpro in interpros]
+                            for interpros in df[id_name]]
     df['GOs'] = df['GOs'].str.replace("GO:", "GO_")
     df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 

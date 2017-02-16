@@ -43,16 +43,24 @@ def r_keggrest_ec(ecs_requests):
 
         temporary_directory_database = "temporaryFiles/databases/"
 
-def translation_go_chebi(selected_gos):
-    chebis = []
+def translation_go_data(selected_gos, df_mapping, data_column):
+    datas = []
     for selected_go in literal_eval(selected_gos):
-        if selected_go in go_to_chebi.index:
-            if type(go_to_chebi.loc[selected_go]['ChEBI']) == str :
-                chebis.append(go_to_chebi.loc[selected_go]['ChEBI'])
-            if type(go_to_chebi.loc[selected_go]['ChEBI']) == list :
-                chebis.extend(go_to_chebi.loc[selected_go]['ChEBI'].tolist())
+        if selected_go in df_mapping.index:
+            if type(df_mapping.loc[selected_go][data_column]) == str :
+                datas.append(df_mapping.loc[selected_go][data_column])
+            if type(df_mapping.loc[selected_go][data_column]) == list :
+                datas.extend(df_mapping.loc[selected_go][data_column].tolist())
 
-    return set(chebis)
+    return set(datas)
+
+def mapping_data(file_name, df_genome):
+    df_mapping = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
+    df_mapping = df_mapping.set_index("GOs")
+    data_column = df_mapping.columns[0]
+    df_genome[data_column] = df_genome['GOs'].apply(translation_go_data, args = (df_mapping, data_column))
+
+    return df_genome
 
 def main():
     if os.path.exists(temporary_directory_database[:-1]) == False :
@@ -62,7 +70,8 @@ def main():
     ecs_requests = ec_extraction(df_genome)
     r_keggrest_ec(ecs_requests)
 
-    go_to_chebi = pa.read_csv(temporary_directory_database + "go_chebi_mapping.tsv", sep = '\t')
-    go_to_chebi = go_to_chebi.set_index("GOs")
-    df_genome['ChEBI'] = df_genome['GOs'].apply(translation_go_chebi)
+    for file_name in os.listdir(temporary_directory_database):
+        if "mapping" in file_name:
+            df_genome = mapping_data(file_name, df_genome)
+    print(df_genome)
 main()

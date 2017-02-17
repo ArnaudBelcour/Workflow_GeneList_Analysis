@@ -7,10 +7,10 @@ from bs4 import BeautifulSoup
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def get_interpro_xml_compressed(url, file_name):
-'''
-    Requests Interpro to retrieve the interpro.xml.gz file.
-    The file is analyzed to extract Interpro ID association with pathway.
-'''
+    '''
+        Requests Interpro to retrieve the interpro.xml.gz file.
+        The file is analyzed to extract Interpro ID association with pathway.
+    '''
     reponse = urllib2.urlopen(url, headers = {"Accept-Encoding": "gzip"})
     with GzipFile(fileobj = response) as xmlFile:
         soup = BeautifulSoup(xmlFile, 'lxml')

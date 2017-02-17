@@ -9,15 +9,15 @@ temporary_directory = '../temporaryFiles/'
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def ghost_koala_file_gestion(file_name):
-'''
-    This script takes a txt file correspind to the extended version of a result of a Ghost Koala analysis.
-    It uses the differents regular expressions to retrieves pathway associated with gene.
-    To store the data a dictionnary of dictionnary of dictionnary of list is used.
-    Genes names are stored in the list.
-    K0XXXX associated with the gene are stored in the dictionnary as key and the value are the gene list.
-    pathway ID are associated with the KO in the upper dictionnary as key and the value are K0XXXX.
-    The title corresponds to the name of the generic process and is stored in a dictionnary as key and the value is the pathway ID.
-'''
+    '''
+        This script takes a txt file correspind to the extended version of a result of a Ghost Koala analysis.
+        It uses the differents regular expressions to retrieves pathway associated with gene.
+        To store the data a dictionnary of dictionnary of dictionnary of list is used.
+        Genes names are stored in the list.
+        K0XXXX associated with the gene are stored in the dictionnary as key and the value are the gene list.
+        pathway ID are associated with the KO in the upper dictionnary as key and the value are K0XXXX.
+        The title corresponds to the name of the generic process and is stored in a dictionnary as key and the value is the pathway ID.
+    '''
     title_expression = r'\s+([A-Z]{1}[\D]+$)'
     pathway_expression = r'\s+[\d]{5}\s{1}'
     ko_expression = r'\s+K[\d]{5}'

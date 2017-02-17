@@ -7,11 +7,11 @@ import requests
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def request_database_eupathdb(db_database):
-'''
-    Requests all the databases present in EuPathDB.
-    The requests retrieve all the file names which are present in the pathwayFiles folder of the download part of the database.
-    File names are stored in a dictionnary.
-'''
+    '''
+        Requests all the databases present in EuPathDB.
+        The requests retrieve all the file names which are present in the pathwayFiles folder of the download part of the database.
+        File names are stored in a dictionnary.
+    '''
     db_database_pathways = {}
     metacyc_pathways = []
     kegg_pathways = []
@@ -48,16 +48,17 @@ def request_database_eupathdb(db_database):
     return db_database_pathways
 
 def request_and_parse_pathway_file(db_database, database, pathways_file_name):
-'''
-    Use the dictionnary containing all of the file names from a database.
-    For each file name a request is sent to EuPathDB to retrieve the file.
-    Then the file is parsed and the association between ID (ChEBI and Enzyme code) and pathway (MetaCyc, KEGG) are extracted and writed into a csv.
-'''
+    '''
+        Use the dictionnary containing all of the file names from a database.
+        For each file name a request is sent to EuPathDB to retrieve the file.
+        Then the file is parsed and the association between ID (ChEBI and Enzyme code) and pathway (MetaCyc, KEGG) are extracted and writed into a csv.
+    '''
     csvfile = open(temporary_directory_database + "ecChebiToPathway_" + db_database + database + ".tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(('pathway', 'ecChebis'))
 
-    label_node_pathec = r'[\D]{3,}'
+    label_node_pathec = r'[\w\d\s\,\/\;\&\(\)\[\]-]{6,}'
+    label_node_rxn = r'RXN-[\d]{1}'
     label_node_chebi = r'C[\d]{5}'
     label_node_pathec_check = False
     label_node_chebi_check = False
@@ -74,19 +75,19 @@ def request_and_parse_pathway_file(db_database, database, pathways_file_name):
 
                     if re.match(label_node_chebi, label):
                         label_node_chebi_check = True
-                    elif re.match(label_node_pathec, label):
+                    elif re.match(label_node_pathec, label) or re.match(label_node_rxn, label):
                         label_node_pathec_check = True
                     else:
                         ec_chebi = label
-                        writer.writerow((pathway, ec_and_chebi))
+                        writer.writerow((pathway, ec_chebi))
                         label_node_pathec_check = False
                         label_node_chebi_check = False
                 if '    <att name=Description" value=' in row and label_sentence_check == True:
                     ec_chebi = row[len('    <att name=Description" value="'):].split('"')[0]
-                    writer.writerow((pathway, ec_and_chebi))
+                    writer.writerow((pathway, ec_chebi))
                 if '    <att name="CID" value=' in row and label_node_chebi_check == True:
                     ec_chebi = row[len('    <att name="CID" value="'):].split('"')[0]
-                    writer.writerow((pathway, ec_and_chebi))
+                    writer.writerow((pathway, ec_chebi))
 
     csvfile.close()
 

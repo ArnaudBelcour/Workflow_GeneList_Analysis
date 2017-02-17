@@ -6,10 +6,10 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def sparql_query(sparql_endpoint, query, output_file):
-'''
-    Requests Reactome SPARQL Endpoint to extract correspondence between Pathway ID and Pathway Name.
-    Then write it into a tsv file.
-'''
+    '''
+        Requests Reactome SPARQL Endpoint to extract correspondence between Pathway ID and Pathway Name.
+        Then write it into a tsv file.
+    '''
     sparql = SPARQLWrapper(sparql_endpoint)
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)

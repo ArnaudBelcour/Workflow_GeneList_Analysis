@@ -33,9 +33,9 @@ def ec_extraction(df_genome):
     return ecs_requests
 
 def r_keggrest_ec(ecs_requests):
-'''
-    Use the R script to extract pathway using Enzyme Code in KEGG.
-'''
+    '''
+        Uses the R script to extract pathway using Enzyme Code in KEGG.
+    '''
     command = 'Rscript'
     path_script = 'pathway-extraction/enzyme_to_pathway.R'
     cmd = [command, path_script] + ecs_requests

@@ -10,10 +10,10 @@ temporary_directory = 'temporaryFiles/'
 output_directory = 'outputFiles/'
 
 def extract_information_from_uniprot():
-'''
-    Requests the SPARQL endpoint of Uniprot to retrieve (from Ensembl transcrit ID) GO terms, interpro, pfam/supfam and prosites.
-    The file taken as input file contains each gene associated with the result of a blast (that's the thing with 'hypothetical protein').
-'''
+    '''
+        Requests the SPARQL endpoint of Uniprot to retrieve (from Ensembl transcrit ID) GO terms, interpro, pfam/supfam and prosites.
+        The file taken as input file contains each gene associated with the result of a blast (that's the thing with 'hypothetical protein').
+    '''
     df_genome = pa.read_excel('inputFiles/Annotation_blast2go_PROT_eH.xls', sep = "\t")
     df_genome['Blast_sur_e3'] = df_genome['Blast_sur_e3'].str[len('CEP03957.1hypothetical protein '):]
     df_genome['Blast_sur_e3'] = df_genome['Blast_sur_e3'].str.replace(", partial", "")

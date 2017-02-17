@@ -6,10 +6,10 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 input_directory = "inputFiles/"
 
 def go_term_synonyms(query):
-'''
-    Requests a SPARQL Endpoint (which contains the go.owl file from the Gene Ontology) to extract association between GO terms, their labels and their synonyms.
-    Writes it into a tsv file.
-'''
+    '''
+        Requests a SPARQL Endpoint (which contains the go.owl file from the Gene Ontology) to extract association between GO terms, their labels and their synonyms.
+        Writes it into a tsv file.
+    '''
     csvfile = open(input_directory + "query_results.tsv", "w", newline = "")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"])

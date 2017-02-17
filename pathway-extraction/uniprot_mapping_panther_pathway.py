@@ -8,9 +8,9 @@ temporary_directory = 'temporaryFiles/'
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def http_request_gene_ontology(url, file_name):
-'''
-    Requests Panther ftp to obtain the mapping file between Uniprot ID/Ensembl ID and pathway.
-'''
+    '''
+        Requests Panther ftp to obtain the mapping file between Uniprot ID/Ensembl ID and pathway.
+    '''
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
     page = response.read()

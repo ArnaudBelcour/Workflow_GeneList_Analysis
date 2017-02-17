@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import gzip
-import urllib2
+import urllib.request
+
 from bs4 import BeautifulSoup
+from gzip import GzipFile
 
 temporary_directory_database = '../temporaryFiles/databases/'
 
@@ -11,10 +12,11 @@ def get_interpro_xml_compressed(url, file_name):
         Requests Interpro to retrieve the interpro.xml.gz file.
         The file is analyzed to extract Interpro ID association with pathway.
     '''
-    reponse = urllib2.urlopen(url, headers = {"Accept-Encoding": "gzip"})
+    response = urllib.request.urlopen(url)
+    print(response)
     with GzipFile(fileobj = response) as xmlFile:
         soup = BeautifulSoup(xmlFile, 'lxml')
-        print(soup.prettify())
+        print(soup.find.all('interpro'))
 
 def uncompress_interpro_xml(file_compressed_name, outputFileName):
     with gzip.open(temporaryDirectory + file_compressed_name + '.xml.gz', 'r') as interpro_file_compressed:
@@ -34,6 +36,7 @@ def read_xml(file_name):
         #print(soup)
 
 def main():
-    #get_interpro_xml_compressed('ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro.xml.gz', 'interpro')
-    uncompress_interpro_xml('interpro', 'interpro')
-    read_xml('interpro')
+    get_interpro_xml_compressed('ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro.xml.gz', 'interpro')
+    #uncompress_interpro_xml('interpro', 'interpro')
+    #read_xml('interpro')
+main()

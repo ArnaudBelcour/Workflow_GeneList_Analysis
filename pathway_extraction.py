@@ -38,13 +38,12 @@ def r_keggrest_ec(ecs_requests):
     '''
     command = 'Rscript'
     path_script = 'pathway-extraction/enzyme_to_pathway.R'
-    cmd = [command, path_script] + ecs_requests
+    data_name = ["enzyme"]
+    cmd = [command, path_script] + ecs_requests + data_name
     try:
-        subprocess.check_output(cmd, universal_newlines=True,stderr=subprocess.STDOUT)
+        subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
-
-        temporary_directory_database = "temporaryFiles/databases/"
 
 def translation_go_data(selected_datas, df_mapping, data_column):
     datas = []

@@ -2,23 +2,29 @@
 
 library(KEGGREST)
 
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+
 my_args <- commandArgs(trailingOnly = TRUE)
 
-enzyme_codes = my_args
+data_codes = my_args[-length(my_args)]
 
-enzyme_pathway_table <- data.frame(matrix(nrow = 0, ncol = 3))
-colnames(enzyme_pathway_table) <- c('ecCode', 'Pathway', 'PathwayID')
+data_name = my_args[length(my_args)]
 
-write.table(enzyme_pathway_table, file <- file.path('temporaryFiles', 'databases', 'enzyme_pathway_kegg.tsv'), append = FALSE, row.names = FALSE, col.names = TRUE, sep ="\t")
+pathway_table <- data.frame(matrix(nrow = 0, ncol = 3))
+colnames(pathway_table) <- c('ecCode', 'Pathway', 'PathwayID')
 
-for(enzyme_code in enzyme_codes)
+file_name = paste(data_name, '_pathway_kegg.tsv', sep = "")
+
+write.table(pathway_table, file <- file.path('temporaryFiles', 'databases', file_name), append = FALSE, row.names = FALSE, col.names = TRUE, quote = FALSE, sep ="\t")
+
+for(data_code in data_codes)
 {
-    pathway_linked_to_enzyme <- keggLink('pathway', enzyme_code)
+    pathway_linked_to_enzyme <- keggLink('pathway', data_code)
     if (toString(pathway_linked_to_enzyme) == '')
     {
-        enzyme_pathway_table <- matrix(c(enzyme_code , NA, NA), ncol = 3)
+        pathway_table <- matrix(c(trim(data_code), NA, NA), ncol = 3)
 
-        write.table(enzyme_pathway_table, file <- file.path('temporaryFiles', 'databases', 'enzyme_pathway_kegg.tsv'), append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
+        write.table(pathway_table, file <- file.path('temporaryFiles', 'databases', file_name), append = TRUE, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
     }
 
     for (pathway_id in pathway_linked_to_enzyme)
@@ -27,9 +33,9 @@ for(enzyme_code in enzyme_codes)
 
         if (grepl(toString(pathway_name), "path:ec") == FALSE)
         {
-            enzyme_pathway_table <- matrix(c(enzyme_code, pathway_name, pathway_id), ncol = 3)
+            pathway_table <- matrix(c(trim(data_code), pathway_name, pathway_id), ncol = 3)
 
-            write.table(enzyme_pathway_table, file <- file.path('temporaryFiles', 'databases', 'enzyme_pathway_kegg.tsv'), append = TRUE, col.names = FALSE, row.names = FALSE, sep = "\t")
+            write.table(pathway_table, file <- file.path('temporaryFiles', 'databases', file_name), append = TRUE, col.names = FALSE, row.names = FALSE, quote = FALSE, sep = "\t")
         }
     }
 }

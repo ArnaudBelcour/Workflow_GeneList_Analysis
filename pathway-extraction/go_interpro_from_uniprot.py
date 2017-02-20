@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import csv
 import pandas as pa
 from ast import literal_eval
 from SPARQLWrapper import SPARQLWrapper, JSON

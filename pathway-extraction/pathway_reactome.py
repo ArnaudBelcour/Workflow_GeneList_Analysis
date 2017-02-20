@@ -5,6 +5,8 @@ import pandas as pa
 import requests
 from ast import literal_eval
 
+temporary_directory_database = '../temporaryFiles/databases/'
+
 def http_request_reactome(data_id, data_name, writer):
     '''
         Requests Reactome to retrieve pathway associated with an ID (GO terms, Reactome ID, CHEBI ID and Enzyme Code ID).
@@ -20,91 +22,59 @@ def http_request_reactome(data_id, data_name, writer):
                 return print('No results found')
 
         #r = requests.get('http://www.reactome.org/ContentService/data/pathways/low/entity/' + result_id)
-        if data_name == "GO":
+        if data_name in ["REACT", "Interpro", "GO", "EC"]:
+            if data_name in ["GO", "EC"]:
+                data_id = data_name + "_" + data_id
             for index in range(len(results['results'][0]['entries'])):
                 reactome_id = results['results'][0]['entries'][index]['id']
                 reactome_id_specie = results['results'][0]['entries'][index]['species']
-                writer.writerow([data_name + "_" + data_id, reactome_id, reactome_id_specie])
-        elif data_name == "EC":
-            for index in range(len(results['results'][0]['entries'])):
-                reactome_id = results['results'][0]['entries'][index]['id']
-                reactome_id_specie =results['results'][0]['entries'][index]['species']
-                writer.writerow([data_name + ":" + data_id, reactome_id, reactome_id_specie])
-        elif data_name == "REACT":
-            for index in range(len(results['results'][0]['entries'])):
-                reactome_id = results['results'][0]['entries'][index]['id']
-                reactome_id_specie = results['results'][0]['entries'][index]['species']
-                writer.writerow([data_name + "_" + data_id, reactome_id, reactome_id_specie])
+                reactome_type = results['results'][0]['entries'][index]['typeName']
         elif data_name == "CHEBI":
             for index in range(len(results['results'])):
                 for index2 in range(len(results['results'][index]['entries'])):
                     reactome_id = results['results'][index]['entries'][index2]['id']
                     reactome_id_specie = results['results'][index]['entries'][index2]['species']
-                    writer.writerow([data_name + "_" + data_id, reactome_id, reactome_id_specie])
-        elif data_name == "Interpro":
-            for index in range(len(results['results'][0]['entries'])):
-                reactome_id = results['results'][0]['entries'][index]['id']
-                reactome_id_specie = results['results'][0]['entries'][index]['species']
-                writer.writerow([data_id, reactome_id, reactome_id_specie])
+                    reactome_type = results['results'][0]['entries'][index]['typeName']
+
+        writer.writerow([data_id, reactome_id, reactome_id_specie, reactome_type])
 
     except Exception as e:
         print ("Errors : " + repr(e))
 
+def file_creation(data_name, column_name, df_genome):
+    csvfile = open(temporary_directory_database + 'pathway_reactome_' + data_name + '.tsv', "w", newline = "")
+    writer = csv.writer(csvfile, delimiter = "\t")
+    writer.writerow([data_name, 'Id', 'specie', 'data_type'])
+
+    datas_requests = []
+    if data_name in ["EC", "Interpro"]:
+        [datas_requests.extend(datas.split("; ")) for datas in df_genome[column_name].dropna().tolist()]
+    elif data_name in ["GO", "CHEBI", "REACT"]:
+        [datas_requests.extend(literal_eval(datas)) for datas in df_genome[column_name]]
+
+    datas_requests = list(set().union(datas_requests))
+
+    if data_name == "Interpro":
+        for data in datas_requests:
+            data = data.strip()[:9]
+    elif data_name == "CHEBI":
+        for data in datas_requests:
+            data = data.strip().replace("_", ":")
+    elif data_name == "REACT":
+        for data in datas_requests:
+            data = data.strip()
+    elif data_name in ["GO", "EC"]:
+        for data in datas_requests:
+            data = data.strip()[len(data_name + ':'):]
+
+    http_request_reactome(data, data_name, writer)
+
+    csvfile.close()
+
 def main():
     df_genome = pa.read_csv('../inputFiles/genome_with_pathway.tsv', sep = "\t")
-    data_names = ["EC", "GO", "CHEBI", "REACT", "Interpro"]
+    data_names = {"EC": "EnzymeCodes", "GO": "GOs", "CHEBI":"ChEBI", "REACT": "reactome_pathway", "Interpro": "InterProScan"}
 
-    csvfile = open('../temporaryFiles/databases/enzyme_pathway_reactome_EC.tsv', "w", newline = "")
-    writer = csv.writer(csvfile, delimiter="\t")
-    writer.writerow(["EC", 'Id', 'specie'])
-    ecs_requests = []
-    [ecs_requests.extend(ecs.split("; ")) for ecs in df_genome['EnzymeCodes'].dropna().tolist()]
-    ecs_requests = list(set().union(ecs_requests))
-    for ec in ecs_requests:
-        ec = ec.strip()[len('ec:'):]
-        http_request_reactome(ec, "EC", writer)
-    csvfile.close()
-
-    csvfile = open('../temporaryFiles/databases/enzyme_pathway_reactome_GO.tsv', "w", newline = "")
-    writer = csv.writer(csvfile, delimiter="\t")
-    writer.writerow(["GO", 'Id', 'specie'])
-    gos_requests = []
-    [gos_requests.extend(literal_eval(gos)) for gos in df_genome['GOs']]
-    gos_requests = list(set().union(gos_requests))
-    for go in gos_requests:
-        go = go.strip()[len('GO_'):]
-        http_request_reactome(go, "GO", writer)
-    csvfile.close()
-
-    csvfile = open('../temporaryFiles/databases/enzyme_pathway_reactome_CHEBI.tsv', "w", newline = "")
-    writer = csv.writer(csvfile, delimiter="\t")
-    writer.writerow(["CHEBI", 'Id', 'specie'])
-    chebis_requests = []
-    [chebis_requests.extend(literal_eval(chebis)) for chebis in df_genome['ChEBI']]
-    chebis_requests = list(set().union(chebis_requests))
-    for chebi in chebis_requests:
-        chebi = chebi.strip()[len('CHEBI:'):]
-        http_request_reactome(chebi, "CHEBI", writer)
-    csvfile.close()
-
-    csvfile = open('../temporaryFiles/databases/enzyme_pathway_reactome_REACT.tsv', "w", newline = "")
-    writer = csv.writer(csvfile, delimiter="\t")
-    writer.writerow(["REACT", 'Id', 'specie'])
-    reactomes_requests = []
-    [reactomes_requests.extend(literal_eval(reactomes)) for reactomes in df_genome['reactome_pathway']]
-    reactomes_requests = list(set().union(reactomes_requests))
-    for reactome in reactomes_requests:
-        http_request_reactome(reactome, "REACT", writer)
-    csvfile.close()
-
-    csvfile = open('../temporaryFiles/databases/enzyme_pathway_reactome_Interpro.tsv', "w", newline = "")
-    writer = csv.writer(csvfile, delimiter="\t")
-    writer.writerow(["Interpro", 'Id', 'specie'])
-    interpros_requests = []
-    [interpros_requests.extend(interpros.split(";")) for interpros in df_genome['InterProScan']]
-    interpros_requests = list(set().union(interpros_requests))
-    for interpro in interpros_requests:
-        interpro = interpro.strip()[:9]
-        http_request_reactome(interpro, "Interpro", writer)
-    csvfile.close()
+    for data_name in data_names:
+        file_creation(data_name, data_names[data_name], df_genome)
 main()

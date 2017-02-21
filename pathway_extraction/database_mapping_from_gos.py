@@ -4,8 +4,8 @@ import csv
 import pandas as pa
 import requests
 
-temporary_directory = 'temporaryFiles/'
-temporary_directory_database = 'temporaryFiles/databases/'
+temporary_directory = '../temporaryFiles/'
+temporary_directory_database = '../temporaryFiles/databases/'
 
 def http_request_gene_ontology(url, file_name):
     """
@@ -54,9 +54,8 @@ def cleaning_file(file_name, id_name, id_prefix):
     df = df[:-1]
     df[id_name] = df[id_name].str.replace(id_prefix, "")
     if id_name == "interpro":
-        df[id_name] = [[interpro[:9]
-                                for interpro in interpros]
-                            for interpros in df[id_name]]
+        df[id_name] = [interpro[:9]
+                        for interpro in df[id_name]]
     df['GOs'] = df['GOs'].str.replace("GO:", "GO_")
     df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 

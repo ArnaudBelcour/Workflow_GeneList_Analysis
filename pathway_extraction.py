@@ -37,7 +37,7 @@ def r_keggrest_ec(ecs_requests):
         Uses the R script to extract pathway using Enzyme Code in KEGG.
     '''
     command = 'Rscript'
-    path_script = 'pathway-extraction/keggrest_pathway_extraction.R'
+    path_script = 'pathway_extraction/keggrest_pathway_extraction.R'
     data_name = ["enzyme"]
     cmd = [command, path_script] + ecs_requests + data_name
     try:

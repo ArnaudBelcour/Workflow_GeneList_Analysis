@@ -39,7 +39,7 @@ def go_term_synonyms(query):
 
     csvfile.close()
 
-query_file = open('sparqlQueries/go_label_with_synonym.sparql', 'r')
+query_file = open('sparql_queries/go_label_with_synonym.sparql', 'r')
 query = query_file.read()
 query_file.close()
 

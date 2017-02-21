@@ -34,7 +34,7 @@ def sparql_query(sparql_endpoint, query, output_file):
     csvfile.close()
 
 def main():
-    query_file = open('../sparqlQueries/reactome_pathway_query.sparql', 'r')
+    query_file = open('../sparql_queries/reactome_pathway_query.sparql', 'r')
     query = query_file.read()
     query_file.close()
 

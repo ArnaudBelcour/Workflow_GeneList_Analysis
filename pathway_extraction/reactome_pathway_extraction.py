@@ -34,13 +34,8 @@ def http_request_reactome(data_id, data_name, writer):
                 for index2 in range(len(results['results'][index]['entries'])):
                     reactome_id = results['results'][index]['entries'][index2]['id']
                     reactome_id_specie = results['results'][index]['entries'][index2]['species']
-                    reactome_type = results['results'][0]['entries'][index]['exactType']
 
-        if 'typeName' in results['results'][0]['entries'][index]:
-            reactome_type = results['results'][0]['entries'][index]
-        else:
-            reactome_type = 'No type'
-        writer.writerow([data_id, reactome_id, reactome_id_specie, reactome_type])
+        writer.writerow([data_id, reactome_id, reactome_id_specie])
 
     except Exception as e:
         print ("Errors : " + repr(e))

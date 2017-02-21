@@ -28,14 +28,18 @@ def http_request_reactome(data_id, data_name, writer):
             for index in range(len(results['results'][0]['entries'])):
                 reactome_id = results['results'][0]['entries'][index]['id']
                 reactome_id_specie = results['results'][0]['entries'][index]['species']
-                reactome_type = results['results'][0]['entries'][index]['typeName']
+
         elif data_name == "CHEBI":
             for index in range(len(results['results'])):
                 for index2 in range(len(results['results'][index]['entries'])):
                     reactome_id = results['results'][index]['entries'][index2]['id']
                     reactome_id_specie = results['results'][index]['entries'][index2]['species']
-                    reactome_type = results['results'][0]['entries'][index]['typeName']
+                    reactome_type = results['results'][0]['entries'][index]['exactType']
 
+        if 'typeName' in results['results'][0]['entries'][index]:
+            reactome_type = results['results'][0]['entries'][index]
+        else:
+            reactome_type = 'No type'
         writer.writerow([data_id, reactome_id, reactome_id_specie, reactome_type])
 
     except Exception as e:
@@ -57,17 +61,19 @@ def file_creation(data_name, column_name, df_genome):
     if data_name == "Interpro":
         for data in datas_requests:
             data = data.strip()[:9]
+            http_request_reactome(data, data_name, writer)
     elif data_name == "CHEBI":
         for data in datas_requests:
             data = data.strip().replace("_", ":")
+            http_request_reactome(data, data_name, writer)
     elif data_name == "REACT":
         for data in datas_requests:
             data = data.strip()
+            http_request_reactome(data, data_name, writer)
     elif data_name in ["GO", "EC"]:
         for data in datas_requests:
             data = data.strip()[len(data_name + ':'):]
-
-    http_request_reactome(data, data_name, writer)
+            http_request_reactome(data, data_name, writer)
 
     csvfile.close()
 

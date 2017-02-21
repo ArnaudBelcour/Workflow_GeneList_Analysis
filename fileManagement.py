@@ -10,6 +10,7 @@ from ast import literal_eval
 from collections import defaultdict
 
 import go_term_extraction_uniprot
+import pathway_extraction.uniprot_retrieval_data as uniprot_retrieval_data
 
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
@@ -552,6 +553,10 @@ class FileManagement():
         else :
             name_gene_column = input("Write the name of the column containing the gene names : ")
 
+        yes_or_no = input("Do you want to try to retrieve data from blast results? ")
+        if yes_or_no.lower() in yes_answers :
+            uniprot_retrieval_data.extract_information_from_uniprot(name_input_file + extension_input_file)
+
         go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)
         results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
         results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
@@ -632,7 +637,7 @@ class FileManagementGeneGOs(FileManagement):
 
         self.column_go_cleaning()
 
-        self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
+        #self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
 
         if self.get_type_file() == 'gene_list':
             genome_file_temporary_name, number_of_gene = self.counting_gene_list(name_of_the_file, 'Counts', analyzed_object_name)

@@ -5,9 +5,7 @@ import pandas as pa
 from ast import literal_eval
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-input_directory = "../inputFiles/"
-temporary_directory = '../temporaryFiles/'
-output_directory = '../outputFiles/'
+from . import *
 
 def extract_information_from_uniprot(file_name):
     '''
@@ -97,4 +95,3 @@ def extract_information_from_uniprot(file_name):
         df_genome.set_value(gene, 'prosites', str(prosites))
 
     df_genome.to_csv(temporary_directory + file_name[:-4] + '.tsv', sep = "\t")
-extract_information_from_uniprot('Annotation_blast2go_PROT_eH.xls')

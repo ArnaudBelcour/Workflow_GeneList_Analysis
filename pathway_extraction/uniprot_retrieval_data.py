@@ -2,19 +2,27 @@
 
 import math
 import pandas as pa
+import six
+
 from ast import literal_eval
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 from . import *
 
-def extract_information_from_uniprot(file_name):
+def extract_information_from_uniprot(file_name, extension_file):
     '''
         Requests the SPARQL endpoint of Uniprot to retrieve (from Ensembl transcrit ID) GO terms, interpro, pfam/supfam and prosites.
         The file taken as input file contains each gene associated with the result of a blast (that's the thing with 'hypothetical protein').
     '''
-    df_genome = pa.read_excel(input_directory + file_name, sep = "\t")
-    df_genome['Blast_sur_e3'] = df_genome['Blast_sur_e3'].str[len('CEP03957.1hypothetical protein '):]
-    df_genome['Blast_sur_e3'] = df_genome['Blast_sur_e3'].str.replace(", partial", "")
+    column_name = input("What is the name of the blast results? ")
+
+    if extension_file == '.xls':
+        results_dataframe = pa.read_excel(input_directory + file_name, + extension_file, sep = None, na_values = "")
+    else:
+        results_dataframe = pa.read_csv(input_directory + file_name, + extension_file, sep = None, engine = "python", na_values = "")
+
+    df_genome[column_name] = df_genome[column_name].str[len('CEP03957.1hypothetical protein '):]
+    df_genome[column_name] = df_genome[column_name].str.replace(", partial", "")
 
     df_genome.set_index("SeqName_eH")
 
@@ -94,4 +102,4 @@ def extract_information_from_uniprot(file_name):
         df_genome.set_value(gene, 'pfams', str(pfams))
         df_genome.set_value(gene, 'prosites', str(prosites))
 
-    df_genome.to_csv(temporary_directory + file_name[:-4] + '.tsv', sep = "\t")
+    df_genome.to_csv(temporary_directory + file_name + '.tsv', sep = "\t")

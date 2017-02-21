@@ -5,8 +5,6 @@ import math
 import pandas as pa
 import scipy.stats as stats
 import six
-import sys
-from ast import literal_eval
 
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'

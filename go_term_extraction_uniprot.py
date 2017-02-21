@@ -5,7 +5,7 @@ import math
 import pandas as pa
 import requests
 import six
-import sys
+
 from ast import literal_eval
 from bs4 import BeautifulSoup
 from functools import lru_cache

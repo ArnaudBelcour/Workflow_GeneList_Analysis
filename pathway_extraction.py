@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import math
 import os
 import pandas as pa
 import re
 import subprocess
+
 from ast import literal_eval
 
 temporary_directory = 'temporaryFiles/'

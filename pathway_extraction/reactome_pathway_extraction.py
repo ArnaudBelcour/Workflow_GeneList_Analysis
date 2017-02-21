@@ -3,6 +3,7 @@
 import csv
 import pandas as pa
 import requests
+
 from ast import literal_eval
 
 temporary_directory_database = '../temporaryFiles/databases/'

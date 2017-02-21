@@ -2,6 +2,7 @@
 
 import csv
 import pandas as pa
+
 from urllib.request import urlopen
 
 temporary_directory = '../temporaryFiles/'

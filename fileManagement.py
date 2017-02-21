@@ -6,8 +6,8 @@ import os
 import pandas as pa
 import re
 import six
+
 from ast import literal_eval
-from collections import defaultdict
 
 import go_term_extraction_uniprot
 import pathway_extraction.uniprot_retrieval_data as uniprot_retrieval_data
@@ -555,7 +555,7 @@ class FileManagement():
 
         yes_or_no = input("Do you want to try to retrieve data from blast results? ")
         if yes_or_no.lower() in yes_answers :
-            uniprot_retrieval_data.extract_information_from_uniprot(name_input_file + extension_input_file)
+            uniprot_retrieval_data.extract_information_from_uniprot(name_input_file, extension_input_file)
 
         go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)
         results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]

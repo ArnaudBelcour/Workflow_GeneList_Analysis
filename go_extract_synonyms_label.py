@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import csv
+
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 input_directory = "inputFiles/"

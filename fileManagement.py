@@ -9,7 +9,7 @@ import six
 
 from ast import literal_eval
 
-import go_term_extraction_uniprot
+import ancestor_go_extraction
 import pathway_extraction.uniprot_retrieval_data as uniprot_retrieval_data
 
 input_directory = "inputFiles/"
@@ -610,7 +610,7 @@ class FileManagementGeneGOs(FileManagement):
         df = pa.read_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
 
         for index, row in df.iterrows():
-            row[column_analyzed_object] = go_term_extraction_uniprot.union_go_and_their_ancestor(literal_eval(row[column_analyzed_object]))
+            row[column_analyzed_object] = ancestor_go_extraction.union_go_and_their_ancestor(literal_eval(row[column_analyzed_object]))
 
         df.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t', index = False)
 
@@ -744,7 +744,7 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
 
         genes_gos_ancestors = {}
         for gene, row in df.iterrows():
-            go_with_ancestor = go_term_extraction_uniprot.union_go_and_their_ancestor([row['GOs']])
+            go_with_ancestor = ancestor_go_extraction.union_go_and_their_ancestor([row['GOs']])
             if gene not in genes_gos_ancestors:
                 genes_gos_ancestors[gene] = go_with_ancestor
             else:

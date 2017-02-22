@@ -72,7 +72,10 @@ class EnrichmentAnalysis():
 
     @number_of_analyzed_object_of_interest.setter
     def number_of_analyzed_object_of_interest(self, value):
-        self._number_of_analyzed_object_of_interest = value
+        if value > self.number_of_analyzed_object_of_reference:
+            raise ValueError("The number of objects in your sample of interest is greater than the number of objects in the reference.")
+        else:
+            self._number_of_analyzed_object_of_interest = value
 
     @property
     def number_of_analyzed_object_of_reference(self):
@@ -80,6 +83,9 @@ class EnrichmentAnalysis():
 
     @number_of_analyzed_object_of_reference.setter
     def number_of_analyzed_object_of_reference(self, value):
+        if value < self.number_of_analyzed_object_of_interest:
+            raise ValueError("The number of objects in the reference is smaller than the number of objects in your sample of interest.")
+        else:
         self._number_of_analyzed_object_of_reference = value
 
     @property

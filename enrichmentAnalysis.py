@@ -86,7 +86,7 @@ class EnrichmentAnalysis():
         if value < self.number_of_analyzed_object_of_interest:
             raise ValueError("The number of objects in the reference is smaller than the number of objects in your sample of interest.")
         else:
-        self._number_of_analyzed_object_of_reference = value
+            self._number_of_analyzed_object_of_reference = value
 
     @property
     def alpha(self):

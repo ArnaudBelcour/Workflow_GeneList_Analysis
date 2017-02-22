@@ -563,10 +563,6 @@ class FileManagement():
         else :
             name_gene_column = input("Write the name of the column containing the gene names : ")
 
-        yes_or_no = input("Do you want to try to retrieve data from blast results? ")
-        if yes_or_no.lower() in yes_answers :
-            uniprot_retrieval_data.extract_information_from_uniprot(name_input_file, extension_input_file)
-
         go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)
         results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
         results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
@@ -576,6 +572,10 @@ class FileManagement():
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("F:", "")
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace(":", "_")
         results_dataframe['GOs'] = results_dataframe['GOs'].str.split(";")
+
+        yes_or_no = input("Do you want to try to retrieve data from blast results? ")
+        if yes_or_no.lower() in yes_answers :
+            uniprot_retrieval_data.extract_information_from_uniprot(name_input_file, extension_input_file)
 
         d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'normal')
 

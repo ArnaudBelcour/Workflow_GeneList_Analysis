@@ -44,21 +44,13 @@ def workflow_mainager():
 
     d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'inverse')
 
-    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', d_go_label_to_number)
-    object_to_analyze = go_enrichment_analysis.get_object_to_analyze()
-
     sentence_choice_number_gene = "Enter the number of genes in the genome of your organism : "
     number_of_genes_in_genome = int(input(sentence_choice_number_gene))
 
     sentence_choice_alpha = "Enter the alpha risk : "
     alpha = float(input(sentence_choice_alpha))
 
-    go_enrichment_analysis.set_file_of_interest(file_of_interest_name)
-    go_enrichment_analysis.set_file_of_reference(file_of_genome_name)
-    go_enrichment_analysis.set_number_of_analyzed_object_of_interest(number_of_gene)
-    go_enrichment_analysis.set_number_of_analyzed_object_of_reference(number_of_genes_in_genome)
-    go_enrichment_analysis.set_alpha(alpha)
-    go_enrichment_analysis.set_normal_approximation_threshold(10000)
+    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', d_go_label_to_number, file_of_interest_name, file_of_genome_name, number_of_gene, number_of_genes_in_genome, alpha, 10000)
     go_enrichment_analysis.enrichment_analysis()
 
 workflow_mainager()

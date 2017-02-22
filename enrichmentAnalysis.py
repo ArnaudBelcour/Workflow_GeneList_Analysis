@@ -23,16 +23,16 @@ class EnrichmentAnalysis():
             -normal approximation threshold : the threshold separating the hypergeometric test (which runs very slowly when using big numbers) and normal approximation.
     '''
 
-    def __init__(self, column_name):
+    def __init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation):
         self.object_to_analyze = column_name
         self.output_columns = ['Counts', 'CountsReference', 'Percentage' + self.get_object_to_analyze() + 'InInterest', 'Percentage' + self.get_object_to_analyze() + 'InReference', 'pvalue_hypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg']
-        self.file_of_interest = ""
-        self.file_of_reference = ""
-        self.number_of_analyzed_object_of_interest = 0
-        self.number_of_analyzed_object_of_reference = 0
-        self.alpha = 0.00
+        self.file_of_interest = file_of_interest_name
+        self.file_of_reference = file_of_reference_name
+        self.number_of_analyzed_object_of_interest = number_of_object_of_interest
+        self.number_of_analyzed_object_of_reference = number_of_genes_in_reference
+        self.alpha = alpha
+        self.normal_approximation_threshold = threshold_normal_approximation
         self.statistic_method = ""
-        self.normal_approximation_threshold = 0
 
     def get_object_to_analyze(self):
         return self.object_to_analyze
@@ -353,8 +353,8 @@ class EnrichmentAnalysis():
 
 class GOEnrichmentAnalysis(EnrichmentAnalysis):
 
-    def __init__(self, column_name, d_go_label_to_number):
-        EnrichmentAnalysis.__init__(self, column_name)
+    def __init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation, d_go_label_to_number):
+        EnrichmentAnalysis.__init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation)
         self.output_columns.append("GOLabel")
         self.gos_labels_to_numbers = d_go_label_to_number
 

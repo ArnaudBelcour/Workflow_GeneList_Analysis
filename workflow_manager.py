@@ -39,7 +39,7 @@ def workflow_mainager():
     sentence_choice = "Write the name of your input file containing differentially expressed gene : "
     name_de_input_file = input(sentence_choice)
     input_listde_file_gestion = FileManagementGeneGOsInterest(name_de_input_file, 'gene_list', 'GOs',
-                                                                name_reference_input_file[:-len(input_genome_file_gestion.file_extension())])
+                                                                name_reference_input_file[:-len(input_genome_file_gestion.file_extension)])
     file_of_interest_name, number_of_gene = input_listde_file_gestion.file_gene_gos_gestion()
 
     d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'inverse')
@@ -50,7 +50,7 @@ def workflow_mainager():
     sentence_choice_alpha = "Enter the alpha risk : "
     alpha = float(input(sentence_choice_alpha))
 
-    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', d_go_label_to_number, file_of_interest_name, file_of_genome_name, number_of_gene, number_of_genes_in_genome, alpha, 10000)
+    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', file_of_interest_name, file_of_genome_name, number_of_gene, number_of_genes_in_genome, alpha, 10000, d_go_label_to_number)
     go_enrichment_analysis.enrichment_analysis()
 
 workflow_mainager()

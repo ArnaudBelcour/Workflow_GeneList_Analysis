@@ -14,12 +14,12 @@ def extract_information_from_uniprot(file_name, extension_file):
         Requests the SPARQL endpoint of Uniprot to retrieve (from Ensembl transcrit ID) GO terms, interpro, pfam/supfam and prosites.
         The file taken as input file contains each gene associated with the result of a blast (that's the thing with 'hypothetical protein').
     '''
-    column_name = input("What is the name of the blast results? ")
+    column_name = input("What is the name of the column of the blast results? ")
 
     if extension_file == '.xls':
-        results_dataframe = pa.read_excel(input_directory + file_name, + extension_file, sep = None, na_values = "")
+        df_genome = pa.read_excel(input_directory + file_name + extension_file, sep = None, na_values = "")
     else:
-        results_dataframe = pa.read_csv(input_directory + file_name, + extension_file, sep = None, engine = "python", na_values = "")
+        df_genome = pa.read_csv(input_directory + file_name + extension_file, sep = None, engine = "python", na_values = "")
 
     df_genome[column_name] = df_genome[column_name].str[len('CEP03957.1hypothetical protein '):]
     df_genome[column_name] = df_genome[column_name].str.replace(", partial", "")
@@ -27,7 +27,7 @@ def extract_information_from_uniprot(file_name, extension_file):
     df_genome.set_index("SeqName_eH")
 
     for gene, row in df_genome.iterrows():
-        transcript = 'ensembl:' + row['Blast_sur_e3']
+        transcript = 'ensembl:' + row[column_name]
         gos_found = []
         sparql = SPARQLWrapper('http://beta.sparql.uniprot.org/sparql')
         sparql.setQuery("""

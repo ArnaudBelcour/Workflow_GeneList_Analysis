@@ -657,7 +657,7 @@ class FileManagementGeneGOs(FileManagement):
 
         self.column_go_cleaning()
 
-        #self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
+        self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
 
         if self.type_file == 'gene_list':
             genome_file_temporary_name, number_of_gene = self.counting_gene_list(name_of_the_file, 'Counts', analyzed_object_name)

@@ -38,6 +38,8 @@ def go_term_ancestor(go):
     for result in results["results"]["bindings"]:
         go_ancestors.append(result["goAnc"]["value"][31:])
 
+    go_ancestors = [go.replace("__", "_") for go in go_ancestors]
+
     return go_ancestors
 
 def union_go_and_their_ancestor(gos):

@@ -9,25 +9,18 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 
 from . import *
 
-def extract_information_from_uniprot(file_name, extension_file):
+def extract_information_from_uniprot(results_dataframe):
     '''
         Requests the SPARQL endpoint of Uniprot to retrieve (from Ensembl transcrit ID) GO terms, interpro, pfam/supfam and prosites.
         The file taken as input file contains each gene associated with the result of a blast (that's the thing with 'hypothetical protein').
     '''
-    column_name = input("What is the name of the column of the blast results? ")
+    results_dataframe['Blast'] = results_dataframe['Blast'].str[len('CEP03957.1hypothetical protein '):]
+    results_dataframe['Blast'] = results_dataframe['Blast'].str.replace(", partial", "")
 
-    if extension_file == '.xls':
-        df_genome = pa.read_excel(input_directory + file_name + extension_file, sep = None, na_values = "")
-    else:
-        df_genome = pa.read_csv(input_directory + file_name + extension_file, sep = None, engine = "python", na_values = "")
+    results_dataframe.set_index("Gene_Name")
 
-    df_genome[column_name] = df_genome[column_name].str[len('CEP03957.1hypothetical protein '):]
-    df_genome[column_name] = df_genome[column_name].str.replace(", partial", "")
-
-    df_genome.set_index("SeqName_eH")
-
-    for gene, row in df_genome.iterrows():
-        transcript = 'ensembl:' + row[column_name]
+    for gene, row in results_dataframe.iterrows():
+        transcript = 'ensembl:' + row['Blast']
         gos_found = []
         sparql = SPARQLWrapper('http://beta.sparql.uniprot.org/sparql')
         sparql.setQuery("""
@@ -93,13 +86,13 @@ def extract_information_from_uniprot(file_name, extension_file):
                 data = data[len('prosite/'):]
                 prosites.append(data)
 
-        if type(row['Gos']) is float:
-            df_genome.set_value(gene, 'Gos', str(gos_found))
-        if row['InterPro IDs'] == 'no IPS match':
-            df_genome.set_value(gene, 'InterPro IDs', str(interpros))
+        if type(row['GOs']) is float:
+            results_dataframe.set_value(gene, 'GOs', str(gos_found))
+        if row['InterProScan'] == 'no IPS match':
+            results_dataframe.set_value(gene, 'InterProScan', str(interpros))
 
-        df_genome.set_value(gene, 'supFams', str(supfams))
-        df_genome.set_value(gene, 'pfams', str(pfams))
-        df_genome.set_value(gene, 'prosites', str(prosites))
+        #results_dataframe.set_value(gene, 'supFams', str(supfams))
+        #results_dataframe.set_value(gene, 'pfams', str(pfams))
+        #results_dataframe.set_value(gene, 'prosites', str(prosites))
 
-    df_genome.to_csv(temporary_directory + file_name + '.tsv', sep = "\t")
+    return results_dataframe

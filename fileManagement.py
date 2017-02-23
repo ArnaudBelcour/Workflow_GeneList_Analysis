@@ -564,8 +564,15 @@ class FileManagement():
             name_gene_column = input("Write the name of the column containing the gene names : ")
 
         go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)
-        results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
-        results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
+
+        yes_or_no = input("Do you want to try to retrieve data from blast results? ").lower()
+        if yes_or_no in yes_answers :
+            column_name = input("What is the name of the column of the blast results? ")
+            results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column, column_name]]
+            results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan', 'Blast']]
+        else:
+            results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
+            results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
 
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("C:", "")
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("P:", "")
@@ -573,32 +580,31 @@ class FileManagement():
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace(":", "_")
         results_dataframe['GOs'] = results_dataframe['GOs'].str.split(";")
 
-        yes_or_no = input("Do you want to try to retrieve data from blast results? ")
-        if yes_or_no.lower() in yes_answers :
-            uniprot_retrieval_data.extract_information_from_uniprot(name_input_file, extension_input_file)
+        if yes_or_no in yes_answers :
+            results_dataframe = uniprot_retrieval_data.extract_information_from_uniprot(results_dataframe)
 
         d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'normal')
 
         results_dataframe = self.cleaning_value(results_dataframe, '-')
         results_dataframe = self.cleaning_nan_value(results_dataframe, 'GOs')
 
-        translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
-        results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
+        #translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
+        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
 
-        correction_Synonym_Issues = lambda x : self.fix_problems_with_synonym(x,  d_go_label_to_number, d_go_label_with_synonym)
-        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_Synonym_Issues)
+        #correction_Synonym_Issues = lambda x : self.fix_problems_with_synonym(x,  d_go_label_to_number, d_go_label_with_synonym)
+        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_Synonym_Issues)
 
-        correction_obsolete_go = lambda x: self.fix_obsolete_go_term(x, d_go_label_to_number, d_go_label_with_synonym)
-        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_obsolete_go)
+        #correction_obsolete_go = lambda x: self.fix_obsolete_go_term(x, d_go_label_to_number, d_go_label_with_synonym)
+        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_obsolete_go)
 
-        correction_n_or_l = lambda x: self.fix_wrong_n_or_l_term(x, d_go_label_to_number, d_go_label_with_synonym)
-        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_n_or_l)
+        #correction_n_or_l = lambda x: self.fix_wrong_n_or_l_term(x, d_go_label_to_number, d_go_label_with_synonym)
+        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_n_or_l)
 
-        correction_terms_issue = lambda x : self.fix_terms_issue(x, d_go_label_to_number, d_go_label_with_synonym)
-        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_terms_issue)
+        #correction_terms_issue = lambda x : self.fix_terms_issue(x, d_go_label_to_number, d_go_label_with_synonym)
+        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_terms_issue)
 
-        correction_dash_issue = lambda x : self.fix_dash_in_excess(x, d_go_label_to_number, d_go_label_with_synonym)
-        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_dash_issue)
+        #correction_dash_issue = lambda x : self.fix_dash_in_excess(x, d_go_label_to_number, d_go_label_with_synonym)
+        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_dash_issue)
 
         self.rewriting_file(results_dataframe, name_input_file + "GOsTranslatedAndFixed.tsv")
 
@@ -657,14 +663,16 @@ class FileManagementGeneGOs(FileManagement):
 
         self.column_go_cleaning()
 
-        self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
+        if self.type_file == 'genome':
+            self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
+            genome_file_temporary_name = self.counting_genome(name_of_the_file, 'CountsReference', analyzed_object_name)
+
+            return genome_file_temporary_name
 
         if self.type_file == 'gene_list':
             genome_file_temporary_name, number_of_gene = self.counting_gene_list(name_of_the_file, 'Counts', analyzed_object_name)
+
             return genome_file_temporary_name, number_of_gene
-        if self.type_file == 'genome':
-            genome_file_temporary_name = self.counting_genome(name_of_the_file, 'CountsReference', analyzed_object_name)
-            return genome_file_temporary_name
 
 class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 

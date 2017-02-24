@@ -5,6 +5,7 @@ import math
 import os
 import pandas as pa
 import re
+import shutil
 import six
 
 from ast import literal_eval
@@ -17,8 +18,9 @@ temporary_directory = 'temporaryFiles/'
 
 class FileManagement():
 
-    def __init__(self, name_of_the_file):
+    def __init__(self, name_of_the_file, already_analyzed_t_f):
         self._file_name, self._file_extension = os.path.splitext(name_of_the_file)
+        self._already_analyzed_file_tf = self.string_to_boolean(already_analyzed_t_f)
 
     @property
     def file_name(self):
@@ -35,6 +37,17 @@ class FileManagement():
     @file_extension.setter
     def file_extension(self, extension):
         self._file_extension = extension
+
+    @property
+    def already_analyzed_file_tf(self):
+        return self._already_analyzed_file_tf
+
+    @already_analyzed_file_tf.setter
+    def already_analyzed_file_tf(self, boolean_response):
+        self._already_analyzed_file_tf = self.string_to_boolean(boolean_response)
+
+    def string_to_boolean(self, value):
+        return value.lower() in ("yes", "true", "y", "t", "1")
 
     def go_label_number_dictionnary_creation(self, file_name, specification):
         d_go_label_to_number = {}
@@ -460,6 +473,25 @@ class FileManagement():
 
         return gos_numbers
 
+    def go_translation(results_dataframe, d_go_label_to_number, d_go_label_with_synonym):
+        translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
+
+        correction_Synonym_Issues = lambda x : self.fix_problems_with_synonym(x,  d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_Synonym_Issues)
+
+        correction_obsolete_go = lambda x: self.fix_obsolete_go_term(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_obsolete_go)
+
+        correction_n_or_l = lambda x: self.fix_wrong_n_or_l_term(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_n_or_l)
+
+        correction_terms_issue = lambda x : self.fix_terms_issue(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_terms_issue)
+
+        correction_dash_issue = lambda x : self.fix_dash_in_excess(x, d_go_label_to_number, d_go_label_with_synonym)
+        results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_dash_issue)
+
     def cleaning_value(self, dataframe, value):
         value_dataframe = dataframe[dataframe.GOs.str.match(value) == True]
 
@@ -482,16 +514,13 @@ class FileManagement():
         newtable.to_csv(temporary_directory + file_name, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
     def find_column_of_interest(self, df):
-        columns = []
+        columns = df.columns.tolist()
 
         go_label_expression = r"[FPC]{1}:[\w]*"
-        go_number_expression = r"[FPC]{1}:GO:[\d]{7}"
+        go_number_expression = r"GO[:_][\d]{7}"
         ec_expression = r"EC:[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,2}"
         ipr_expression = r"IPR[\d]{6}"
         ko_kegg_expression = r"K[\d]{5}"
-
-        for column in df:
-            columns.append(column)
 
         go_label_columns = {}
         go_number_columns = {}
@@ -508,22 +537,22 @@ class FileManagement():
                         go_label_columns[column] += 1
                     else:
                         go_label_columns[column] = 1
-                if re.match(go_number_expression, column_values):
+                elif re.match(go_number_expression, column_values):
                     if column in go_number_columns:
                         go_number_columns[column] += 1
                     else:
                         go_number_columns[column] = 1
-                if re.match(ec_expression, column_values):
+                elif re.match(ec_expression, column_values):
                     if column in ec_columns:
                         ec_columns[column] += 1
                     else:
                         ec_columns[column] = 1
-                if re.match(ipr_expression, column_values):
+                elif re.match(ipr_expression, column_values):
                     if column in ipr_columns:
                         ipr_columns[column] += 1
                     else:
                         ipr_columns[column] = 1
-                if re.match(ko_kegg_expression, column_values):
+                elif re.match(ko_kegg_expression, column_values):
                     if column in ko_keggs:
                         ko_keggs[column] += 1
                     else:
@@ -531,16 +560,16 @@ class FileManagement():
 
         if go_number_columns:
             go_number_column = max(go_number_columns, key = go_number_columns.get)
+            go_column = go_number_column
             go_label_columns.pop(go_number_column, None)
-        go_label_column = max(go_label_columns, key = go_label_columns.get)
         ec_column = max(ec_columns, key = ec_columns.get)
         ipr_column = max(ipr_columns, key = ipr_columns.get)
         if ko_keggs:
             ko_kegg = max(ko_keggs, key = ko_keggs.get)
 
-        if go_number_columns:
-            go_column = go_number_column
-        elif not go_number_columns:
+        go_label_column = max(go_label_columns, key = go_label_columns.get)
+
+        if not go_number_columns:
             go_column = go_label_column
 
         return go_column, ec_column, ipr_column
@@ -583,35 +612,17 @@ class FileManagement():
         if yes_or_no in yes_answers :
             results_dataframe = uniprot_retrieval_data.extract_information_from_uniprot(results_dataframe)
 
-        d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'normal')
-
         results_dataframe = self.cleaning_value(results_dataframe, '-')
         results_dataframe = self.cleaning_nan_value(results_dataframe, 'GOs')
 
-        #translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
-        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
-
-        #correction_Synonym_Issues = lambda x : self.fix_problems_with_synonym(x,  d_go_label_to_number, d_go_label_with_synonym)
-        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_Synonym_Issues)
-
-        #correction_obsolete_go = lambda x: self.fix_obsolete_go_term(x, d_go_label_to_number, d_go_label_with_synonym)
-        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_obsolete_go)
-
-        #correction_n_or_l = lambda x: self.fix_wrong_n_or_l_term(x, d_go_label_to_number, d_go_label_with_synonym)
-        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_n_or_l)
-
-        #correction_terms_issue = lambda x : self.fix_terms_issue(x, d_go_label_to_number, d_go_label_with_synonym)
-        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_terms_issue)
-
-        #correction_dash_issue = lambda x : self.fix_dash_in_excess(x, d_go_label_to_number, d_go_label_with_synonym)
-        #results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_dash_issue)
-
         self.rewriting_file(results_dataframe, name_input_file + "GOsTranslatedAndFixed.tsv")
+
+        return name_input_file + "GOsTranslatedAndFixed.tsv"
 
 class FileManagementGeneGOs(FileManagement):
 
-    def __init__(self, name_of_the_file, type_of_the_file, column_name):
-        FileManagement.__init__(self, name_of_the_file)
+    def __init__(self, name_of_the_file, already_analyzed_tf, type_of_the_file, column_name):
+        FileManagement.__init__(self, name_of_the_file, already_analyzed_tf)
         self._analyzed_object = column_name
         self._type_file = type_of_the_file
 
@@ -631,14 +642,14 @@ class FileManagementGeneGOs(FileManagement):
     def type_file(self, type_name):
         self._type_file = type_name
 
-    def go_ancestors_list_of_interest(self, column_analyzed_object, name_input_file):
+    def go_ancestors_list_of_interest(self, column_analyzed_object, file_name_temporary):
 
-        df = pa.read_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t')
+        df = pa.read_csv(temporary_directory + file_name_temporary, '\t')
 
         for index, row in df.iterrows():
             row[column_analyzed_object] = ancestor_go_extraction.union_go_and_their_ancestor(literal_eval(row[column_analyzed_object]))
 
-        df.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", '\t', index = False)
+        df.to_csv(temporary_directory + file_name_temporary, '\t', index = False)
 
     def create_gene_object_analysis_file(self, file_name, columns_names, column_analyzed_object):
         df = pa.read_csv(temporary_directory + file_name, sep = "\t")
@@ -661,27 +672,32 @@ class FileManagementGeneGOs(FileManagement):
         name_of_the_file = self.file_name
         extension_of_the_file  = self.file_extension
 
-        self.column_go_cleaning()
+        if self.already_analyzed_file_tf == True and self.type_file == 'genome':
+            shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory) 
+            file_name_temporary = name_of_the_file + extension_of_the_file
+        if self.already_analyzed_file_tf == False:
+            file_name_temporary = self.column_go_cleaning()
 
         if self.type_file == 'genome':
-            self.go_ancestors_list_of_interest(analyzed_object_name, name_of_the_file)
-            genome_file_temporary_name = self.counting_genome(name_of_the_file, 'CountsReference', analyzed_object_name)
+            if self.already_analyzed_file_tf == False:
+                self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
+            counting_object_file = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
 
-            return genome_file_temporary_name
+            return file_name_temporary, counting_object_file
 
         if self.type_file == 'gene_list':
-            genome_file_temporary_name, number_of_gene = self.counting_gene_list(name_of_the_file, 'Counts', analyzed_object_name)
+            counting_object_file, number_of_gene = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
 
-            return genome_file_temporary_name, number_of_gene
+            return counting_object_file, number_of_gene
 
 class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 
-    def __init__(self, name_of_the_file, type_of_the_file, column_name):
-        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
+    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name):
+        FileManagementGeneGOs.__init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name)
 
-    def counting_genome(self, file_name, column_name, column_analyzed_object):
+    def counting_genome(self, file_name_temporary, column_name, column_analyzed_object):
         analyzed_objects = []
-        df = pa.read_csv(temporary_directory + file_name + "GOsTranslatedAndFixed.tsv", sep="\t")
+        df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
 
         for index, row in df.iterrows():
             for analyzed_object in literal_eval(row[column_analyzed_object]):
@@ -699,8 +715,8 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 
 class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
-    def __init__(self, name_of_the_file, type_of_the_file, column_name, file_name_genome):
-        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
+    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name, file_name_genome):
+        FileManagementGeneGOs.__init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name)
         self._file_genome_reference_name = file_name_genome
 
     @property
@@ -711,13 +727,13 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
     def genome_file_reference_name(self, file_name):
         self._file_genome_reference_name = file_name
 
-    def counting_gene_list(self, file_name, column_name, column_analyzed_object):
+    def counting_gene_list(self, file_name_temporary, column_name, column_analyzed_object):
         analyzed_objects = []
-        df = pa.read_csv(temporary_directory + file_name + "GOsTranslatedAndFixed.tsv", sep = "\t")
+        df = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
         df = df[['Gene_Name']]
         df = df.set_index("Gene_Name")
 
-        df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name + "GOsTranslatedAndFixed.tsv", sep = "\t")
+        df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name, sep = "\t")
         df_genome = df_genome[['Gene_Name', 'GOs']]
         df_genome = df_genome.set_index("Gene_Name")
 
@@ -742,8 +758,8 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
 class FileManagementGeneGO(FileManagement):
 
-    def __init__(self, name_of_the_file, type_of_the_file, column_name):
-        FileManagement.__init__(self, name_of_the_file)
+    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name):
+        FileManagement.__init__(self, name_of_the_file, already_analyzed_t_f)
         self._analyzed_object = column_name
         self._type_file = type_of_the_file
 
@@ -776,8 +792,8 @@ class FileManagementGeneGO(FileManagement):
 
 class FileManagementGeneGOGenome(FileManagementGeneGO):
 
-    def __init__(self, name_of_the_file, type_of_the_file, column_name):
-        FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
+    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name):
+        FileManagementGeneGO.__init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name)
 
     def genome_file_processing(self, genome_file_name):
         df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep = "\t", header = None)
@@ -827,8 +843,8 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
 
 class FileManagementGeneGOInterest(FileManagementGeneGO):
 
-    def __init__(self, name_of_the_file, type_of_the_file, column_name, file_name_genome):
-        FileManagement.__init__(self, name_of_the_file)
+    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name, file_name_genome):
+        FileManagement.__init__(self, name_of_the_file, already_analyzed_t_f)
         self._file_genome_reference_name = file_name_genome
 
     @property

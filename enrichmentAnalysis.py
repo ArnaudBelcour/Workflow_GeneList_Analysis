@@ -33,6 +33,7 @@ class EnrichmentAnalysis():
         self._alpha = alpha
         self._normal_approximation_threshold = threshold_normal_approximation
         self._statistic_method = ""
+        self.multiple_test_names = ['Sidak', 'Bonferroni', 'Holm', 'SGoF', 'BenjaminiHochberg']
 
     @property
     def object_to_analyze(self):
@@ -187,9 +188,7 @@ class EnrichmentAnalysis():
 
         significative_objects = {}
 
-        multiple_test_names = ['Sidak', 'Bonferroni', 'Holm', 'SGoF', 'BenjaminiHochberg']
-
-        for multiple_test_name in multiple_test_names:
+        for multiple_test_name in self.multiple_test_names:
             if multiple_test_name == 'Sidak':
                 error_rate = self.error_rate_adjustement_sidak(df)
             elif multiple_test_name == 'Bonferroni':
@@ -206,6 +205,11 @@ class EnrichmentAnalysis():
         return df, significative_objects
 
     def writing_output(self, df, significative_objects, over_or_underrepresentation, approximation_yes_or_no, yes_answers):
+        '''
+        For the second results file (file with significative objects):
+        Results are writing using sorted(dictionnary): so the list of result correspond to : Sidak (position 4 in the list), Bonferroni (position 1),
+        Holm (position 2), SGoF (position 3) and Benjamini and Hochberg (position 0).
+        '''
         df = df.sort_values(['pValueBenjaminiHochberg'])
 
         if approximation_yes_or_no in yes_answers:
@@ -227,26 +231,24 @@ class EnrichmentAnalysis():
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow([self.object_to_analyze + 'Sidak', self.object_to_analyze + 'Bonferroni', self.object_to_analyze + 'Holm', self.object_to_analyze + 'SGoF', self.object_to_analyze + 'BenjaminiHochberg'])
 
-        for index in range(len(significative_objects['BenjaminiHochberg'])):
-            if index in range(len(significative_objects['Sidak'])):
-                object_significatives_SidakValue =  significative_objects['Sidak'][index]
-            else :
-                object_significatives_SidakValue =  'nan'
-            if index in range(len(significative_objects['Bonferroni'])):
-                object_significatives_bonferroniValue =  significative_objects['Bonferroni'][index]
-            else :
-                object_significatives_bonferroniValue =  'nan'
-            if index in range(len(significative_objects['Holm'])):
-                object_significatives_holmValue =  significative_objects['Holm'][index]
-            else :
-                object_significatives_holmValue =  'nan'
-            if index in range(len(significative_objects['SGoF'])):
-                object_significatives_sgofValue =  significative_objects['SGoF'][index]
-            else :
-                object_significatives_sgofValue =  'nan'
+        number_significatives_per_method = {}
 
-            writer.writerow([object_significatives_SidakValue, object_significatives_bonferroniValue, object_significatives_holmValue, \
-            object_significatives_sgofValue, significative_objects['BenjaminiHochberg'][index]])
+        for method in significative_objects:
+            number_significatives_per_method[method] = len(significative_objects[method])
+
+        max_significatives_method = max(number_significatives_per_method, key = number_significatives_per_method.get)
+
+        for index in range(len(significative_objects[max_significatives_method])):
+            results = []
+            for method in sorted(significative_objects):
+                if index in range(len(significative_objects[method])):
+                    object_significatives_value =  significative_objects[method][index]
+                else :
+                    object_significatives_value =  'nan'
+                results.append(object_significatives_value)
+
+            writer.writerow([results[4], results[1], results[2], \
+            results[3], results[0]])
 
         csvfile.close()
 
@@ -402,9 +404,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         significative_objects = {}
         translation_gos_labels_to_numbers = self.gos_labels_to_numbers
 
-        multiple_test_names = ['Sidak', 'Bonferroni', 'Holm', 'SGoF', 'BenjaminiHochberg']
-
-        for multiple_test_name in multiple_test_names:
+        for multiple_test_name in self.multiple_test_names:
             if multiple_test_name == 'Sidak':
                 error_rate = self.error_rate_adjustement_sidak(df)
             elif multiple_test_name == 'Bonferroni':

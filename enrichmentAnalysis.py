@@ -113,20 +113,20 @@ class EnrichmentAnalysis():
     def normal_approximation_threshold(self, value):
         self._normal_approximation_threshold = value
 
-    def hypergeometric_test_on_dataframe(self, df, over_or_underrepresentation, genome_columns):
+    def hypergeometric_test_on_dataframe(self, df, over_or_underrepresentation, reference_column):
         analyzed_objects_with_hypergeo_test_nan = []
 
         approximation_threshold = self.normal_approximation_threshold
 
         for analyzed_object, row in df.iterrows():
-            if math.isnan(df.get_value(analyzed_object, genome_columns)):
+            if math.isnan(df.get_value(analyzed_object, reference_column)):
                 df = df.drop([analyzed_object])
             else:
                 if row['Counts'] < approximation_threshold:
-                    self.compute_hypergeometric_test(analyzed_object, row['Counts'], row[genome_columns], df, over_or_underrepresentation)
+                    self.compute_hypergeometric_test(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
 
                 elif row['Counts'] > approximation_threshold:
-                    self.compute_normal_approximation(analyzed_object, row['Counts'], row[genome_columns], df, over_or_underrepresentation)
+                    self.compute_normal_approximation(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
 
                 if math.isnan(df.get_value(analyzed_object, self.statistic_method)):
                     analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)

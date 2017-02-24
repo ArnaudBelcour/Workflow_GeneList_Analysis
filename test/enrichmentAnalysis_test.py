@@ -3,7 +3,6 @@ import scipy.stats as stats
 import sys
 import unittest
 
-from pandas.util.testing import assert_frame_equal
 sys.path.append("..")
 
 from enrichmentAnalysis import EnrichmentAnalysis

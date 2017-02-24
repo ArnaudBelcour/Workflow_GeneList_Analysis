@@ -187,22 +187,21 @@ class EnrichmentAnalysis():
 
         significative_objects = {}
 
-        error_rate_sidak = self.error_rate_adjustement_sidak(df)
-        object_significatives_Sidak = self.selection_object_with_adjusted_error_rate(error_rate_sidak, df)
-        significative_objects['Sidak'] = object_significatives_Sidak
+        multiple_test_names = ['Sidak', 'Bonferroni', 'Holm', 'SGoF', 'BenjaminiHochberg']
 
-        error_rate_bonferroni = self.error_rate_adjustement_bonferroni(df)
-        object_significatives_bonferroni = self.selection_object_with_adjusted_error_rate(error_rate_bonferroni, df)
-        significative_objects['Bonferroni'] = object_significatives_bonferroni
+        for multiple_test_name in multiple_test_names:
+            if multiple_test_name == 'Sidak':
+                error_rate = self.error_rate_adjustement_sidak(df)
+            elif multiple_test_name == 'Bonferroni':
+                error_rate = self.error_rate_adjustement_bonferroni(df)
+            if multiple_test_name in ['Sidak', 'Bonferroni']:
+                object_significatives = self.selection_object_with_adjusted_error_rate(error_rate, df)
+            elif multiple_test_name in ['Holm', 'BenjaminiHochberg']:
+                object_significatives = self.selection_object_with_adjusted_pvalue(multiple_test_name, df)
+            elif multiple_test_name == 'SGoF':
+                object_significatives = self.selection_object_with_sgof(multiple_test_name, df)
 
-        object_significatives_holm = self.selection_object_with_adjusted_pvalue("Holm", df)
-        significative_objects['Holm'] = object_significatives_holm
-
-        object_significatives_sgof = self.selection_object_with_sgof("SGoF", df)
-        significative_objects['SGoF'] = object_significatives_sgof
-
-        object_significatives_benjamini_hochberg = self.selection_object_with_adjusted_pvalue("BenjaminiHochberg", df)
-        significative_objects['BenjaminiHochberg'] = object_significatives_benjamini_hochberg
+            significative_objects[multiple_test_name] = object_significatives
 
         return df, significative_objects
 
@@ -353,29 +352,19 @@ class EnrichmentAnalysis():
             df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InInterest', self.percentage_calculation(row['Counts'], self.number_of_analyzed_object_of_interest))
 
         if yes_or_no in yes_answers:
-            df_joined_approximation = self.counting_approximation(df_joined)
-            for analyzed_object, row in df_joined_approximation.iterrows():
-                df_joined_approximation.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference', self.percentage_calculation(row['CountsTotal'], self.number_of_analyzed_object_of_reference))
-
-            df_joined_overrepresentation = self.hypergeometric_test_on_dataframe(df_joined_approximation, "over", 'CountsTotal')
-            df_joined_overrepresentation, significative_objects = self.multiple_testing_correction(df_joined_overrepresentation)
-            self.writing_output(df_joined_overrepresentation, significative_objects, "over", yes_or_no, yes_answers)
-
-            df_joined_underrepresentation = self.hypergeometric_test_on_dataframe(df_joined_approximation, "under", 'CountsTotal')
-            df_joined_underrepresentation, significative_objects = self.multiple_testing_correction(df_joined_underrepresentation)
-            self.writing_output(df_joined_underrepresentation, significative_objects, "under", yes_or_no, yes_answers)
-
+            df_joined = self.counting_approximation(df_joined)
+            count_column_name = 'CountsTotal'
         else:
-            for analyzed_object, row in df_joined.iterrows():
-                df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference', self.percentage_calculation(row['CountsReference'], self.number_of_analyzed_object_of_reference))
+            count_column_name = 'CountsReference'
 
-            df_joined_overrepresentation = self.hypergeometric_test_on_dataframe(df_joined, "over", 'CountsReference')
-            df_joined_overrepresentation, significative_objects = self.multiple_testing_correction(df_joined_overrepresentation)
-            self.writing_output(df_joined_overrepresentation, significative_objects, "over", yes_or_no, yes_answers)
+        for analyzed_object, row in df_joined.iterrows():
+            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference', self.percentage_calculation(row[count_column_name], self.number_of_analyzed_object_of_reference))
 
-            df_joined_underrepresentation = self.hypergeometric_test_on_dataframe(df_joined, "under", 'CountsReference')
-            df_joined_underrepresentation, significative_objects = self.multiple_testing_correction(df_joined_underrepresentation)
-            self.writing_output(df_joined_underrepresentation, significative_objects, "under", yes_or_no, yes_answers)
+        over_unders = ['over', 'under']
+        for over_under in over_unders:
+            df_joined_over_under = self.hypergeometric_test_on_dataframe(df_joined, over_under, count_column_name)
+            df_joined_over_under, significative_objects = self.multiple_testing_correction(df_joined_over_under)
+            self.writing_output(df_joined_over_under, significative_objects, over_under, yes_or_no, yes_answers)
 
 
 class GOEnrichmentAnalysis(EnrichmentAnalysis):
@@ -413,27 +402,22 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         significative_objects = {}
         translation_gos_labels_to_numbers = self.gos_labels_to_numbers
 
-        error_rate_sidak = self.error_rate_adjustement_sidak(df)
-        object_significatives_Sidak = self.selection_object_with_adjusted_error_rate(error_rate_sidak, df)
-        go_label_significatives_sidak = self.tranlsation_go_number_to_go_label(object_significatives_Sidak, translation_gos_labels_to_numbers)
-        significative_objects['Sidak'] = go_label_significatives_sidak
+        multiple_test_names = ['Sidak', 'Bonferroni', 'Holm', 'SGoF', 'BenjaminiHochberg']
 
-        error_rate_bonferroni = self.error_rate_adjustement_bonferroni(df)
-        object_significatives_bonferroni = self.selection_object_with_adjusted_error_rate(error_rate_bonferroni, df)
-        go_label_significatives_bonferroni= self.tranlsation_go_number_to_go_label(object_significatives_bonferroni, translation_gos_labels_to_numbers)
-        significative_objects['Bonferroni'] = go_label_significatives_bonferroni
+        for multiple_test_name in multiple_test_names:
+            if multiple_test_name == 'Sidak':
+                error_rate = self.error_rate_adjustement_sidak(df)
+            elif multiple_test_name == 'Bonferroni':
+                error_rate = self.error_rate_adjustement_bonferroni(df)
+            if multiple_test_name in ['Sidak', 'Bonferroni']:
+                object_significatives = self.selection_object_with_adjusted_error_rate(error_rate, df)
+            elif multiple_test_name in ['Holm', 'BenjaminiHochberg']:
+                object_significatives = self.selection_object_with_adjusted_pvalue(multiple_test_name, df)
+            elif multiple_test_name == 'SGoF':
+                object_significatives = self.selection_object_with_sgof(multiple_test_name, df)
 
-        object_significatives_holm = self.selection_object_with_adjusted_pvalue("Holm", df)
-        go_label_significatives_holm = self.tranlsation_go_number_to_go_label(object_significatives_holm, translation_gos_labels_to_numbers)
-        significative_objects['Holm'] = go_label_significatives_holm
-
-        object_significatives_sgof = self.selection_object_with_sgof("SGoF", df)
-        go_label_significatives_sgof = self.tranlsation_go_number_to_go_label(object_significatives_sgof, translation_gos_labels_to_numbers)
-        significative_objects['SGoF'] = go_label_significatives_sgof
-
-        object_significatives_benjamini_hochberg = self.selection_object_with_adjusted_pvalue("BenjaminiHochberg", df)
-        go_label_significatives_benjamini_hochberg = self.tranlsation_go_number_to_go_label(object_significatives_benjamini_hochberg, translation_gos_labels_to_numbers)
-        significative_objects['BenjaminiHochberg'] = go_label_significatives_benjamini_hochberg
+            go_label_significatives = self.tranlsation_go_number_to_go_label(object_significatives, translation_gos_labels_to_numbers)
+            significative_objects[multiple_test_name] = go_label_significatives
 
         for go, row in df.iterrows():
             if go in translation_gos_labels_to_numbers:

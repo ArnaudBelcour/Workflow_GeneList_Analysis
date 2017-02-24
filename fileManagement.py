@@ -473,7 +473,9 @@ class FileManagement():
 
         return gos_numbers
 
-    def go_translation(results_dataframe, d_go_label_to_number, d_go_label_with_synonym):
+    def go_translation(results_dataframe):
+        d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", "normal")
+
         translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
         results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
 
@@ -491,6 +493,8 @@ class FileManagement():
 
         correction_dash_issue = lambda x : self.fix_dash_in_excess(x, d_go_label_to_number, d_go_label_with_synonym)
         results_dataframe['GOs'] = results_dataframe['GOs'].apply(correction_dash_issue)
+
+        return results_dataframe
 
     def cleaning_value(self, dataframe, value):
         value_dataframe = dataframe[dataframe.GOs.str.match(value) == True]

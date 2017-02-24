@@ -207,7 +207,7 @@ class EnrichmentAnalysis():
     def writing_output(self, df, significative_objects, over_or_underrepresentation, approximation_yes_or_no, yes_answers):
         '''
         For the second results file (file with significative objects):
-        Results are writing using sorted(dictionnary): so the list of result correspond to : Sidak (position 4 in the list), Bonferroni (position 1),
+        Results are written using sorted(dictionnary), so the list of result corresponds to : Sidak (position 4 in the list), Bonferroni (position 1),
         Holm (position 2), SGoF (position 3) and Benjamini and Hochberg (position 0).
         '''
         df = df.sort_values(['pValueBenjaminiHochberg'])

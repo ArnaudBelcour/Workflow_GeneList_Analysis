@@ -1,0 +1,5 @@
+pvalue_hypergeometric	PvalueBonferroni	PvalueHolm	pValueBenjaminiHochberg	Sidak
+0.3587	1	0.4096	0.3587	0.8309
+0.1663	0.6653	0.4096	0.3326	0.5169
+0.1365	0.5462	0.4096	0.3326	0.4441
+0.0117	0.047	0.047	0.047	0.0462

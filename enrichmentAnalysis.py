@@ -304,7 +304,6 @@ class EnrichmentAnalysis():
         return df
 
     def correction_sgof(self, df):
-        F = len(df.index) * self.alpha
         df = df.sort_values("pvalue_hypergeometric")
         R = 0
 
@@ -315,7 +314,8 @@ class EnrichmentAnalysis():
         object_significatives = []
         row_number = 0
         while stats.binom_test(R, len(df), p = self.alpha) < self.alpha and R > 0:
-            df.set_value(row_number, 'pValueSGoF', 'significant')
+
+            df.set_value(row_number, 'pValueSGoF', float(stats.binom_test(R, len(df), p = self.alpha)))
             object_significatives.append(df.iloc[row_number][self.object_to_analyze])
             R = R - 1
             row_number = row_number + 1
@@ -325,9 +325,9 @@ class EnrichmentAnalysis():
         for analyzed_object, row in df.iterrows():
             try:
                 if analyzed_object not in object_significatives:
-                    df.set_value(analyzed_object, 'pValueSGoF', 'nonSignificant')
+                    df.set_value(analyzed_object, 'pValueSGoF', 1)
             except:
-                df.set_value(analyzed_object, 'pValueSGoF', 'nonSignificant')
+                df.set_value(analyzed_object, 'pValueSGoF', 1)
 
         return df
 

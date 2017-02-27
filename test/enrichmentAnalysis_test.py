@@ -103,6 +103,7 @@ class enrichmentAnalysis_test(unittest.TestCase):
     def test_correction_benjamini_hochberg(self):
         '''
         Datas are from : http://www.pmean.com/05/MultipleComparisons.asp
+                        https://journal.r-project.org/archive/2014-2/conde-alvarez.pdf
         '''
         print("\nTesting Benjamini and Hochberg multiple testing correction ")
         pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
@@ -114,6 +115,22 @@ class enrichmentAnalysis_test(unittest.TestCase):
         pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
         np.testing.assert_array_almost_equal(pvalue_df['pValueBenjaminiHochberg'].tolist(), pvalue_truth_df['pValueBenjaminiHochberg'].tolist(), decimal = 4)
+
+    def test_correction_sgof(self):
+        '''
+        Datas are from : http://acraaj.webs.uvigo.es/SGoFReadme.htm
+        '''
+        print("\nTesting SGoF multiple testing correction ")
+        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_sgof_(copy)' + ".tsv", sep = "\t")
+
+        self.obj.statistic_method = "pvalue_hypergeometric"
+        self.obj.object_to_analyze= "pvalue_hypergeometric"
+        pvalue_df = self.obj.correction_sgof(pvalue_df)
+
+        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_sgof_(copy)' + ".tsv", sep = "\t")
+        pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
+
+        np.testing.assert_array_almost_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist(), decimal = 4)
 
 if __name__ == '__main__':
     unittest.main()

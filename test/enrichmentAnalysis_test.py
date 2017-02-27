@@ -10,7 +10,14 @@ from enrichmentAnalysis import EnrichmentAnalysis
 
 test_data_directory = '../test_data/'
 
+
 class enrichmentAnalysis_test(unittest.TestCase):
+
+    def setUp(self):
+        self.obj = EnrichmentAnalysis('Genes', 'counting_objects_in_interest', 'counting_objects_in_reference', 122, 1293, 0.05, 10000)
+
+    def tearDown(self):
+        del self.obj
 
     def test_compute_hypergeometric_cdf(self):
         '''
@@ -61,6 +68,52 @@ class enrichmentAnalysis_test(unittest.TestCase):
             df_joined = enrichment_analysis_test.compute_hypergeometric_test(analyzed_object, row['Counts'], row['CountsReference'], df_joined, 'over')
 
         np.testing.assert_array_almost_equal(df_joined['pvalue_hypergeometric'].tolist(), df_joined_wih_results['pvalue_hypergeometric'].tolist(), decimal = 4)
+
+    def test_correction_bonferroni(self):
+        '''
+        Datas are from : http://www.pmean.com/05/MultipleComparisons.asp
+        '''
+        print("\nTesting Bonferroni multiple testing correction ")
+        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
+
+        self.obj.statistic_method = "pvalue_hypergeometric"
+
+        pvalue_df = self.obj.correction_bonferroni(pvalue_df)
+
+        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
+
+        np.testing.assert_array_almost_equal(pvalue_df['pValueBonferroni'].tolist(), pvalue_truth_df['PvalueBonferroni'].tolist(), decimal = 4)
+
+    def test_correction_holm(self):
+        '''
+        Datas are from : http://www.pmean.com/05/MultipleComparisons.asp
+        '''
+        print("\nTesting Holm multiple testing correction ")
+        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
+
+        self.obj.statistic_method = "pvalue_hypergeometric"
+
+        pvalue_df = self.obj.correction_holm(pvalue_df)
+
+        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
+        pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
+
+        np.testing.assert_array_almost_equal(pvalue_df['pValueHolm'].tolist(), pvalue_truth_df['PvalueHolm'].tolist(), decimal = 4)
+
+    def test_correction_benjamini_hochberg(self):
+        '''
+        Datas are from : http://www.pmean.com/05/MultipleComparisons.asp
+        '''
+        print("\nTesting Benjamini and Hochberg multiple testing correction ")
+        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
+
+        self.obj.statistic_method = "pvalue_hypergeometric"
+
+        pvalue_df = self.obj.correction_benjamini_hochberg(pvalue_df)
+
+        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
+        pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
+        np.testing.assert_array_almost_equal(pvalue_df['pValueBenjaminiHochberg'].tolist(), pvalue_truth_df['pValueBenjaminiHochberg'].tolist(), decimal = 4)
 
 if __name__ == '__main__':
     unittest.main()

@@ -253,21 +253,52 @@ class EnrichmentAnalysis():
         csvfile.close()
 
     def correction_bonferroni(self, df):
-        pvalue_correction_bonferroni = lambda x: x * len(df.index)
+
+        def pvalue_correction_bonferroni(x) :
+            number_of_test = len(df.index)
+            q_value = x * number_of_test
+            if q_value > 1 :
+                q_value = 1
+
+            return q_value
+
         df['pValueBonferroni'] = df[self.statistic_method].apply(pvalue_correction_bonferroni)
 
         return df
 
     def correction_benjamini_hochberg(self, df):
+        df = df.sort_values(by = self.statistic_method, ascending = True)
+
+        number_of_test = len(df.index)
+
         for analyzed_object, row in df.iterrows():
-            pvalue_correction_benjamini_hochberg = row[self.statistic_method] * (len(df.index)/(df.index.get_loc(analyzed_object)+1))
+            rank = df.index.get_loc(analyzed_object)
+            pvalue_correction_benjamini_hochberg = row[self.statistic_method] * (number_of_test / (rank + 1))
+
+            if pvalue_correction_benjamini_hochberg > 1:
+                pvalue_correction_benjamini_hochberg = 1
             df.set_value(analyzed_object, 'pValueBenjaminiHochberg', pvalue_correction_benjamini_hochberg)
 
         return df
 
     def correction_holm(self, df):
+        df = df.sort_values(by = self.statistic_method, ascending = True)
+
+        number_of_test = len(df.index)
+        pvalue_max = 0
+
         for analyzed_object, row in df.iterrows():
-            pvalue_correction_holm = row[self.statistic_method] * (len(df.index) - df.index.get_loc(analyzed_object))
+            rank = df.index.get_loc(analyzed_object)
+            pvalue_correction_holm = row[self.statistic_method] * (number_of_test - rank)
+            if pvalue_correction_holm > 1:
+                pvalue_correction_holm = 1
+            if pvalue_correction_holm > pvalue_max:
+                pvalue_max = pvalue_correction_holm
+            if pvalue_max > pvalue_correction_holm:
+                pvalue_correction_holm = pvalue_max
+            if pvalue_correction_holm > self.alpha and pvalue_max < pvalue_correction_holm:
+                pvalue_max = pvalue_correction_holm
+
             df.set_value(analyzed_object, 'pValueHolm', pvalue_correction_holm)
 
         return df

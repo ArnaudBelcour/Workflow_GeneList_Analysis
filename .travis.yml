@@ -3,10 +3,9 @@ python:
   - "3.2_with_system_site_packages"
 before_install:
   - sudo apt-get update
-  - sudo apt-get install python-numpy python-scipy
+  - sudo apt-get install python-numpy python-scipy python-pandas
 # command to install dependencies
 install:
-  - pip install pandas
 # command to run tests
 script:
   - python test/enrichmentAnalysis_test.py

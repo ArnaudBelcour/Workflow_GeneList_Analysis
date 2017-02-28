@@ -19,6 +19,12 @@ class enrichmentAnalysis_test(unittest.TestCase):
     def tearDown(self):
         del self.obj
 
+    def test_percentage_calculator(self):
+        print("\nTesting percentage")
+        percentage_computed =  self.obj.percentage_calculator(53, 260)
+
+        np.testing.assert_almost_equal(percentage_computed, 20.38461538461538, decimal = 5)
+
     def test_compute_hypergeometric_cdf(self):
         '''
         Datas are from : https://www.geneprof.org/GeneProf/tools/hypergeometric.jsp
@@ -121,13 +127,13 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Datas are from : http://acraaj.webs.uvigo.es/SGoFReadme.htm
         '''
         print("\nTesting SGoF multiple testing correction ")
-        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_sgof_(copy)' + ".tsv", sep = "\t")
+        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_sgof_2' + ".tsv", sep = "\t")
 
         self.obj.statistic_method = "pvalue_hypergeometric"
         self.obj.object_to_analyze= "pvalue_hypergeometric"
         pvalue_df = self.obj.correction_sgof(pvalue_df)
 
-        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_sgof_(copy)' + ".tsv", sep = "\t")
+        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_sgof_2' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
 
         np.testing.assert_array_almost_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist(), decimal = 4)

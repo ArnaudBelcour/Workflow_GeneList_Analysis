@@ -173,7 +173,7 @@ class EnrichmentAnalysis():
 
         return df
 
-    def percentage_calculation(self, numerator, denominator):
+    def percentage_calculator(self, numerator, denominator):
         percentage = (numerator / denominator) * 100
 
         return percentage
@@ -313,9 +313,10 @@ class EnrichmentAnalysis():
 
         object_significatives = []
         row_number = 0
+
         while stats.binom_test(R, len(df), p = self.alpha) < self.alpha and R > 0:
 
-            df.set_value(row_number, 'pValueSGoF', float(stats.binom_test(R, len(df), p = self.alpha)))
+            df.set_value(row_number, 'pValueSGoF', stats.binom_test(R, len(df), p = self.alpha))
             object_significatives.append(df.iloc[row_number][self.object_to_analyze])
             R = R - 1
             row_number = row_number + 1
@@ -325,9 +326,9 @@ class EnrichmentAnalysis():
         for analyzed_object, row in df.iterrows():
             try:
                 if analyzed_object not in object_significatives:
-                    df.set_value(analyzed_object, 'pValueSGoF', 1)
+                    df.set_value(analyzed_object, 'pValueSGoF', None)
             except:
-                df.set_value(analyzed_object, 'pValueSGoF', 1)
+                df.set_value(analyzed_object, 'pValueSGoF', None)
 
         return df
 
@@ -382,7 +383,7 @@ class EnrichmentAnalysis():
         yes_or_no = input("Is this an approximation of the reference? ")
 
         for analyzed_object, row in df_joined.iterrows():
-            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InInterest', self.percentage_calculation(row['Counts'], self.number_of_analyzed_object_of_interest))
+            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InInterest', self.percentage_calculator(row['Counts'], self.number_of_analyzed_object_of_interest))
 
         if yes_or_no in yes_answers:
             df_joined = self.counting_approximation(df_joined)
@@ -391,7 +392,7 @@ class EnrichmentAnalysis():
             count_column_name = 'CountsReference'
 
         for analyzed_object, row in df_joined.iterrows():
-            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference', self.percentage_calculation(row[count_column_name], self.number_of_analyzed_object_of_reference))
+            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference', self.percentage_calculator(row[count_column_name], self.number_of_analyzed_object_of_reference))
 
         over_unders = ['over', 'under']
         for over_under in over_unders:

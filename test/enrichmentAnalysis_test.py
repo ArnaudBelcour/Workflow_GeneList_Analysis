@@ -9,7 +9,9 @@ sys.path.append("..")
 from enrichmentAnalysis import EnrichmentAnalysis
 
 test_data_directory = '../test_data/'
-
+test_data_directory_cdf = test_data_directory + 'test_cdf/'
+test_data_directory_sf = test_data_directory + 'test_sf/'
+test_data_directory_multiple = test_data_directory + 'test_multiple/'
 
 class enrichmentAnalysis_test(unittest.TestCase):
 
@@ -32,16 +34,15 @@ class enrichmentAnalysis_test(unittest.TestCase):
         print("\nTesting hypergeometric cdf ")
         enrichment_analysis_test = EnrichmentAnalysis('Genes', 'data_interest_test_cdf_hypergeometric', 'data_reference_test_cdf_hypergeometric', 10, 100, 0.05, 10000)
 
-        counts_df = pa.read_csv(test_data_directory + 'data_interest_test_cdf_hypergeometric' + ".tsv", sep = "\t")
-        counts_df_reference = pa.read_csv(test_data_directory + 'data_reference_test_cdf_hypergeometric' + ".tsv", sep = "\t")
+        counts_df = pa.read_csv(test_data_directory_cdf + 'data_interest_test_cdf_hypergeometric' + ".tsv", sep = "\t")
+        counts_df_reference = pa.read_csv(test_data_directory_cdf + 'data_reference_test_cdf_hypergeometric' + ".tsv", sep = "\t")
 
         counts_df = counts_df.set_index('Genes')
         counts_df_reference = counts_df_reference.set_index('Genes')
 
         df_joined = counts_df.join(counts_df_reference)
 
-        datas = [{'Genes': 'Gene_1', 'Counts': 2, 'CountsReference': 20, 'pvalue_hypergeometric': 0.6812}]
-        df_joined_wih_results = pa.DataFrame(datas)
+        df_joined_wih_results = pa.read_csv(test_data_directory_cdf + 'result_test_cdf_hypergeometric' + ".tsv", sep = "\t")
 
         df_joined_wih_results = df_joined_wih_results.set_index('Genes')
 
@@ -57,16 +58,15 @@ class enrichmentAnalysis_test(unittest.TestCase):
         print("\nTesting hypergeometric sf ")
         enrichment_analysis_test = EnrichmentAnalysis('Genes', 'data_interest_test_sf_hypergeometric', 'data_reference_test_sf_hypergeometric', 300, 10000, 0.05, 10000)
 
-        counts_df = pa.read_csv(test_data_directory + 'data_interest_test_sf_hypergeometric' + ".tsv", sep = "\t")
-        counts_df_reference = pa.read_csv(test_data_directory + 'data_reference_test_sf_hypergeometric' + ".tsv", sep = "\t")
+        counts_df = pa.read_csv(test_data_directory_sf + 'data_interest_test_sf_hypergeometric' + ".tsv", sep = "\t")
+        counts_df_reference = pa.read_csv(test_data_directory_sf + 'data_reference_test_sf_hypergeometric' + ".tsv", sep = "\t")
 
         counts_df = counts_df.set_index('Genes')
         counts_df_reference = counts_df_reference.set_index('Genes')
 
         df_joined = counts_df.join(counts_df_reference)
 
-        datas = [{'Genes': 'Gene_1', 'Counts': 60, 'CountsReference': 2000, 'pvalue_hypergeometric': 0.5237255041}]
-        df_joined_wih_results = pa.DataFrame(datas)
+        df_joined_wih_results = pa.read_csv(test_data_directory_sf + 'result_test_sf_hypergeometric' + ".tsv", sep = "\t")
 
         df_joined_wih_results = df_joined_wih_results.set_index('Genes')
 
@@ -80,13 +80,13 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Datas are from : http://www.pmean.com/05/MultipleComparisons.asp
         '''
         print("\nTesting Bonferroni multiple testing correction ")
-        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
+        pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
 
         self.obj.statistic_method = "pvalue_hypergeometric"
 
         pvalue_df = self.obj.correction_bonferroni(pvalue_df)
 
-        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
+        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
 
         np.testing.assert_array_almost_equal(pvalue_df['pValueBonferroni'].tolist(), pvalue_truth_df['PvalueBonferroni'].tolist(), decimal = 4)
 
@@ -95,13 +95,13 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Datas are from : http://www.pmean.com/05/MultipleComparisons.asp
         '''
         print("\nTesting Holm multiple testing correction ")
-        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
+        pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
 
         self.obj.statistic_method = "pvalue_hypergeometric"
 
         pvalue_df = self.obj.correction_holm(pvalue_df)
 
-        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
+        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
 
         np.testing.assert_array_almost_equal(pvalue_df['pValueHolm'].tolist(), pvalue_truth_df['PvalueHolm'].tolist(), decimal = 4)
@@ -112,13 +112,13 @@ class enrichmentAnalysis_test(unittest.TestCase):
                         https://journal.r-project.org/archive/2014-2/conde-alvarez.pdf
         '''
         print("\nTesting Benjamini and Hochberg multiple testing correction ")
-        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
+        pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
 
         self.obj.statistic_method = "pvalue_hypergeometric"
 
         pvalue_df = self.obj.correction_benjamini_hochberg(pvalue_df)
 
-        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
+        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
         np.testing.assert_array_almost_equal(pvalue_df['pValueBenjaminiHochberg'].tolist(), pvalue_truth_df['pValueBenjaminiHochberg'].tolist(), decimal = 4)
 
@@ -127,13 +127,13 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Datas are from : http://acraaj.webs.uvigo.es/SGoFReadme.htm
         '''
         print("\nTesting SGoF multiple testing correction ")
-        pvalue_df = pa.read_csv(test_data_directory + 'multiple_test_data_sgof_2' + ".tsv", sep = "\t")
+        pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_sgof_2' + ".tsv", sep = "\t")
 
         self.obj.statistic_method = "pvalue_hypergeometric"
         self.obj.object_to_analyze= "pvalue_hypergeometric"
         pvalue_df = self.obj.correction_sgof(pvalue_df)
 
-        pvalue_truth_df = pa.read_csv(test_data_directory + 'multiple_test_result_sgof_2' + ".tsv", sep = "\t")
+        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_sgof_2' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
 
         np.testing.assert_array_almost_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist(), decimal = 4)

@@ -4,8 +4,8 @@ python:
 # command to install dependencies
 install:
   - pip install pandas
+  - pip install numpy
   - pip install scipy
-  - pip install pandas
 # command to run tests
 script:
   - python test/enrichmentAnalysis_test.py

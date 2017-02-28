@@ -1,13 +1,11 @@
 language: python
 python:
-  - "3.2"
-  - "3.3"
   - "3.4"
-  # PyPy versions
-  - "pypy3" # Pypy3 2.4.0
-  - "pypy-5.3.1"
 # command to install dependencies
 install:
-  - pip install -r requirements.txt
+  - pip install pandas
+  - pip install scipy
+  - pip install pandas
 # command to run tests
-script: pytest
+script:
+  - python test/enrichmentAnalysis_test.py

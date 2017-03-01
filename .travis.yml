@@ -25,4 +25,4 @@ install:
   - source activate test-environment
 
 script:
-  - python test/enrichmentAnalysis_test.py
+  - python3 -m unittest discover

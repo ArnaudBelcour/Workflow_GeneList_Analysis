@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pa
 import scipy.stats as stats
+import sys
 import unittest
+ 
+sys.path.append("..")
 
-from ..enrichmentAnalysis import EnrichmentAnalysis
+from enrichmentAnalysis import EnrichmentAnalysis
 
 test_data_directory = '../test_data/'
 test_data_directory_cdf = test_data_directory + 'test_cdf/'

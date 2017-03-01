@@ -17,8 +17,10 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib "pandas>=0.17.0"
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib "pandas>=0.17.0" coverage
   - source activate test-environment
 
 script:
-  - python3 -m unittest discover
+  - coverage run -m unittest discover
+after_success:
+  - coveralls

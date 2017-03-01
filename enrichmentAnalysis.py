@@ -123,10 +123,10 @@ class EnrichmentAnalysis():
                 df = df.drop([analyzed_object])
             else:
                 if row['Counts'] < approximation_threshold:
-                    self.compute_hypergeometric_test(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
+                    df = self.compute_hypergeometric_test(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
 
                 elif row['Counts'] > approximation_threshold:
-                    self.compute_normal_approximation(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
+                    df = self.compute_normal_approximation(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
 
                 if math.isnan(df.get_value(analyzed_object, self.statistic_method)):
                     analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)

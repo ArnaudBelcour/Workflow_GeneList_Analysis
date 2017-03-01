@@ -125,16 +125,16 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Datas are from : http://acraaj.webs.uvigo.es/SGoFReadme.htm
         '''
         print("\nTesting SGoF multiple testing correction ")
-        pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_sgof_2' + ".tsv", sep = "\t")
+        pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_sgof' + ".tsv", sep = "\t")
 
         self.obj.statistic_method = "pvalue_hypergeometric"
         self.obj.object_to_analyze= "pvalue_hypergeometric"
         pvalue_df = self.obj.correction_sgof(pvalue_df)
 
-        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_sgof_2' + ".tsv", sep = "\t")
+        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_sgof' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
 
-        np.testing.assert_array_almost_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist(), decimal = 4)
+        np.testing.assert_array_almost_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist(), decimal = 3)
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,7 @@
 # Workflow for Genes List Analysis
 
+[![Build Status](https://travis-ci.org/ArnaudBelcour/Workflow_GeneList_Analysis.svg?branch=master)](https://travis-ci.org/ArnaudBelcour/Workflow_GeneList_Analysis)
+
 Workflow for gene enrichment analysis (at this time, it only does a GO terms Enrichment analysis).
 
 ## Installation

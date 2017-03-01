@@ -34,14 +34,14 @@ class enrichmentAnalysis_test(unittest.TestCase):
         counts_df = pa.read_csv(test_data_directory_cdf + 'data_interest_test_cdf_hypergeometric' + ".tsv", sep = "\t")
         counts_df_reference = pa.read_csv(test_data_directory_cdf + 'data_reference_test_cdf_hypergeometric' + ".tsv", sep = "\t")
 
-        counts_df = counts_df.set_index('Genes')
-        counts_df_reference = counts_df_reference.set_index('Genes')
+        counts_df.set_index('Genes', inplace = True)
+        counts_df_reference.set_index('Genes', inplace = True)
 
         df_joined = counts_df.join(counts_df_reference)
 
         df_joined_wih_results = pa.read_csv(test_data_directory_cdf + 'result_test_cdf_hypergeometric' + ".tsv", sep = "\t")
 
-        df_joined_wih_results = df_joined_wih_results.set_index('Genes')
+        df_joined_wih_results.set_index('Genes', inplace = True)
 
         for analyzed_object, row in df_joined.iterrows():
             df_joined = enrichment_analysis_test.compute_hypergeometric_test(analyzed_object, row['Counts'], row['CountsReference'], df_joined, 'under')
@@ -58,14 +58,14 @@ class enrichmentAnalysis_test(unittest.TestCase):
         counts_df = pa.read_csv(test_data_directory_sf + 'data_interest_test_sf_hypergeometric' + ".tsv", sep = "\t")
         counts_df_reference = pa.read_csv(test_data_directory_sf + 'data_reference_test_sf_hypergeometric' + ".tsv", sep = "\t")
 
-        counts_df = counts_df.set_index('Genes')
-        counts_df_reference = counts_df_reference.set_index('Genes')
+        counts_df.set_index('Genes', inplace = True)
+        counts_df_reference.set_index('Genes', inplace = True)
 
         df_joined = counts_df.join(counts_df_reference)
 
         df_joined_wih_results = pa.read_csv(test_data_directory_sf + 'result_test_sf_hypergeometric' + ".tsv", sep = "\t")
 
-        df_joined_wih_results = df_joined_wih_results.set_index('Genes')
+        df_joined_wih_results.set_index('Genes', inplace = True)
 
         for analyzed_object, row in df_joined.iterrows():
             df_joined = enrichment_analysis_test.compute_hypergeometric_test(analyzed_object, row['Counts'], row['CountsReference'], df_joined, 'over')
@@ -145,14 +145,14 @@ class enrichmentAnalysis_test(unittest.TestCase):
         counts_df = pa.read_csv(test_data_directory_sf + 'data_interest_test_sf_hypergeometric' + ".tsv", sep = "\t")
         counts_df_reference = pa.read_csv(test_data_directory_sf + 'data_reference_test_sf_hypergeometric' + ".tsv", sep = "\t")
 
-        counts_df.set_index('Genes', inplace=True)
-        counts_df_reference = counts_df_reference.set_index('Genes')
+        counts_df.set_index('Genes', inplace = True)
+        counts_df_reference.set_index('Genes', inplace = True)
 
         df_joined = counts_df.join(counts_df_reference)
 
         df_joined_wih_results = pa.read_csv(test_data_directory_sf + 'result_test_sf_hypergeometric' + ".tsv", sep = "\t")
 
-        df_joined_wih_results = df_joined_wih_results.set_index('Genes')
+        df_joined_wih_results.set_index('Genes', inplace = True)
 
         df_joined = enrichment_analysis_test.hypergeometric_test_on_dataframe(df_joined, 'over', 'CountsReference')
 
@@ -168,14 +168,14 @@ class enrichmentAnalysis_test(unittest.TestCase):
         counts_df = pa.read_csv(test_data_directory_cdf + 'data_interest_test_cdf_hypergeometric' + ".tsv", sep = "\t")
         counts_df_reference = pa.read_csv(test_data_directory_cdf + 'data_reference_test_cdf_hypergeometric' + ".tsv", sep = "\t")
 
-        counts_df = counts_df.set_index('Genes')
-        counts_df_reference = counts_df_reference.set_index('Genes')
+        counts_df.set_index('Genes', inplace = True)
+        counts_df_reference.set_index('Genes', inplace = True)
 
         df_joined = counts_df.join(counts_df_reference)
 
         df_joined_wih_results = pa.read_csv(test_data_directory_cdf + 'result_test_cdf_hypergeometric' + ".tsv", sep = "\t")
 
-        df_joined_wih_results = df_joined_wih_results.set_index('Genes')
+        df_joined_wih_results.set_index('Genes', inplace = True)
 
         df_joined = enrichment_analysis_test.hypergeometric_test_on_dataframe(df_joined, 'under', 'CountsReference')
 

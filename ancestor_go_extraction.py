@@ -36,9 +36,7 @@ def go_term_ancestor(go):
     results = sparql.query().convert()
 
     for result in results["results"]["bindings"]:
-        go_ancestors.append(result["goAnc"]["value"][31:])
-
-    go_ancestors = [go.replace("__", "_") for go in go_ancestors]
+        go_ancestors.append(result["goAnc"]["value"][31:].replace("_",":"))
 
     return go_ancestors
 
@@ -55,5 +53,6 @@ def union_go_and_their_ancestor(gos):
         go_ancestors_for_go_lists.append(go_ancestors)
 
     go_list_for_entity = list(set().union(*go_ancestors_for_go_lists))
+    go_str_for_entity = ",".join(go_list_for_entity)
 
-    return go_list_for_entity
+    return go_str_for_entity

@@ -4,8 +4,6 @@ import csv
 import pandas as pa
 import requests
 
-from ast import literal_eval
-
 temporary_directory_database = '../temporaryFiles/databases/'
 
 def http_request_reactome(data_id, data_name, writer):
@@ -50,7 +48,7 @@ def file_creation(data_name, column_name, df_genome):
     if data_name in ["EC", "Interpro"]:
         [datas_requests.extend(datas.split("; ")) for datas in df_genome[column_name].dropna().tolist()]
     elif data_name in ["GO", "CHEBI", "REACT"]:
-        [datas_requests.extend(literal_eval(datas)) for datas in df_genome[column_name]]
+        [datas_requests.extend(datas.split(",")) for datas in df_genome[column_name]]
 
     datas_requests = list(set().union(datas_requests))
 

@@ -4,7 +4,6 @@ import math
 import pandas as pa
 import six
 
-from ast import literal_eval
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 from . import *
@@ -17,7 +16,7 @@ def extract_information_from_uniprot(results_dataframe):
     results_dataframe['Blast'] = results_dataframe['Blast'].str[len('CEP03957.1hypothetical protein '):]
     results_dataframe['Blast'] = results_dataframe['Blast'].str.replace(", partial", "")
 
-    results_dataframe.set_index("Gene_Name")
+    results_dataframe.set_index("Gene_Name", inplace = True)
 
     for gene, row in results_dataframe.iterrows():
         transcript = 'ensembl:' + row['Blast']

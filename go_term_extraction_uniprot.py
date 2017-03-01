@@ -6,7 +6,6 @@ import pandas as pa
 import requests
 import six
 
-from ast import literal_eval
 from bs4 import BeautifulSoup
 from functools import lru_cache
 from SPARQLWrapper import SPARQLWrapper, JSON
@@ -84,7 +83,7 @@ def create_approximation_go_genome(string_values_protein_names):
     df = pa.read_csv(temporary_directory + 'test_genomeGO.tsv', '\t')
 
     for index, row in df.iterrows():
-        row['GOs'] = union_go_and_their_ancestor(literal_eval(row['GOs']))
+        row['GOs'] = union_go_and_their_ancestor(row['GOs'].split(","))
     df.to_csv(temporary_directory + 'test_genomeGO_edit.tsv', '\t')
 
 def request_go_term_for_a_protein(uniprot_id):

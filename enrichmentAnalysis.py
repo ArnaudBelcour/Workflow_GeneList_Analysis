@@ -309,7 +309,7 @@ class EnrichmentAnalysis():
 
         R = (df['pvalue_hypergeometric'] < 0.05).sum()
 
-        df = df.reset_index()
+        df.reset_index(inplace = True)
 
         object_significatives = []
         row_number = 0
@@ -321,7 +321,7 @@ class EnrichmentAnalysis():
             R = R - 1
             row_number = row_number + 1
 
-        df = df.set_index(self.object_to_analyze)
+        df.set_index(self.object_to_analyze, inplace = True)
 
         for analyzed_object, row in df.iterrows():
             try:
@@ -374,8 +374,8 @@ class EnrichmentAnalysis():
         counts_df = pa.read_csv(temporary_directory + self.file_of_interest + ".tsv", sep = "\t")
         counts_df_reference = pa.read_csv(temporary_directory + self.file_of_reference + ".tsv", sep = "\t")
 
-        counts_df = counts_df.set_index(self.object_to_analyze)
-        counts_df_reference = counts_df_reference.set_index(self.object_to_analyze)
+        counts_df.set_index(self.object_to_analyze, inplace = True)
+        counts_df_reference.set_index(self.object_to_analyze, inplace = True)
 
         df_joined = counts_df.join(counts_df_reference)
 

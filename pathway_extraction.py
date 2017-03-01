@@ -5,8 +5,6 @@ import pandas as pa
 import re
 import subprocess
 
-from ast import literal_eval
-
 temporary_directory = 'temporaryFiles/'
 temporary_directory_database = 'temporaryFiles/databases/'
 
@@ -14,7 +12,7 @@ def ipr_extraction(df_genome):
     ipr_expression = r"IPR[\d]{6}[^0-9]"
 
     df_genome = df_genome[['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
-    df_genome = df_genome.set_index("Gene_Name")
+    df_genome.set_index("Gene_Name", inplace = True)
     df_genome['InterProScan'] = df_genome['InterProScan'].str.split("; ").apply(
         lambda x: [y[:len('IPRXXXXXX')] 
                    for y in x 
@@ -47,7 +45,7 @@ def r_keggrest_ec(ecs_requests):
 
 def translation_go_data(selected_datas, df_mapping, data_column):
     datas = []
-    for selected_data in literal_eval(selected_datas):
+    for selected_data in selected_datas.split(","):
         if selected_data in df_mapping.index:
             if type(df_mapping.loc[selected_data][data_column]) == str :
                 datas.append(df_mapping.loc[selected_data][data_column])
@@ -58,7 +56,7 @@ def translation_go_data(selected_datas, df_mapping, data_column):
 
 def mapping_data(file_name, df_genome):
     df_mapping = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
-    df_mapping = df_mapping.set_index("GOs")
+    df_mapping.set_index("GOs", inplace = True)
     data_column = df_mapping.columns[0]
     df_genome[data_column] = df_genome['GOs'].apply(translation_go_data, args = (df_mapping, data_column))
 

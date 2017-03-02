@@ -304,31 +304,68 @@ class EnrichmentAnalysis():
         return df
 
     def correction_sgof(self, df):
+        '''
+            This python version of the SGoF algorithm has been developped using the algorithm described in Carvajal-Rodriguez et al. (BMC Bioinformatics 10:209, 2009)
+            and the MATLAB version developped by Garth Thompson.
+            The MATLAB version is accessible at : http://acraaj.webs.uvigo.es/software/matlab_sgof.m
+        '''
         df = df.sort_values("pvalue_hypergeometric")
-        R = 0
 
+        number_pvalue = len(df.pvalue_hypergeometric)
         R = (df['pvalue_hypergeometric'] < 0.05).sum()
 
         df.reset_index(inplace = True)
 
-        object_significatives = []
         row_number = 0
 
-        while stats.binom_test(R, len(df), p = self.alpha) < self.alpha and R > 0:
+        if number_pvalue <= 10:
+            mutliple_values = list(stats.binom.sf(range(1, R+1), len(df), self.alpha))
+            reordered_pvalues = mutliple_values[::-1]
 
-            df.set_value(row_number, 'pValueSGoF', stats.binom_test(R, len(df), p = self.alpha))
-            object_significatives.append(df.iloc[row_number][self.object_to_analyze])
-            R = R - 1
-            row_number = row_number + 1
+            for corrected_value in reordered_pvalues:
+                if corrected_value <= self.alpha:
+                    df.set_value(row_number, 'pValueSGoF', 'significant')
+                    row_number = row_number + 1
+                elif corrected_value > self.alpha:
+                    df.set_value(row_number, 'pValueSGoF', 'nan')
+                    row_number = row_number + 1
 
-        df.set_index(self.object_to_analyze, inplace = True)
+        else:
+            if number_pvalue == R:
+                R = R - 1
+            l_R_value = [number for number in range(1, R+1)]
 
-        for analyzed_object, row in df.iterrows():
-            try:
-                if analyzed_object not in object_significatives:
-                    df.set_value(analyzed_object, 'pValueSGoF', None)
-            except:
-                df.set_value(analyzed_object, 'pValueSGoF', None)
+            l_R_value_log = [math.log(number) for number in l_R_value]
+            l_R_value_log_multiply = [number * number_log for number, number_log in zip(l_R_value, l_R_value_log)]
+            below_alpha = [number /(number_pvalue * self.alpha) for number in l_R_value_log_multiply]
+
+            l_R_value_minus_pvalue = [number_pvalue - number for number in l_R_value]
+            l_R_value_minus_value_log = [math.log(number) for number in l_R_value_minus_pvalue]
+            l_R_value_minus_value_log_multiply = [number_minus * number_minus_log for number_minus, number_minus_log in zip(l_R_value_minus_pvalue, l_R_value_minus_value_log)]
+            number_pvalue_multiply_alpha = number_pvalue * (1 - self.alpha)
+            above_alpha = [number / number_pvalue_multiply_alpha for number in l_R_value_minus_value_log_multiply]
+
+            william_factor = (1+1/(2*number_pvalue))
+
+            without_correction_probs = [number_below_alpha + number_above_alpha for number_below_alpha, number_above_alpha in zip(below_alpha, above_alpha)]
+            with_correction_probs = [prob_without_correction / william_factor for prob_without_correction in without_correction_probs]
+            prob_each_pvalues = [prob * 2 for prob in with_correction_probs]
+
+            g_threshold = stats.chi2.ppf(1-self.alpha,1)
+
+            reordered_pvalues = prob_each_pvalues[::-1]
+
+            for corrected_value in reordered_pvalues:
+                if prob_each_pvalues[-1] >= prob_each_pvalues[-2]:
+                    if corrected_value >= g_threshold:
+                        df.set_value(row_number, 'pValueSGoF', 'significant')
+                        row_number = row_number + 1
+                    else:
+                        df.set_value(row_number, 'pValueSGoF', None)
+                        row_number = row_number + 1
+                else:
+                    df.set_value(row_number, 'pValueSGoF', None)
+                    row_number = row_number + 1
 
         return df
 

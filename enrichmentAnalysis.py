@@ -6,6 +6,8 @@ import pandas as pa
 import scipy.stats as stats
 import six
 
+from statsmodels.sandbox.stats.multicomp import multipletests
+
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
 output_directory = 'outputFiles/'
@@ -278,6 +280,16 @@ class EnrichmentAnalysis():
             if pvalue_correction_benjamini_hochberg > 1:
                 pvalue_correction_benjamini_hochberg = 1
             df.set_value(analyzed_object, 'pValueBenjaminiHochberg', pvalue_correction_benjamini_hochberg)
+
+        return df
+
+    def correction_benjamini_yekutieli (self, df):
+        df = df.sort_values(by = self.statistic_method, ascending = True)
+
+        row_number = 0
+        for pvalue_corrected in list(multipletests(df['pvalue_hypergeometric'].tolist(), alpha=0.05, method="fdr_by")[1]):
+            df.set_value(row_number, 'pValueBenjaminiYekutieli', pvalue_corrected)
+            row_number += 1
 
         return df
 

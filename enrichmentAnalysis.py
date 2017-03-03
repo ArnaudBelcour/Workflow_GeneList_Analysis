@@ -2,6 +2,7 @@
 
 import csv
 import math
+import numpy as np
 import pandas as pa
 import scipy.stats as stats
 import six
@@ -27,7 +28,7 @@ class EnrichmentAnalysis():
 
     def __init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation):
         self._object_to_analyze = column_name
-        self._output_columns = ['Counts', 'CountsReference', 'Percentage' + self.object_to_analyze + 'InInterest', 'Percentage' + self.object_to_analyze + 'InReference', 'pvalue_hypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg']
+        self._output_columns = ['Counts', 'CountsReference', 'Percentage' + self.object_to_analyze + 'InInterest', 'Percentage' + self.object_to_analyze + 'InReference', 'pvalue_hypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg', 'pValueBenjaminiYekutieli']
         self._file_of_interest = file_of_interest_name
         self._file_of_reference = file_of_reference_name
         self._number_of_analyzed_object_of_interest = number_of_object_of_interest
@@ -35,7 +36,7 @@ class EnrichmentAnalysis():
         self._alpha = alpha
         self._normal_approximation_threshold = threshold_normal_approximation
         self._statistic_method = ""
-        self.multiple_test_names = ['Sidak', 'Bonferroni', 'Holm', 'SGoF', 'BenjaminiHochberg']
+        self.multiple_test_names = ['Sidak', 'Bonferroni', 'Holm', 'SGoF', 'BenjaminiHochberg', 'BenjaminiYekutieli']
 
     @property
     def object_to_analyze(self):
@@ -185,6 +186,7 @@ class EnrichmentAnalysis():
 
         df = self.correction_bonferroni(df)
         df = self.correction_benjamini_hochberg(df)
+        df = self.correction_benjamini_yekutieli(df)
         df = self.correction_holm(df)
         df = self.correction_sgof(df)
 
@@ -197,7 +199,7 @@ class EnrichmentAnalysis():
                 error_rate = self.error_rate_adjustement_bonferroni(df)
             if multiple_test_name in ['Sidak', 'Bonferroni']:
                 object_significatives = self.selection_object_with_adjusted_error_rate(error_rate, df)
-            elif multiple_test_name in ['Holm', 'BenjaminiHochberg']:
+            elif multiple_test_name in ['Holm', 'BenjaminiHochberg', 'BenjaminiYekutieli']:
                 object_significatives = self.selection_object_with_adjusted_pvalue(multiple_test_name, df)
             elif multiple_test_name == 'SGoF':
                 object_significatives = self.selection_object_with_sgof(multiple_test_name, df)
@@ -209,8 +211,8 @@ class EnrichmentAnalysis():
     def writing_output(self, df, significative_objects, over_or_underrepresentation, approximation_yes_or_no, yes_answers):
         '''
         For the second results file (file with significative objects):
-        Results are written using sorted(dictionnary), so the list of result corresponds to : Sidak (position 4 in the list), Bonferroni (position 1),
-        Holm (position 2), SGoF (position 3) and Benjamini and Hochberg (position 0).
+        Results are written using sorted(dictionnary), so the list of result corresponds to : Sidak (position 5 in the list), Bonferroni (position 2),
+        Holm (position 3), SGoF (position 4), Benjamini & Hochberg (position 0) and Benjamini & Yekutieli (position 1).
         '''
         df = df.sort_values(['pValueBenjaminiHochberg'])
 
@@ -231,7 +233,8 @@ class EnrichmentAnalysis():
             csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_under.tsv", "w", newline = "")
 
         writer = csv.writer(csvfile, delimiter="\t")
-        writer.writerow([self.object_to_analyze + 'Sidak', self.object_to_analyze + 'Bonferroni', self.object_to_analyze + 'Holm', self.object_to_analyze + 'SGoF', self.object_to_analyze + 'BenjaminiHochberg'])
+        writer.writerow([self.object_to_analyze + 'Sidak', self.object_to_analyze + 'Bonferroni', self.object_to_analyze + 'Holm', \
+        self.object_to_analyze + 'SGoF', self.object_to_analyze + 'BenjaminiHochberg', self.object_to_analyze + 'BenjaminiYekutieli'])
 
         number_significatives_per_method = {}
 
@@ -249,8 +252,8 @@ class EnrichmentAnalysis():
                     object_significatives_value =  'nan'
                 results.append(object_significatives_value)
 
-            writer.writerow([results[4], results[1], results[2], \
-            results[3], results[0]])
+            writer.writerow([results[5], results[2], results[3], \
+            results[4], results[0], results[1]])
 
         csvfile.close()
 
@@ -270,26 +273,21 @@ class EnrichmentAnalysis():
 
     def correction_benjamini_hochberg(self, df):
         df = df.sort_values(by = self.statistic_method, ascending = True)
-
         number_of_test = len(df.index)
+        ranks = np.arange(number_of_test) + 1
 
-        for analyzed_object, row in df.iterrows():
-            rank = df.index.get_loc(analyzed_object)
-            pvalue_correction_benjamini_hochberg = row[self.statistic_method] * (number_of_test / (rank + 1))
-
-            if pvalue_correction_benjamini_hochberg > 1:
-                pvalue_correction_benjamini_hochberg = 1
-            df.set_value(analyzed_object, 'pValueBenjaminiHochberg', pvalue_correction_benjamini_hochberg)
+        qvalue_BH = df[self.statistic_method] * (number_of_test / (ranks))
+        qvalue_BH_desc = qvalue_BH[::-1] # Inverse the order to look at each qvalue with minimum.accumulate().
+        qvalue_BH_fixed = np.minimum.accumulate(qvalue_BH_desc)[::-1] # Verify if value violate the initial order, if not replace the pvalue.
+        qvalue_BH_fixed = np.minimum(1, qvalue_BH_fixed)
+        df['pValueBenjaminiHochberg'] = qvalue_BH_fixed
 
         return df
 
-    def correction_benjamini_yekutieli (self, df):
-        df = df.sort_values(by = self.statistic_method, ascending = True)
+    def correction_benjamini_yekutieli(self, df):
+        df = df.sort_values(by = 'pvalue_hypergeometric', ascending = True)
 
-        row_number = 0
-        for pvalue_corrected in list(multipletests(df['pvalue_hypergeometric'].tolist(), alpha=0.05, method="fdr_by")[1]):
-            df.set_value(row_number, 'pValueBenjaminiYekutieli', pvalue_corrected)
-            row_number += 1
+        df['pValueBenjaminiYekutieli'] = multipletests(df['pvalue_hypergeometric'].tolist(), alpha=0.05, method="fdr_by")[1]
 
         return df
 
@@ -347,21 +345,21 @@ class EnrichmentAnalysis():
                 R = R - 1
             l_R_value = [number for number in range(1, R+1)]
 
-            l_R_value_log = [math.log(number) for number in l_R_value]
-            l_R_value_log_multiply = [number * number_log for number, number_log in zip(l_R_value, l_R_value_log)]
-            below_alpha = [number /(number_pvalue * self.alpha) for number in l_R_value_log_multiply]
+            l_R_value_log = np.log(l_R_value)
+            l_R_value_log_multiply = np.multiply(l_R_value, l_R_value_log)
+            below_alpha = np.divide(l_R_value_log_multiply, (number_pvalue * self.alpha))
 
-            l_R_value_minus_pvalue = [number_pvalue - number for number in l_R_value]
-            l_R_value_minus_value_log = [math.log(number) for number in l_R_value_minus_pvalue]
-            l_R_value_minus_value_log_multiply = [number_minus * number_minus_log for number_minus, number_minus_log in zip(l_R_value_minus_pvalue, l_R_value_minus_value_log)]
+            l_R_value_minus_pvalue = np.subtract(number_pvalue, l_R_value)
+            l_R_value_minus_value_log = np.log(l_R_value_minus_pvalue)
+            l_R_value_minus_value_log_multiply = np.multiply(l_R_value_minus_pvalue, l_R_value_minus_value_log)
             number_pvalue_multiply_alpha = number_pvalue * (1 - self.alpha)
-            above_alpha = [number / number_pvalue_multiply_alpha for number in l_R_value_minus_value_log_multiply]
+            above_alpha = np.divide(l_R_value_minus_value_log_multiply, number_pvalue_multiply_alpha)
 
             william_factor = (1+1/(2*number_pvalue))
 
-            without_correction_probs = [number_below_alpha + number_above_alpha for number_below_alpha, number_above_alpha in zip(below_alpha, above_alpha)]
-            with_correction_probs = [prob_without_correction / william_factor for prob_without_correction in without_correction_probs]
-            prob_each_pvalues = [prob * 2 for prob in with_correction_probs]
+            without_correction_probs = np.add(below_alpha, above_alpha)
+            with_correction_probs = np.divide(without_correction_probs, william_factor)
+            prob_each_pvalues = np.multiply(with_correction_probs, 2)
 
             g_threshold = stats.chi2.ppf(1-self.alpha,1)
 
@@ -378,6 +376,8 @@ class EnrichmentAnalysis():
                 else:
                     df.set_value(row_number, 'pValueSGoF', None)
                     row_number = row_number + 1
+            if R == 0:
+                df['pValueSGoF'] = None
 
         return df
 
@@ -475,15 +475,17 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         return go_labels
 
     def multiple_testing_correction(self, df):
-        df = df.sort_values([self.statistic_method])
+        df.sort_values([self.statistic_method], inplace = True)
 
         df = self.correction_bonferroni(df)
         df = self.correction_benjamini_hochberg(df)
+        df = self.correction_benjamini_yekutieli(df)
         df = self.correction_holm(df)
         df = self.correction_sgof(df)
 
         significative_objects = {}
         translation_gos_labels_to_numbers = self.gos_labels_to_numbers
+        df.set_index(self.object_to_analyze, inplace = True)
 
         for multiple_test_name in self.multiple_test_names:
             if multiple_test_name == 'Sidak':
@@ -492,7 +494,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
                 error_rate = self.error_rate_adjustement_bonferroni(df)
             if multiple_test_name in ['Sidak', 'Bonferroni']:
                 object_significatives = self.selection_object_with_adjusted_error_rate(error_rate, df)
-            elif multiple_test_name in ['Holm', 'BenjaminiHochberg']:
+            elif multiple_test_name in ['Holm', 'BenjaminiHochberg', 'BenjaminiYekutieli']:
                 object_significatives = self.selection_object_with_adjusted_pvalue(multiple_test_name, df)
             elif multiple_test_name == 'SGoF':
                 object_significatives = self.selection_object_with_sgof(multiple_test_name, df)

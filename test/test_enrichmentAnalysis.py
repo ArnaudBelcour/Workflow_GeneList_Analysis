@@ -119,7 +119,8 @@ class enrichmentAnalysis_test(unittest.TestCase):
 
     def test_correction_sgof_G(self):
         '''
-        Datas are from : http://acraaj.webs.uvigo.es/SGoFReadme.htm
+        Datas have been created for the example.
+        To obtain the results, they have been used on MATLAB script for SGoF here : http://acraaj.webs.uvigo.es/software/matlab_sgof.m
         '''
         print("\nTesting SGoF multiple testing correction using G test")
         pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_sgof_G_test' + ".tsv", sep = "\t")
@@ -131,11 +132,12 @@ class enrichmentAnalysis_test(unittest.TestCase):
         pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_sgof_G_test' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
 
-        np.testing.assert_array_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoFG'].tolist())
+        np.testing.assert_array_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist())
 
     def test_correction_sgof_bino(self):
         '''
-        Datas are from : http://acraaj.webs.uvigo.es/SGoFReadme.htm
+        Datas have been created for the example.
+        To obtain the results, they have been used on MATLAB script for SGoF here : http://acraaj.webs.uvigo.es/software/matlab_sgof.m
         '''
         print("\nTesting SGoF multiple testing correction using binomial test ")
         pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_sgof_binomial' + ".tsv", sep = "\t")
@@ -147,7 +149,7 @@ class enrichmentAnalysis_test(unittest.TestCase):
         pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_sgof_binomial' + ".tsv", sep = "\t")
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
 
-        np.testing.assert_array_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoFBino'].tolist())
+        np.testing.assert_array_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist())
 
 if __name__ == '__main__':
     unittest.main()

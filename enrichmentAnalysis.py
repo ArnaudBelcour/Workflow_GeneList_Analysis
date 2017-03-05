@@ -322,46 +322,47 @@ class EnrichmentAnalysis():
         df = df.sort_values("pvalue_hypergeometric")
 
         number_pvalue = len(df.pvalue_hypergeometric)
-        R = (df['pvalue_hypergeometric'] < 0.05).sum()
+        R = (df['pvalue_hypergeometric'] < self.alpha).sum()
 
         df.reset_index(inplace = True)
 
         row_number = 0
 
         if number_pvalue <= 10:
-            mutliple_values = list(stats.binom.sf(range(1, R+1), len(df), self.alpha))
+            mutliple_values = list(stats.binom.sf(range(1, R+2), len(df), self.alpha)[:-1])
             reordered_pvalues = mutliple_values[::-1]
 
             for corrected_value in reordered_pvalues:
                 if corrected_value <= self.alpha:
                     df.set_value(row_number, 'pValueSGoF', 'significant')
+                    df.set_value(row_number, 'pValueSGoFValue', corrected_value)
                     row_number = row_number + 1
                 elif corrected_value > self.alpha:
-                    df.set_value(row_number, 'pValueSGoF', 'nan')
+                    df.set_value(row_number, 'pValueSGoF', np.nan)
+                    df.set_value(row_number, 'pValueSGoFValue', np.nan)
                     row_number = row_number + 1
-
         else:
             if number_pvalue == R:
                 R = R - 1
-            l_R_value = [number for number in range(1, R+1)]
+            l_R_value = [number for number in range(1, R+2)]
 
-            l_R_value_log = np.log(l_R_value)
-            l_R_value_log_multiply = np.multiply(l_R_value, l_R_value_log)
-            below_alpha = np.divide(l_R_value_log_multiply, (number_pvalue * self.alpha))
+            l_R_value_divide = np.divide(l_R_value, (number_pvalue * self.alpha))
+            l_R_value_log = np.log(l_R_value_divide)
+            below_alpha = np.multiply(l_R_value, l_R_value_log)
 
             l_R_value_minus_pvalue = np.subtract(number_pvalue, l_R_value)
-            l_R_value_minus_value_log = np.log(l_R_value_minus_pvalue)
-            l_R_value_minus_value_log_multiply = np.multiply(l_R_value_minus_pvalue, l_R_value_minus_value_log)
             number_pvalue_multiply_alpha = number_pvalue * (1 - self.alpha)
-            above_alpha = np.divide(l_R_value_minus_value_log_multiply, number_pvalue_multiply_alpha)
+            l_R_value_minus_divide = np.divide(l_R_value_minus_pvalue, number_pvalue_multiply_alpha)
+            l_R_value_minus_value_log = np.log(l_R_value_minus_divide)
+            above_alpha = np.multiply(l_R_value_minus_pvalue, l_R_value_minus_value_log)
 
             william_factor = (1+1/(2*number_pvalue))
 
-            without_correction_probs = np.add(below_alpha, above_alpha)
-            with_correction_probs = np.divide(without_correction_probs, william_factor)
-            prob_each_pvalues = np.multiply(with_correction_probs, 2)
+            correction_above_alpha = np.divide(above_alpha, william_factor)
+            below_above_alpha_add = np.add(below_alpha, correction_above_alpha)
+            prob_each_pvalues = np.multiply(below_above_alpha_add, 2)
 
-            g_threshold = stats.chi2.ppf(1-self.alpha,1)
+            g_threshold = stats.chi2.ppf(1 - self.alpha,1)
 
             reordered_pvalues = prob_each_pvalues[::-1]
 
@@ -369,15 +370,18 @@ class EnrichmentAnalysis():
                 if prob_each_pvalues[-1] >= prob_each_pvalues[-2]:
                     if corrected_value >= g_threshold:
                         df.set_value(row_number, 'pValueSGoF', 'significant')
+                        df.set_value(row_number, 'pValueSGoFValue', corrected_value)
                         row_number = row_number + 1
                     else:
-                        df.set_value(row_number, 'pValueSGoF', None)
+                        df.set_value(row_number, 'pValueSGoF', np.nan)
+                        df.set_value(row_number, 'pValueSGoFValue', np.nan)
                         row_number = row_number + 1
                 else:
-                    df.set_value(row_number, 'pValueSGoF', None)
+                    df.set_value(row_number, 'pValueSGoF', np.nan)
+                    df.set_value(row_number, 'pValueSGoFValue', np.nan)
                     row_number = row_number + 1
             if R == 0:
-                df['pValueSGoF'] = None
+                df['pValueSGoF'] = np.nan
 
         return df
 

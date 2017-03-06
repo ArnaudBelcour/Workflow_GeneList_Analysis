@@ -103,19 +103,19 @@ class enrichmentAnalysis_test(unittest.TestCase):
 
     def test_correction_benjamini_hochberg(self):
         '''
-        Datas are from : http://www.pmean.com/05/MultipleComparisons.asp
-                        https://journal.r-project.org/archive/2014-2/conde-alvarez.pdf
+        Datas and results are from : www.biostathandbook.com/multiplecomparisons.html
+        Data are from the article : onlinelibrary.wiley.com/doi/10.1002/ijc.28513/full
         '''
         print("\nTesting Benjamini and Hochberg multiple testing correction ")
-        pvalue_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_pmean' + ".tsv", sep = "\t")
 
+        df_data = pa.read_csv(test_data_directory_multiple + 'multiple_test_data_BH.tsv', sep='\t')
         self.obj.statistic_method = "pvalue_hypergeometric"
 
-        pvalue_df = self.obj.correction_benjamini_hochberg(pvalue_df)
+        df_data = self.obj.correction_benjamini_hochberg(df_data)
 
-        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_pmean' + ".tsv", sep = "\t")
-        pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
-        np.testing.assert_array_almost_equal(pvalue_df['pValueBenjaminiHochberg'].tolist(), pvalue_truth_df['pValueBenjaminiHochberg'].tolist(), decimal = 4)
+        pvalue_truth_df = pa.read_csv(test_data_directory_multiple + 'multiple_test_result_BH.tsv', sep='\t')
+
+        np.testing.assert_array_almost_equal(df_data['pValueBenjaminiHochberg'].tolist(), pvalue_truth_df['pValueBenjaminiHochberg'].tolist(), decimal = 4)
 
     def test_correction_sgof_G(self):
         '''
@@ -150,6 +150,35 @@ class enrichmentAnalysis_test(unittest.TestCase):
         pvalue_truth_df = pvalue_truth_df.sort_values(by = "pvalue_hypergeometric")
 
         np.testing.assert_array_equal(pvalue_df['pValueSGoF'].tolist(), pvalue_truth_df['pValueSGoF'].tolist())
+
+    def test_error_rate_adjustement_bonferroni(self):
+        '''
+        Datas and results are from : www.biostathandbook.com/multiplecomparisons.html
+        '''
+        print("\nTesting error rate adjustement Bonferroni ")
+        datas = {'pvalue_hypergeometric':[0.001,0.008,0.039,0.041,0.042,0.06,0.074,0.205,0.212,0.216,0.222,
+                                    0.251,0.269,0.275,0.34,0.341,0.384,0.569,0.594,0.696,0.762,0.94,0.942,0.975,0.986]}
+        df = pa.DataFrame(datas)
+        error_rate_adjusted = self.obj.error_rate_adjustement_bonferroni(df)
+
+        self.assertEqual(error_rate_adjusted, 0.002)
+
+    def test_error_rate_adjustement_sidak(self):
+        '''
+        Datas have been created for the example (the only important thing here is the numver of pvalue).
+        The example and the result are from : www.spc.univ-lyon1.fr/polycop/comparaisons multiples.htm
+        '''
+        print("\nTesting error rate adjustement Sidak ")
+        datas_10 = {'pvalue_hypergeometric_10':[0.01,0.02,0.3,0.02,0.05,0.07,0.9,0.001,0.09,0.008]}
+        df_10_pvalue = pa.DataFrame(datas_10)
+        error_rate_adjusted_10 = self.obj.error_rate_adjustement_sidak(df_10_pvalue)
+
+        datas_20 = {'pvalue_hypergeometric_20':[0.01,0.02,0.05,0.04,0.2,0.04,0.9,0.05,0.06,0.0545,
+                                                0.048766,0.02,0.04,0.03,0.365,0.21,0.0234,0.2,0.156]}
+        df_20_pvalue = pa.DataFrame(datas_20)
+        error_rate_adjusted_20 = self.obj.error_rate_adjustement_sidak(df_20_pvalue)
+
+        np.testing.assert_array_almost_equal([error_rate_adjusted_10, error_rate_adjusted_20], [0.0051, 0.0026], decimal = 4)
 
 if __name__ == '__main__':
     unittest.main()

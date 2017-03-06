@@ -578,7 +578,7 @@ class FileManagement():
 
         return go_column, ec_column, ipr_column
 
-    def column_go_cleaning(self, type_file):
+    def column_data_cleaning(self, type_file):
 
         name_input_file = self.file_name
         extension_input_file = self.file_extension
@@ -604,8 +604,8 @@ class FileManagement():
 
         go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)
 
-        yes_or_no = input("Do you want to try to retrieve data from blast results? ").lower()
-        if yes_or_no in yes_answers :
+        uniprot_retrieval_y_n = input("Do you want to try to retrieve data from blast results? ").lower()
+        if uniprot_retrieval_y_n in yes_answers :
             column_name = input("What is the name of the column of the blast results? ")
             results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column, column_name]]
             results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan', 'Blast']]
@@ -619,7 +619,31 @@ class FileManagement():
         results_dataframe['GOs'] = results_dataframe['GOs'].str.split("; ")
         results_dataframe['GOs'] = results_dataframe['GOs'].str.join(",")
 
-        if yes_or_no in yes_answers :
+        results_dataframe.replace(np.nan, '', regex=True, inplace=True)
+
+        list_to_string = lambda datas: ','.join(datas)
+        to_list = lambda x: x.split("; ")
+
+        results_dataframe['InterProScan'] = results_dataframe['InterProScan'].apply(to_list)
+
+        ipr_selection = lambda interpros: [interpro[:9]
+                                           for interpro in interpros
+                                           if re.match(ipr_expression, interpro[:9])]
+
+        results_dataframe['InterProScan'] = results_dataframe['InterProScan'].apply(ipr_selection)
+        results_dataframe['InterProScan'] = results_dataframe['InterProScan'].apply(drop_duplicates)
+        results_dataframe['InterProScan'] = results_dataframe['InterProScan'].apply(list_to_string)
+
+        results_dataframe['EnzymeCodes'] = results_dataframe['EnzymeCodes'].apply(to_list)
+
+        ec_modification = lambda ecs: [ec.lower()
+                                     for ec in ecs]
+
+        results_dataframe['EnzymeCodes'] = results_dataframe['EnzymeCodes'].apply(ec_modification)
+        results_dataframe['EnzymeCodes'] = results_dataframe['EnzymeCodes'].apply(drop_duplicates)
+        results_dataframe['EnzymeCodes'] = results_dataframe['EnzymeCodes'].apply(list_to_string)
+
+        if uniprot_retrieval_y_n in yes_answers :
             results_dataframe = uniprot_retrieval_data.extract_information_from_uniprot(results_dataframe)
 
         results_dataframe = self.cleaning_value(results_dataframe, '-')
@@ -687,7 +711,7 @@ class FileManagementGeneGOs(FileManagement):
             shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory) 
             file_name_temporary = name_of_the_file + extension_of_the_file
         if self.already_analyzed_file_tf == False:
-            file_name_temporary = self.column_go_cleaning(type_of_the_file)
+            file_name_temporary = self.column_data_cleaning(type_of_the_file)
 
         if type_of_the_file == 'genome':
             if self.already_analyzed_file_tf == False:
@@ -714,13 +738,13 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
             for analyzed_object in row[column_analyzed_object].split(","):
                 analyzed_objects.append(analyzed_object)
 
-        counts_df_Genome = pa.DataFrame(analyzed_objects)
-        counts_df_Genome.columns = [column_analyzed_object]
-        counts_df_Genome = counts_df_Genome.groupby(column_analyzed_object).size().rename(column_name)
-        counts_df_Genome = counts_df_Genome.to_frame()
+        counts_df_genome = pa.DataFrame(analyzed_objects)
+        counts_df_genome.columns = [column_analyzed_object]
+        counts_df_genome = counts_df_genome.groupby(column_analyzed_object).size().rename(column_name)
+        counts_df_genome = counts_df_genome.to_frame()
 
-        counts_df_Genome.reset_index(inplace = True)
-        self.rewriting_file(counts_df_Genome, "counting_objects_in_genome.tsv")
+        counts_df_genome.reset_index(inplace = True)
+        self.rewriting_file(counts_df_genome, "counting_objects_in_genome.tsv")
 
         return "counting_objects_in_genome"
 
@@ -797,7 +821,7 @@ class FileManagementGeneGO(FileManagement):
         analyzed_object_name = self.analyzed_object_name
         name_of_file = self.file_name
 
-        self.column_go_cleaning()
+        self.column_data_cleaning()
 
         if self.type_file == 'gene_list':
             self.genome_file_processing(name_of_file)

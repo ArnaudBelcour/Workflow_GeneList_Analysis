@@ -5,6 +5,15 @@ import pandas as pa
 import re
 import subprocess
 
+import pathway_extraction.chebi_from_go as chebi_from_go
+import pathway_extraction.database_mapping_from_gos as database_mapping_from_gos
+import pathway_extraction.eupathdb_pathway_extraction as eupathdb_pathway_extraction
+import pathway_extraction.ghost_koala_pathway_extraction as ghost_koala_pathway_extraction
+import pathway_extraction.interpro_pathway_extraction as interpro_pathway_extraction
+import pathway_extraction.panther_pathway_mapping_uniprot as panther_pathway_mapping_uniprot
+import pathway_extraction.reactome_pathway_extraction as reactome_pathway_extraction
+import pathway_extraction.sparql_query_reactome_pathway_name as sparql_query_reactome_pathway_name
+
 temporary_directory = 'temporaryFiles/'
 temporary_directory_database = 'temporaryFiles/databases/'
 
@@ -43,25 +52,6 @@ def r_keggrest_ec(ecs_requests):
     except subprocess.CalledProcessError as e:
         raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
-def translation_go_data(selected_datas, df_mapping, data_column):
-    datas = []
-    for selected_data in selected_datas.split(","):
-        if selected_data in df_mapping.index:
-            if type(df_mapping.loc[selected_data][data_column]) == str :
-                datas.append(df_mapping.loc[selected_data][data_column])
-            if type(df_mapping.loc[selected_data][data_column]) == list :
-                datas.extend(df_mapping.loc[selected_data][data_column].tolist())
-
-    return set(datas)
-
-def mapping_data(file_name, df_genome):
-    df_mapping = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
-    df_mapping.set_index("GOs", inplace = True)
-    data_column = df_mapping.columns[0]
-    df_genome[data_column] = df_genome['GOs'].apply(translation_go_data, args = (df_mapping, data_column))
-
-    return df_genome
-
 def main():
     if os.path.exists(temporary_directory_database[:-1]) == False :
         os.makedirs(temporary_directory_database)
@@ -70,8 +60,19 @@ def main():
     ecs_requests = ec_extraction(df_genome)
     r_keggrest_ec(ecs_requests)
 
-    for file_name in os.listdir(temporary_directory_database):
-        if "mapping" in file_name:
-            df_genome = mapping_data(file_name, df_genome)
+    chebi_from_go.go_to_chebi()
 
+    database_mapping_from_gos.main()
+
+    eupathdb_pathway_extraction.main()
+
+    ghost_koala_pathway_extraction.main()
+
+    interpro_pathway_extraction.main()
+
+    panther_pathway_mapping_uniprot.main()
+
+    reactome_pathway_extraction.main(name_reference_file)
+
+    sparql_query_reactome_pathway_name.main()
 main()

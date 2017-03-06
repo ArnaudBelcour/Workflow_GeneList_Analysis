@@ -6,7 +6,7 @@ import urllib.request
 from lxml import etree
 from gzip import GzipFile
 
-temporary_directory_database = '../temporaryFiles/databases/'
+from . import *
 
 def interpro_pathway_extraction(url, file_name):
     '''

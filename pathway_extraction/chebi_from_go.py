@@ -4,7 +4,7 @@ import csv
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 
-temporary_directory_database = '../temporaryFiles/databases/'
+from . import *
 
 def go_to_chebi():
     '''
@@ -38,5 +38,3 @@ def go_to_chebi():
         writer.writerow([go, chebi])
 
     csvfile.close()
-
-go_to_chebi()

@@ -4,8 +4,7 @@ import csv
 import pandas as pa
 import requests
 
-temporary_directory = '../temporaryFiles/'
-temporary_directory_database = '../temporaryFiles/databases/'
+from . import *
 
 def http_request_gene_ontology(url, file_name):
     """
@@ -69,5 +68,3 @@ def main():
     for database in databases_gos_mapping:
         id_name, id_prefix = http_request_gene_ontology(databases_gos_mapping[database], database)
         cleaning_file(database, id_name, id_prefix)
-
-main()

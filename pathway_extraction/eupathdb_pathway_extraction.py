@@ -4,7 +4,7 @@ import csv
 import re
 import requests
 
-temporary_directory_database = '../temporaryFiles/databases/'
+from . import *
 
 def request_database_eupathdb(db_database):
     '''
@@ -100,5 +100,3 @@ def main():
         if db_database == 'tritrypdb':
             request_and_parse_pathway_file(db_database, 'LeishCyc', db_database_pathways['LeishCyc'])
             request_and_parse_pathway_file(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'])
-
-main()

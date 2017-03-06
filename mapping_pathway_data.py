@@ -202,6 +202,6 @@ def main():
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(drop_duplicates)
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(list_to_string)
 
-    return df_genome
-df_genome = main()
-df_genome.to_csv("result_pathway_extraction.tsv", sep = "\t")
+    df_genome.to_csv(temporary_directory_database + "result_pathway_extraction.tsv", sep = "\t")
+
+main()

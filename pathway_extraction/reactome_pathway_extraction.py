@@ -4,7 +4,7 @@ import csv
 import pandas as pa
 import requests
 
-temporary_directory_database = '../temporaryFiles/databases/'
+from . import *
 
 def http_request_reactome(data_id, data_name, writer):
     '''
@@ -71,8 +71,8 @@ def file_creation(data_name, column_name, df_genome):
 
     csvfile.close()
 
-def main():
-    df_genome = pa.read_csv('../inputFiles/genome_with_pathway.tsv', sep = "\t")
+def main(file_name):
+    df_genome = pa.read_csv(temporary_directory + file_name + 'tsv', sep = "\t")
     data_names = {"EC": "EnzymeCodes", "GO": "GOs", "CHEBI":"ChEBI", "REACT": "reactome_pathway", "Interpro": "InterProScan"}
 
     for data_name in data_names:

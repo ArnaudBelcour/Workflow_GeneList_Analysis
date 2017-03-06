@@ -4,9 +4,7 @@ import csv
 import pandas as pa
 import re
 
-input_directory = "../inputFiles/"
-temporary_directory = '../temporaryFiles/'
-temporary_directory_database = '../temporaryFiles/databases/'
+from . import *
 
 def ghost_koala_file_gestion(file_name):
     '''
@@ -76,5 +74,6 @@ def file_cleaning():
     df_KO['kegg_pathway'] = [['path:map' + pathway[:5] for pathway in pathways] for pathways in df_KO['kegg_pathway']]
     df_KO.to_csv(temporary_directory_database + "gene_with_kegg_pathway.tsv", sep = "\t")
 
-ghost_koala_file_gestion('gene_pathwayq_GhostKoala.txt')
-file_cleaning()
+def main():
+    ghost_koala_file_gestion('gene_pathwayq_GhostKoala.txt')
+    file_cleaning()

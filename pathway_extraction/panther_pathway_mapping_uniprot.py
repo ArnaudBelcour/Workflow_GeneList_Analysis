@@ -5,8 +5,7 @@ import pandas as pa
 
 from urllib.request import urlopen
 
-temporary_directory = '../temporaryFiles/'
-temporary_directory_database = '../temporaryFiles/databases/'
+from . import *
 
 def http_request_gene_ontology(url, file_name):
     '''

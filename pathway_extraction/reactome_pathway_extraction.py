@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
 import csv
+import numpy as np
 import pandas as pa
 import requests
+
+from progress.bar import IncrementalBar
 
 from . import *
 
@@ -14,13 +17,11 @@ def http_request_reactome(data_id, data_name, writer):
     try:
         r = requests.get('http://www.reactome.org/ContentService/search/query?query=' + data_id +'&cluster=true')
         results = r.json()
-        print(results)
 
         if 'code' in results:
             if results['code'] == 404:
-                return print('No results found')
+                return
 
-        #r = requests.get('http://www.reactome.org/ContentService/data/pathways/low/entity/' + result_id)
         if data_name in ["REACT", "Interpro", "GO", "EC"]:
             if data_name in ["GO", "EC"]:
                 data_id = data_name + "_" + data_id
@@ -37,7 +38,7 @@ def http_request_reactome(data_id, data_name, writer):
         writer.writerow([data_id, reactome_id, reactome_id_specie])
 
     except Exception as e:
-        print ("Errors : " + repr(e))
+        error = "Errors : " + repr(e)
 
 def file_creation(data_name, column_name, df_genome):
     csvfile = open(temporary_directory_database + 'pathway_reactome_' + data_name + '.tsv', "w", newline = "")
@@ -45,36 +46,39 @@ def file_creation(data_name, column_name, df_genome):
     writer.writerow([data_name, 'Id', 'specie', 'data_type'])
 
     datas_requests = []
-    if data_name in ["EC", "Interpro"]:
-        [datas_requests.extend(datas.split("; ")) for datas in df_genome[column_name].dropna().tolist()]
-    elif data_name in ["GO", "CHEBI", "REACT"]:
-        [datas_requests.extend(datas.split(",")) for datas in df_genome[column_name]]
+
+    [datas_requests.extend(datas.split(",")) for datas in df_genome[column_name]]
 
     datas_requests = list(set().union(datas_requests))
-
+    bar = IncrementalBar('Processing ' + data_name, max=len(datas_requests))
     if data_name == "Interpro":
         for data in datas_requests:
-            data = data.strip()[:9]
             http_request_reactome(data, data_name, writer)
+            bar.next()
     elif data_name == "CHEBI":
         for data in datas_requests:
             data = data.strip().replace("_", ":")
             http_request_reactome(data, data_name, writer)
+            bar.next()
     elif data_name == "REACT":
         for data in datas_requests:
             data = data.strip()
             http_request_reactome(data, data_name, writer)
+            bar.next()
     elif data_name in ["GO", "EC"]:
         for data in datas_requests:
             data = data.strip()[len(data_name + ':'):]
             http_request_reactome(data, data_name, writer)
+            bar.next()
+    bar.finish()
 
     csvfile.close()
 
 def main(file_name):
-    df_genome = pa.read_csv(temporary_directory + file_name + 'tsv', sep = "\t")
-    data_names = {"EC": "EnzymeCodes", "GO": "GOs", "CHEBI":"ChEBI", "REACT": "reactome_pathway", "Interpro": "InterProScan"}
+    df_genome = pa.read_csv(temporary_directory + file_name + '.tsv', sep = "\t")
+    df_genome.replace(np.nan, '', regex=True, inplace=True)
+    data_names = {"EC": "EnzymeCodes", "GO": "GOs", "Interpro": "InterProScan"}
 
     for data_name in data_names:
         file_creation(data_name, data_names[data_name], df_genome)
-main()
+

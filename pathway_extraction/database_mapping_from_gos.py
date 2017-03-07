@@ -4,6 +4,8 @@ import csv
 import pandas as pa
 import requests
 
+from progress.bar import IncrementalBar
+
 from . import *
 
 def http_request_gene_ontology(url, file_name):
@@ -65,6 +67,12 @@ def main():
                    'interpro_go_mapping': 'http://geneontology.org/external2go/interpro2go',
                    'eccode_go_mapping': 'http://geneontology.org/external2go/ec2go',
                    }
+
+    bar = IncrementalBar('Processing', max=len(databases_gos_mapping))
     for database in databases_gos_mapping:
         id_name, id_prefix = http_request_gene_ontology(databases_gos_mapping[database], database)
         cleaning_file(database, id_name, id_prefix)
+        bar.next()
+
+    bar.finish()
+

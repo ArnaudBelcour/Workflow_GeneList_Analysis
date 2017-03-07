@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import numpy as np
 import os
 import pandas as pa
 import re
@@ -28,14 +29,12 @@ def ipr_extraction(df_genome):
                    if re.match(ipr_expression, y)])
 
 def ec_extraction(df_genome):
-    df_genome['EnzymeCodes'] = df_genome['EnzymeCodes'].str.lower().str.split(";")
-
     ecs_requests = []
+
     for ecs in df_genome['EnzymeCodes']:
-        if type(ecs) != float:
-            for ec in ecs:
-                if ec not in ecs_requests:
-                    ecs_requests.append(ec)
+        for ec in ecs.lower().split(","):
+            if ec not in ecs_requests and ec != '':
+                ecs_requests.append(ec)
 
     return ecs_requests
 
@@ -53,26 +52,38 @@ def r_keggrest_ec(ecs_requests):
         raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
 
 def main():
-    if os.path.exists(temporary_directory_database[:-1]) == False :
+    if os.path.isdir(temporary_directory_database) == False:
         os.makedirs(temporary_directory_database)
-    name_reference_file = 'Annotation_blast2go_PROT_eH'
-    df_genome = pa.read_csv(temporary_directory + name_reference_file + 'GOsTranslatedAndFixed.tsv', sep = "\t")
+    name_reference_file = 'Annotation_blast2go_PROT_eH_testGOsTranslatedAndFixed'
+    df_genome = pa.read_csv(temporary_directory + name_reference_file + '.tsv', sep = "\t")
+    df_genome.replace(np.nan, '', regex=True, inplace=True)
+
+    print("Keggrest interrogation")
     ecs_requests = ec_extraction(df_genome)
     r_keggrest_ec(ecs_requests)
 
+    print("GO owl interrogation to retrieve ChEBI")
     chebi_from_go.go_to_chebi()
 
+    print("GO mapping files interrogation")
     database_mapping_from_gos.main()
 
+    print("EupathDB interrogation")
     eupathdb_pathway_extraction.main()
 
+    print("Ghost Koala interrogation")
     ghost_koala_pathway_extraction.main()
 
+    print("Interpro interrogation")
     interpro_pathway_extraction.main()
 
+    print("Panther interrogation")
     panther_pathway_mapping_uniprot.main()
 
+    print("Reactome interrogation")
     reactome_pathway_extraction.main(name_reference_file)
 
+    print("Reactome endpoint interrogation")
     sparql_query_reactome_pathway_name.main()
 main()
+

@@ -2,6 +2,7 @@
 
 import csv
 
+from progress.bar import IncrementalBar
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 from . import *
@@ -32,9 +33,13 @@ def go_to_chebi():
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['GOs', 'ChEBI'])
 
+    bar = IncrementalBar('Processing', max=len(results["results"]["bindings"]))
     for result in results["results"]["bindings"]:
         go = result["go"]["value"][len('http://purl.obolibrary.org/obo/'):]
         chebi = result["chebi"]["value"][len('http://purl.obolibrary.org/obo/'):]
         writer.writerow([go, chebi])
+        bar.next()
 
+    bar.finish()
     csvfile.close()
+

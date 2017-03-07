@@ -3,6 +3,7 @@
 import csv
 import pandas as pa
 
+from progress.bar import IncrementalBar
 from urllib.request import urlopen
 
 from . import *
@@ -19,10 +20,14 @@ def http_request_gene_ontology(url, file_name):
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['pathway_accession', 'pathway_name', 'uniprot_id', 'panther_subfamily_id', 'panther_subfamily_name'])
 
+    bar = IncrementalBar('Processing', max=len(page[:-1]))
+
     for i in page[:-1]:
         column_separation = i.split("\t")
         writer.writerow([column_separation[0], column_separation[1], column_separation[4], column_separation[9], column_separation[10].replace('\r', '')])
+        bar.next()
 
+    bar.finish()
     csvfile.close()
 
 def cleaning_file(file_name):
@@ -35,4 +40,3 @@ def main():
     http_request_gene_ontology('ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt', file_name)
     cleaning_file(file_name)
 
-main()

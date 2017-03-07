@@ -59,3 +59,4 @@ def union_go_and_their_ancestor(gos):
     go_str_for_entity = ",".join(go_list_for_entity)
 
     return go_str_for_entity
+

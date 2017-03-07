@@ -3,8 +3,9 @@
 import csv
 import urllib.request
 
-from lxml import etree
 from gzip import GzipFile
+from lxml import etree
+from progress.bar import IncrementalBar
 
 from . import *
 
@@ -21,6 +22,7 @@ def interpro_pathway_extraction(url, file_name):
 
     with GzipFile(fileobj = response) as xmlFile:
         coords = etree.parse(xmlFile).getroot()
+        bar = IncrementalBar('Processing', max=len(coords))
         for coord in coords:
             interpro_id = coord.attrib.get('id')
             if interpro_id is not None:
@@ -32,9 +34,11 @@ def interpro_pathway_extraction(url, file_name):
                             if database_name == "KEGG":
                                pathway_id = pathway_id.split("+")[0]
                             writer.writerow([interpro_id, database_name, pathway_id])
+            bar.next()
 
+        bar.finish()
     csvfile.close()
 
 def main():
     interpro_pathway_extraction('ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro.xml.gz', 'interpro')
-main()
+

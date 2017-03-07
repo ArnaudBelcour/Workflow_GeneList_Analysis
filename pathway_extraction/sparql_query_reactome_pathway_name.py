@@ -40,4 +40,4 @@ def main():
 
     sparql_query("https://www.ebi.ac.uk/rdf/services/reactome/sparql", query, "pathwayReactomeIDToPathwayName")
 
-main()
+

@@ -43,6 +43,9 @@ def translation_interpro_data(selected_interpros, df_mapping, data_column, datab
                         datas.extend(df_mapping.loc[selected_interpro][data_column].tolist())
                     elif type(df_mapping.loc[selected_interpro][data_column]) is str or type(df_mapping.loc[selected_interpro][data_column]) is float:
                         datas.append(str(df_mapping.loc[selected_interpro][data_column]))
+
+    datas = list(set(datas))
+
     return datas
 
 def translation_gene_pathway(selected_gene, df_mapping, data_column):
@@ -52,10 +55,13 @@ def translation_gene_pathway(selected_gene, df_mapping, data_column):
         if type(df_mapping.loc[selected_gene][data_column]) is str:
             datas = literal_eval(df_mapping.loc[selected_gene][data_column])
 
+    datas = list(set(datas))
+
     return datas
 
 def mapping_data(file_name, df_genome):
     df_mapping = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
+    df_mapping['GOs'] = df_mapping['GOs'].str.replace("_", ":")
     df_mapping = df_mapping.set_index("GOs")
     data_column = df_mapping.columns[0]
     df_genome[data_column] = df_genome['GOs'].apply(translation_data, args = (df_mapping, data_column, 'initial'))
@@ -80,21 +86,28 @@ def list_to_string(datas):
 
 def main():
     name_reference_file = 'Annotation_blast2go_PROT_eH'
-    df_genome = pa.read_csv(temporary_directory + name_reference_file + "GOsTranslatedAndFixed_test.tsv", sep = "\t")
+    df_genome = pa.read_csv(temporary_directory + name_reference_file + "GOsTranslatedAndFixed.tsv", sep = "\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
-    #ecs_requests = ec_extraction(df_genome)
-    #r_keggrest_ec(ecs_requests)
 
     for file_name in os.listdir(temporary_directory_database):
         if "mapping" in file_name:
             df_genome = mapping_data(file_name, df_genome)
+
+    for index, row in df_genome.iterrows():
+        if row['EnzymeCodes'] == '':
+            df_genome.set_value(index, 'EnzymeCodes', row['ec_code'])
+        if row['InterProScan'] == '':
+            df_genome.set_value(index, 'InterProScan', row['interpro'])
+
+    df_genome.drop('ec_code', 1, inplace=True)
+    df_genome.drop('interpro', 1, inplace=True)
 
     for file_name in os.listdir(temporary_directory_database):
         if "ecChebiToPathway" in file_name:
             df_eupathdb = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
             df_eupathdb['ecChebis'] = df_eupathdb['ecChebis'].str.replace(":", "_")
             df_eupathdb = df_eupathdb.set_index('ecChebis')
-            df_genome['pathway_' + file_name] = (df_genome['ec_code'].apply(translation_data, args = (df_eupathdb, 'pathway', 'pathway'))\
+            df_genome['pathway_' + file_name] = (df_genome['EnzymeCodes'].apply(translation_data, args = (df_eupathdb, 'pathway', 'pathway'))\
                                                  + df_genome['ChEBI'].apply(translation_data, args = (df_eupathdb, 'pathway', 'pathway')))
 
     column_names = df_genome.columns.tolist()
@@ -148,12 +161,12 @@ def main():
                 df_genome[file_name] = df_genome['GOs'].apply(translation_data, args = (df_reactome, 'Id', 'pathway'))
             if 'Interpro' in file_name:
                 df_reactome = df_reactome.set_index('Interpro')
-                df_genome[file_name] = df_genome['interpro'].apply(translation_data, args = (df_reactome, 'Id', 'pathway'))
+                df_genome[file_name] = df_genome['InterProScan'].apply(translation_data, args = (df_reactome, 'Id', 'pathway'))
             if 'EC' in file_name:
                 df_reactome['EC'] = df_reactome['EC'].str.replace("ec:", "")
                 df_reactome['EC'] = df_reactome['EC'].str.replace("_", ":")
                 df_reactome = df_reactome.set_index('EC')
-                df_genome[file_name] = df_genome['ec_code'].apply(translation_data, args = (df_reactome, 'Id', 'pathway'))
+                df_genome[file_name] = df_genome['EnzymeCodes'].apply(translation_data, args = (df_reactome, 'Id', 'pathway'))
             if 'CHEBI' in file_name:
                 df_reactome['CHEBI'] = df_reactome['CHEBI'].str.replace(":", "_")
                 df_reactome = df_reactome.set_index('CHEBI')
@@ -181,7 +194,7 @@ def main():
     df_keggrest['ecCode'] = df_keggrest['ecCode'].str.replace("ec:", "")
     df_keggrest = df_keggrest.set_index('ecCode')
 
-    df_genome['pathway_keggrest'] = df_genome['ec_code'].apply(translation_data, args = (df_keggrest, 'PathwayID', 'pathway'))
+    df_genome['pathway_keggrest'] = df_genome['EnzymeCodes'].apply(translation_data, args = (df_keggrest, 'PathwayID', 'pathway'))
 
     df_genome['pathway_keggrest'] = df_genome['pathway_keggrest'].apply(list_to_string)
 
@@ -191,7 +204,7 @@ def main():
     databases = ['KEGG', 'REACTOME', 'METACYC']
 
     for database in databases:
-        df_genome['pathway_interpro_' + database] = df_genome['interpro'].apply(translation_interpro_data, args = (df_interpro, 'Pathway_id', database))
+        df_genome['pathway_interpro_' + database] = df_genome['InterProScan'].apply(translation_interpro_data, args = (df_interpro, 'Pathway_id', database))
         df_genome['pathway_interpro_' + database] = df_genome['pathway_interpro_' + database].apply(list_to_string)
 
 
@@ -202,6 +215,6 @@ def main():
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(drop_duplicates)
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(list_to_string)
 
-    df_genome.to_csv(temporary_directory_database + "result_pathway_extraction.tsv", sep = "\t")
+    df_genome.to_csv(temporary_directory + "result_pathway_extraction.tsv", sep = "\t")
 
 main()

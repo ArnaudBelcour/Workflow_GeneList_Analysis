@@ -2,6 +2,7 @@
 
 import csv
 import math
+import numpy as np
 import os
 import pandas as pa
 import re
@@ -496,24 +497,6 @@ class FileManagement():
 
         return results_dataframe
 
-    def cleaning_value(self, dataframe, value):
-        value_dataframe = dataframe[dataframe.GOs.str.match(value) == True]
-
-        dataframe.set_index("Gene_Name", inplace = True)
-        for index in value_dataframe['Gene_Name'].tolist():
-            dataframe = dataframe.drop(index)
-        dataframe.reset_index(inplace = True)
-
-        return dataframe
-
-    def cleaning_nan_value(self, dataframe, column):
-        for index, row in dataframe.iterrows():
-            if type(row[column]) is float:
-                if math.isnan(dataframe.get_value(index, column)):
-                    dataframe = dataframe.drop([index])
-
-        return dataframe
-
     def rewriting_file(self, newtable, file_name):
         newtable.to_csv(temporary_directory + file_name, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
@@ -580,6 +563,13 @@ class FileManagement():
 
     def column_data_cleaning(self, type_file):
 
+        def drop_duplicates(datas):
+            datas_with_unique = []
+            for data in datas:
+                if data not in datas_with_unique:
+                    datas_with_unique.append(data)
+            return datas_with_unique
+
         name_input_file = self.file_name
         extension_input_file = self.file_extension
 
@@ -620,12 +610,12 @@ class FileManagement():
         results_dataframe['GOs'] = results_dataframe['GOs'].str.join(",")
 
         results_dataframe.replace(np.nan, '', regex=True, inplace=True)
-
         list_to_string = lambda datas: ','.join(datas)
         to_list = lambda x: x.split("; ")
 
         results_dataframe['InterProScan'] = results_dataframe['InterProScan'].apply(to_list)
 
+        ipr_expression = r"IPR[\d]{6}"
         ipr_selection = lambda interpros: [interpro[:9]
                                            for interpro in interpros
                                            if re.match(ipr_expression, interpro[:9])]
@@ -646,8 +636,7 @@ class FileManagement():
         if uniprot_retrieval_y_n in yes_answers :
             results_dataframe = uniprot_retrieval_data.extract_information_from_uniprot(results_dataframe)
 
-        results_dataframe = self.cleaning_value(results_dataframe, '-')
-        results_dataframe = self.cleaning_nan_value(results_dataframe, 'GOs')
+        results_dataframe.reset_index(inplace = True)
 
         self.rewriting_file(results_dataframe, name_input_file + "GOsTranslatedAndFixed.tsv")
 
@@ -679,6 +668,7 @@ class FileManagementGeneGOs(FileManagement):
     def go_ancestors_list_of_interest(self, column_analyzed_object, file_name_temporary):
 
         df = pa.read_csv(temporary_directory + file_name_temporary, '\t')
+        df.replace(np.nan, '', regex=True, inplace=True)
 
         for index, row in df.iterrows():
             df[column_analyzed_object].loc[index] = ancestor_go_extraction.union_go_and_their_ancestor(row[column_analyzed_object].split(","))
@@ -733,6 +723,7 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
     def counting_genome(self, file_name_temporary, column_name, column_analyzed_object):
         analyzed_objects = []
         df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
+        df.replace(np.nan, '', regex=True, inplace=True)
 
         for index, row in df.iterrows():
             for analyzed_object in row[column_analyzed_object].split(","):

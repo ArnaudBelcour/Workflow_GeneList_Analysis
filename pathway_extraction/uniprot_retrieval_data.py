@@ -42,7 +42,7 @@ def extract_information_from_uniprot(results_dataframe):
         results = sparql.query().convert()
 
         for result in results["results"]["bindings"]:
-            gos_found.append(result["go"]["value"][31:])
+            gos_found.append(result["go"]["value"][31:].replace("_", ":"))
 
         sparql.setQuery("""
         PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> 
@@ -85,10 +85,11 @@ def extract_information_from_uniprot(results_dataframe):
                 data = data[len('prosite/'):]
                 prosites.append(data)
 
-        if type(row['GOs']) is float:
-            results_dataframe.set_value(gene, 'GOs', str(gos_found))
-        if row['InterProScan'] == 'no IPS match':
-            results_dataframe.set_value(gene, 'InterProScan', str(interpros))
+        if row['GOs'] == '':
+            results_dataframe.set_value(gene, 'GOs', ','.join(gos_found))
+
+        if row['InterProScan'] == '':
+            results_dataframe.set_value(gene, 'InterProScan', ','.join(interpros))
 
         #results_dataframe.set_value(gene, 'supFams', str(supfams))
         #results_dataframe.set_value(gene, 'pfams', str(pfams))

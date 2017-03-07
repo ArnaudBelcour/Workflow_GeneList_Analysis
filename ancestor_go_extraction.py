@@ -49,8 +49,11 @@ def union_go_and_their_ancestor(gos):
     go_ancestors_for_go_lists = []
 
     for go in gos:
-        go_ancestors = go_term_ancestor(go)
-        go_ancestors_for_go_lists.append(go_ancestors)
+        if go == '':
+            go_ancestors_for_go_lists.append('')
+        elif go != '':
+            go_ancestors = go_term_ancestor(go)
+            go_ancestors_for_go_lists.append(go_ancestors)
 
     go_list_for_entity = list(set().union(*go_ancestors_for_go_lists))
     go_str_for_entity = ",".join(go_list_for_entity)

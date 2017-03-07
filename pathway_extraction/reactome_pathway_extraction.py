@@ -4,8 +4,7 @@ import csv
 import numpy as np
 import pandas as pa
 import requests
-
-from progress.bar import IncrementalBar
+import tqdm
 
 from . import *
 
@@ -50,27 +49,25 @@ def file_creation(data_name, column_name, df_genome):
     [datas_requests.extend(datas.split(",")) for datas in df_genome[column_name]]
 
     datas_requests = list(set().union(datas_requests))
-    bar = IncrementalBar('Processing ' + data_name, max=len(datas_requests))
+
     if data_name == "Interpro":
-        for data in datas_requests:
+        for data in tqdm(datas_requests):
             http_request_reactome(data, data_name, writer)
             bar.next()
     elif data_name == "CHEBI":
-        for data in datas_requests:
+        for data in tqdm(datas_requests):
             data = data.strip().replace("_", ":")
             http_request_reactome(data, data_name, writer)
             bar.next()
     elif data_name == "REACT":
-        for data in datas_requests:
+        for data in tqdm(datas_requests):
             data = data.strip()
             http_request_reactome(data, data_name, writer)
             bar.next()
     elif data_name in ["GO", "EC"]:
-        for data in datas_requests:
+        for data in tqdm(datas_requests):
             data = data.strip()[len(data_name + ':'):]
             http_request_reactome(data, data_name, writer)
-            bar.next()
-    bar.finish()
 
     csvfile.close()
 

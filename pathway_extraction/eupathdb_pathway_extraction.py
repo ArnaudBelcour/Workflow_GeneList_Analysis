@@ -3,8 +3,7 @@
 import csv
 import re
 import requests
-
-from progress.bar import IncrementalBar
+import tqdm
 
 from . import *
 
@@ -96,16 +95,10 @@ def request_and_parse_pathway_file(db_database, database, pathways_file_name):
 def main():
     db_databases = ['amoebadb', 'cryptodb', 'fungidb', 'giardiadb', 'microsporidiadb', 'piroplasmadb', 'plasmodb', 'toxodb', 'trichdb', 'tritrypdb']
 
-    bar = IncrementalBar('Processing', max=len(db_databases))
-
-    for db_database in db_databases:
+    for db_database in tqdm(db_databases):
         db_database_pathways = request_database_eupathdb(db_database)
         request_and_parse_pathway_file(db_database, 'KEGG', db_database_pathways['KEGG'])
         request_and_parse_pathway_file(db_database, 'MetaCyc', db_database_pathways['MetaCyc'])
         if db_database == 'tritrypdb':
             request_and_parse_pathway_file(db_database, 'LeishCyc', db_database_pathways['LeishCyc'])
             request_and_parse_pathway_file(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'])
-        bar.next()
-
-    bar.finish()
-

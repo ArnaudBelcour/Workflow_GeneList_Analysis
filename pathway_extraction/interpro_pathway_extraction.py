@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import csv
+import tqdm
 import urllib.request
 
 from gzip import GzipFile
 from lxml import etree
-from progress.bar import IncrementalBar
 
 from . import *
 
@@ -22,8 +22,8 @@ def interpro_pathway_extraction(url, file_name):
 
     with GzipFile(fileobj = response) as xmlFile:
         coords = etree.parse(xmlFile).getroot()
-        bar = IncrementalBar('Processing', max=len(coords))
-        for coord in coords:
+
+        for coord in tqdm(coords):
             interpro_id = coord.attrib.get('id')
             if interpro_id is not None:
                 for childs in coord.getchildren():
@@ -34,9 +34,7 @@ def interpro_pathway_extraction(url, file_name):
                             if database_name == "KEGG":
                                pathway_id = pathway_id.split("+")[0]
                             writer.writerow([interpro_id, database_name, pathway_id])
-            bar.next()
 
-        bar.finish()
     csvfile.close()
 
 def main():

@@ -2,8 +2,8 @@
 
 import csv
 import pandas as pa
-import tqdm
 
+from tqdm import *
 from urllib.request import urlopen
 
 from . import *

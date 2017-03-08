@@ -17,9 +17,15 @@ file_name = paste(data_name, '_pathway_kegg.tsv', sep = "")
 
 write.table(pathway_table, file <- file.path('temporaryFiles', 'databases', file_name), append = FALSE, row.names = FALSE, col.names = TRUE, quote = FALSE, sep ="\t")
 
+progress_bar <- txtProgressBar(min = 0, max = length(data_codes), style = 3)
+progress = 0
+
 for(data_code in data_codes)
 {
     pathway_linked_to_enzyme <- keggLink('pathway', data_code)
+    progress = progress + 1
+    setTxtProgressBar(progress_bar, progress)
+
     if (toString(pathway_linked_to_enzyme) == '')
     {
         pathway_table <- matrix(c(trim(data_code), NA, NA), ncol = 3)
@@ -39,3 +45,6 @@ for(data_code in data_codes)
         }
     }
 }
+
+close(progress_bar)
+

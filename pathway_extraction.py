@@ -24,8 +24,8 @@ def ipr_extraction(df_genome):
     df_genome = df_genome[['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
     df_genome.set_index("Gene_Name", inplace = True)
     df_genome['InterProScan'] = df_genome['InterProScan'].str.split("; ").apply(
-        lambda x: [y[:len('IPRXXXXXX')] 
-                   for y in x 
+        lambda x: [y[:len('IPRXXXXXX')]
+                   for y in x
                    if re.match(ipr_expression, y)])
 
 def ec_extraction(df_genome):
@@ -41,15 +41,22 @@ def ec_extraction(df_genome):
 def r_keggrest_ec(ecs_requests):
     '''
         Uses the R script to extract pathway using Enzyme Code in KEGG.
+        Show the progress bar send by R in the console (and update it during the iteration).
     '''
     command = 'Rscript'
     path_script = 'pathway_extraction/keggrest_pathway_extraction.R'
     data_name = ["enzyme"]
     cmd = [command, path_script] + ecs_requests + data_name
-    try:
-        subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+
+    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+    for stdout_line in iter(popen.stdout.readline, ""):
+        if "%" in stdout_line:
+            print ("\x1b[2K\r{}".format(stdout_line.rstrip()), end="")
+    print("\r")
+    popen.stdout.close()
+    return_code = popen.wait()
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, cmd)
 
 def main():
     if os.path.isdir(temporary_directory_database) == False:

@@ -4,6 +4,8 @@ import csv
 import pandas as pa
 import re
 
+from tqdm import *
+
 from . import *
 
 def ghost_koala_file_gestion(file_name):
@@ -49,7 +51,7 @@ def ghost_koala_file_gestion(file_name):
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['Title', 'Pathway', 'KO', 'Gene'])
 
-    for title in title_pathways:
+    for title in tqdm(title_pathways):
         for pathway in title_pathways[title]:
             for ko in title_pathways[title][pathway]:
                 for gene in title_pathways[title][pathway][ko]:

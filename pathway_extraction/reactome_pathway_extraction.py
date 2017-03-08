@@ -4,7 +4,8 @@ import csv
 import numpy as np
 import pandas as pa
 import requests
-import tqdm
+
+from tqdm import *
 
 from . import *
 
@@ -51,20 +52,21 @@ def file_creation(data_name, column_name, df_genome):
     datas_requests = list(set().union(datas_requests))
 
     if data_name == "Interpro":
+        print("\tPathway from Interpro extraction")
         for data in tqdm(datas_requests):
             http_request_reactome(data, data_name, writer)
-            bar.next()
     elif data_name == "CHEBI":
+        print("\tPathway from ChEBI extraction")
         for data in tqdm(datas_requests):
             data = data.strip().replace("_", ":")
             http_request_reactome(data, data_name, writer)
-            bar.next()
     elif data_name == "REACT":
+        print("\tREACT pathway extraction")
         for data in tqdm(datas_requests):
             data = data.strip()
             http_request_reactome(data, data_name, writer)
-            bar.next()
     elif data_name in ["GO", "EC"]:
+        print("\tPathway from " + data_name + " extraction")
         for data in tqdm(datas_requests):
             data = data.strip()[len(data_name + ':'):]
             http_request_reactome(data, data_name, writer)

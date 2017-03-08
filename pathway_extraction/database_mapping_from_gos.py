@@ -3,7 +3,8 @@
 import csv
 import pandas as pa
 import requests
-import tqdm
+
+from tqdm import *
 
 from . import *
 

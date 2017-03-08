@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import csv
-import tqdm
 import urllib.request
 
 from gzip import GzipFile
 from lxml import etree
+from tqdm import *
 
 from . import *
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import csv
-import tqdm
 
 from SPARQLWrapper import SPARQLWrapper, JSON
+from tqdm import *
 
 from . import *
 

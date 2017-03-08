@@ -3,7 +3,8 @@
 import csv
 import re
 import requests
-import tqdm
+
+from tqdm import *
 
 from . import *
 

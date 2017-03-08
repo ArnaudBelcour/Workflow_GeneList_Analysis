@@ -159,12 +159,12 @@ class EnrichmentAnalysis():
         sigma = math.sqrt(self.number_of_analyzed_object_of_interest  * p * q * (1 - t))
 
         if over_or_underrepresentation == "over":
-            pValueNormal = stats.norm.sf(number_of_object_in_interest + 1, loc = mu, scale = sigma)
+            pvalue_normal = stats.norm.sf(number_of_object_in_interest, loc = mu, scale = sigma)
 
         if over_or_underrepresentation == "under":
-            pValueNormal = stats.norm.cdf(number_of_object_in_interest, loc = mu, scale = sigma)
+            pvalue_normal = stats.norm.cdf(number_of_object_in_interest, loc = mu, scale = sigma)
 
-        df.set_value(analyzedObject, 'pvalue_normal_approximation', pValueNormal)
+        df.set_value(analyzedObject, 'pvalue_normal_approximation', pvalue_normal)
         self.output_columns[4] = 'pvalue_normal_approximation'
         self.statistic_method = 'pvalue_normal_approximation'
 

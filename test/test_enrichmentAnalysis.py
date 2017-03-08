@@ -70,6 +70,28 @@ class enrichmentAnalysis_test(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(df_joined['pvalue_hypergeometric'].tolist(), df_joined_wih_results['pvalue_hypergeometric'].tolist(), decimal = 4)
 
+    def test_normal_approximation_on_dataframe_over(self):
+        '''
+        Datas have been invented for the test.
+        Results for the hypergeometric test are from : https://www.geneprof.org/GeneProf/tools/hypergeometric.jsp
+        pvalue_hypergeometric found : 4.834533775884863e-8
+        '''
+        print("\nTesting normal approximation sf on dataframe ")
+        enrichment_analysis_test = EnrichmentAnalysis('Genes', 'data_interest_test_sf_hypergeometric', 'data_reference_test_sf_hypergeometric', 10000, 100000, 0.05, 10000)
+
+        counts_df = pa.read_csv(test_data_directory_sf + 'data_interest_test_sf_hypergeometric_normal' + ".tsv", sep = "\t")
+        counts_df_reference = pa.read_csv(test_data_directory_sf + 'data_reference_test_sf_hypergeometric_normal' + ".tsv", sep = "\t")
+
+        counts_df.set_index('Genes', inplace = True)
+        counts_df_reference.set_index('Genes', inplace = True)
+
+        df_joined = counts_df.join(counts_df_reference)
+
+        df_joined = enrichment_analysis_test.compute_normal_approximation('Gene_1', 6000, 57500, df_joined, 'over')
+        df_joined = enrichment_analysis_test.hypergeometric_test_on_dataframe(df_joined, 'over', 'CountsReference')
+
+        np.testing.assert_array_almost_equal(df_joined['pvalue_hypergeometric'].tolist(), df_joined['pvalue_normal_approximation'].tolist(), decimal = 4)
+
     def test_correction_bonferroni(self):
         '''
         Datas are from : http://www.pmean.com/05/MultipleComparisons.asp

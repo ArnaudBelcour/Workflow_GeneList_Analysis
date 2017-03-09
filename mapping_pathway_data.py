@@ -75,9 +75,8 @@ def drop_duplicates(datas):
 def list_to_string(datas):
     return ','.join(datas)
 
-def main():
-    name_reference_file = 'Annotation_blast2go_PROT_eH'
-    df_genome = pa.read_csv(temporary_directory + name_reference_file + "GOsTranslatedAndFixed.tsv", sep = "\t")
+def main(file_name_temporary):
+    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
     for file_name in os.listdir(temporary_directory_database):

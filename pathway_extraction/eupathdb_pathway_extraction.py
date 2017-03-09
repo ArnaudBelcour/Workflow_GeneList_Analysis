@@ -103,3 +103,4 @@ def main():
         if db_database == 'tritrypdb':
             request_and_parse_pathway_file(db_database, 'LeishCyc', db_database_pathways['LeishCyc'])
             request_and_parse_pathway_file(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'])
+

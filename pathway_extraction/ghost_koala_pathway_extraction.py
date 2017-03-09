@@ -79,3 +79,4 @@ def file_cleaning():
 def main():
     ghost_koala_file_gestion('gene_pathwayq_GhostKoala.txt')
     file_cleaning()
+

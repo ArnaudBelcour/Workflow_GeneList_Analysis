@@ -10,6 +10,7 @@ import shutil
 import six
 
 import ancestor_go_extraction
+import mapping_pathway_data
 import pathway_extractor
 import pathway_extraction.uniprot_retrieval_data as uniprot_retrieval_data
 
@@ -708,6 +709,8 @@ class FileManagementGeneGOs(FileManagement):
             if self.already_analyzed_file_tf == False:
                 self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
                 pathway_extractor.data_retrieval_from_GO(file_name_temporary)
+                pathway_extractor.main(file_name_temporary)
+                mapping_pathway_data.main(file_name_temporary)
             counting_object_file = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
 
             return file_name_temporary, counting_object_file

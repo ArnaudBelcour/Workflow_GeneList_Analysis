@@ -57,6 +57,9 @@ def cleaning_file(file_name, id_name, id_prefix):
     if id_name == "interpro":
         df[id_name] = [interpro[:9]
                         for interpro in df[id_name]]
+    if id_name == "ec_code":
+        df[id_name] = ['ec:'+ec
+                        for ec in df[id_name]]
     df['GOs'] = df['GOs'].str.replace("GO:", "GO_")
     df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 

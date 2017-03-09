@@ -93,9 +93,8 @@ def data_retrieval_from_GO(file_name_temporary):
     df_genome.drop('interpro', 1, inplace=True)
     df_genome.to_csv(temporary_directory + file_name_temporary, sep = "\t")
 
-def main():
-    name_reference_file = 'Annotation_blast2go_PROT_eH_testGOsTranslatedAndFixed'
-    df_genome = pa.read_csv(temporary_directory + name_reference_file + '.tsv', sep = "\t")
+def main(file_name_temporary):
+    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
     print("Keggrest interrogation")

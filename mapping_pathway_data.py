@@ -59,15 +59,6 @@ def translation_gene_pathway(selected_gene, df_mapping, data_column):
 
     return datas
 
-def mapping_data(file_name, df_genome):
-    df_mapping = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
-    df_mapping['GOs'] = df_mapping['GOs'].str.replace("_", ":")
-    df_mapping = df_mapping.set_index("GOs")
-    data_column = df_mapping.columns[0]
-    df_genome[data_column] = df_genome['GOs'].apply(translation_data, args = (df_mapping, data_column, 'initial'))
-
-    return df_genome
-
 def intialize_column(df, column_name):
     df[column_name] = ''
     df[column_name] = df[column_name].apply(list)
@@ -88,19 +79,6 @@ def main():
     name_reference_file = 'Annotation_blast2go_PROT_eH'
     df_genome = pa.read_csv(temporary_directory + name_reference_file + "GOsTranslatedAndFixed.tsv", sep = "\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
-
-    for file_name in os.listdir(temporary_directory_database):
-        if "mapping" in file_name:
-            df_genome = mapping_data(file_name, df_genome)
-
-    for index, row in df_genome.iterrows():
-        if row['EnzymeCodes'] == '':
-            df_genome.set_value(index, 'EnzymeCodes', row['ec_code'])
-        if row['InterProScan'] == '':
-            df_genome.set_value(index, 'InterProScan', row['interpro'])
-
-    df_genome.drop('ec_code', 1, inplace=True)
-    df_genome.drop('interpro', 1, inplace=True)
 
     for file_name in os.listdir(temporary_directory_database):
         if "ecChebiToPathway" in file_name:
@@ -217,4 +195,3 @@ def main():
 
     df_genome.to_csv(temporary_directory + "result_pathway_extraction.tsv", sep = "\t")
 
-main()

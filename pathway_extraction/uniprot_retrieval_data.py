@@ -5,6 +5,7 @@ import pandas as pa
 import six
 
 from SPARQLWrapper import SPARQLWrapper, JSON
+from tqdm import *
 
 from . import *
 
@@ -18,7 +19,7 @@ def extract_information_from_uniprot(results_dataframe):
 
     results_dataframe.set_index("Gene_Name", inplace = True)
 
-    for gene, row in results_dataframe.iterrows():
+    for gene, row in tqdm(results_dataframe.iterrows(), total=len(results_dataframe.index)):
         transcript = 'ensembl:' + row['Blast']
         gos_found = []
         sparql = SPARQLWrapper('http://beta.sparql.uniprot.org/sparql')
@@ -62,7 +63,7 @@ def extract_information_from_uniprot(results_dataframe):
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
         datas_found = []
-        print(results["results"]["bindings"])
+        #print(results["results"]["bindings"])
         for result in results["results"]["bindings"]:
             datas_found.append(result["data"]["value"][len('http://purl.uniprot.org/'):])
 

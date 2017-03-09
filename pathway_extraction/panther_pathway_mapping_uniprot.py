@@ -20,8 +20,8 @@ def http_request_gene_ontology(url, file_name):
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['pathway_accession', 'pathway_name', 'uniprot_id', 'panther_subfamily_id', 'panther_subfamily_name'])
 
-    for i in tqdm(page[:-1]):
-        column_separation = i.split("\t")
+    for line in tqdm(page[:-1]):
+        column_separation = line.split("\t")
         writer.writerow([column_separation[0], column_separation[1], column_separation[4], column_separation[9], column_separation[10].replace('\r', '')])
 
     csvfile.close()

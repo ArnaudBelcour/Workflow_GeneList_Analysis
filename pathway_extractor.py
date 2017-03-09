@@ -79,6 +79,9 @@ def data_retrieval_from_GO(file_name_temporary):
     print("GO mapping files interrogation")
     database_mapping_from_gos.main()
 
+    print("GO owl interrogation to retrieve ChEBI")
+    chebi_from_go.go_to_chebi()
+
     for file_name in os.listdir(temporary_directory_database):
         if "mapping" in file_name:
             df_genome = mapping_data(file_name, df_genome)
@@ -101,9 +104,6 @@ def main(file_name_temporary):
     ecs_requests = ec_extraction(df_genome)
     r_keggrest_ec(ecs_requests)
 
-    print("GO owl interrogation to retrieve ChEBI")
-    chebi_from_go.go_to_chebi()
-
     print("EupathDB interrogation")
     eupathdb_pathway_extraction.main()
 
@@ -117,7 +117,7 @@ def main(file_name_temporary):
     panther_pathway_mapping_uniprot.main()
 
     print("Reactome interrogation")
-    reactome_pathway_extraction.main(name_reference_file)
+    reactome_pathway_extraction.main(file_name_temporary)
 
     print("Reactome endpoint interrogation")
     sparql_query_reactome_pathway_name.main()

@@ -74,7 +74,7 @@ def file_creation(data_name, column_name, df_genome):
     csvfile.close()
 
 def main(file_name):
-    df_genome = pa.read_csv(temporary_directory + file_name + '.tsv', sep = "\t")
+    df_genome = pa.read_csv(temporary_directory + file_name, sep = "\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
     data_names = {"EC": "EnzymeCodes", "GO": "GOs", "Interpro": "InterProScan", "CHEBI": "ChEBI"}
 

@@ -3,6 +3,7 @@
 import csv
 
 from SPARQLWrapper import SPARQLWrapper, JSON
+from tqdm import *
 
 from . import *
 
@@ -18,7 +19,7 @@ def sparql_query(sparql_endpoint, query, output_file):
     results = sparql.query().convert()
 
     column_names = []
-    for result in results["results"]["bindings"]:
+    for result in tqdm(results["results"]["bindings"]):
         for key in result:
             if key not in column_names:
                 column_names.append(key.encode("utf-8"))

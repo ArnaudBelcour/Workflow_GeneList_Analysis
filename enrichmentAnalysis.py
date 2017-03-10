@@ -142,7 +142,7 @@ class EnrichmentAnalysis():
         if over_or_underrepresentation == "over":
             pvalue_hypergeo = stats.hypergeom.sf(number_of_object_in_interest - 1, self.number_of_analyzed_object_of_reference, number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
 
-        if over_or_underrepresentation == "under":
+        elif over_or_underrepresentation == "under":
             pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest, self.number_of_analyzed_object_of_reference, number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
 
         df.set_value(analyzed_object, 'pvalue_hypergeometric', pvalue_hypergeo)
@@ -161,7 +161,7 @@ class EnrichmentAnalysis():
         if over_or_underrepresentation == "over":
             pvalue_normal = stats.norm.sf(number_of_object_in_interest, loc = mu, scale = sigma)
 
-        if over_or_underrepresentation == "under":
+        elif over_or_underrepresentation == "under":
             pvalue_normal = stats.norm.cdf(number_of_object_in_interest, loc = mu, scale = sigma)
 
         df.set_value(analyzedObject, 'pvalue_normal_approximation', pvalue_normal)
@@ -258,14 +258,8 @@ class EnrichmentAnalysis():
         csvfile.close()
 
     def correction_bonferroni(self, df):
-
-        def pvalue_correction_bonferroni(x) :
-            number_of_test = len(df.index)
-            q_value = x * number_of_test
-            if q_value > 1 :
-                q_value = 1
-
-            return q_value
+        number_of_test = len(df.index)
+        pvalue_correction_bonferroni = lambda pvalue: 1 if pvalue * number_of_test > 1 else pvalue * number_of_test
 
         df['pValueBonferroni'] = df[self.statistic_method].apply(pvalue_correction_bonferroni)
 
@@ -396,31 +390,24 @@ class EnrichmentAnalysis():
         return error_rate_adjusted
 
     def selection_object_with_adjusted_error_rate(self, error_rate, df):
-        object_significatives = []
+        '''
+        Return a list containing all the significatives objects (all the objects having a pvalue lower than the error_rate).
+        This selection method is used by Sidak and Bonferroni multiple testing correction.
+        '''
 
-        for analyzed_object, row in df.iterrows():
-            if row[self.statistic_method] < error_rate :
-                object_significatives.append(analyzed_object)
-
-        return object_significatives
+        return df[df[self.statistic_method] < error_rate].dropna(0).index.tolist()
 
     def selection_object_with_adjusted_pvalue(self, method_name, df):
-        object_significatives = []
+        '''
+        Return a list containing all the significatives objects (all the objects having a pvalue lower than the alpha threshold).
+        This selection method is used by Holm, Benjamini & Hochberg and Benjamini & Yekutieli multiple testing correction.
+        '''
 
-        for analyzed_object, row in df.iterrows():
-            if row['pValue' + method_name] < self.alpha:
-                object_significatives.append(analyzed_object)
-
-        return object_significatives
+        return df[df['pValue' + method_name] < self.alpha].dropna(0).index.tolist()
 
     def selection_object_with_sgof(self, method_name, df):
-        object_significatives = []
 
-        for analyzed_object, row in df.iterrows():
-            if row['pValue' + method_name] == 'significant' :
-                object_significatives.append(analyzed_object)
-
-        return object_significatives
+        return df[df['pValue' + method_name] == 'significant'].dropna(0).index.tolist()
 
     def enrichment_analysis(self):
 

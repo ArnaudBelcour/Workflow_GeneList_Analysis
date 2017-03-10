@@ -19,9 +19,8 @@ temporary_directory = 'temporaryFiles/'
 
 class FileManagement():
 
-    def __init__(self, name_of_the_file, already_analyzed_t_f):
+    def __init__(self, name_of_the_file):
         self._file_name, self._file_extension = os.path.splitext(name_of_the_file)
-        self._already_analyzed_file_tf = self.string_to_boolean(already_analyzed_t_f)
 
     @property
     def file_name(self):
@@ -38,17 +37,6 @@ class FileManagement():
     @file_extension.setter
     def file_extension(self, extension):
         self._file_extension = extension
-
-    @property
-    def already_analyzed_file_tf(self):
-        return self._already_analyzed_file_tf
-
-    @already_analyzed_file_tf.setter
-    def already_analyzed_file_tf(self, boolean_response):
-        self._already_analyzed_file_tf = self.string_to_boolean(boolean_response)
-
-    def string_to_boolean(self, value):
-        return value.lower() in ("yes", "true", "y", "t", "1")
 
     def go_label_number_dictionnary_creation(self, file_name, specification):
         d_go_label_to_number = {}
@@ -694,19 +682,21 @@ class FileManagementGeneGOs(FileManagement):
         csvfile.close()
 
     def file_gene_gos_gestion(self):
+        string_to_boolean = lambda value: value.lower() in ("yes", "true", "y", "t", "1")
+
         analyzed_object_name = self.analyzed_object_name
         name_of_the_file = self.file_name
         extension_of_the_file  = self.file_extension
         type_of_the_file = self.type_file
 
-        if self.already_analyzed_file_tf == True and type_of_the_file == 'genome':
-            shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory) 
-            file_name_temporary = name_of_the_file + extension_of_the_file
-        if self.already_analyzed_file_tf == False:
-            file_name_temporary = self.column_data_cleaning(type_of_the_file)
-
         if type_of_the_file == 'genome':
-            if self.already_analyzed_file_tf == False:
+            already_analyzed_file_yes_no = string_to_boolean(input("Does this file have already been analyzed? "))
+            if already_analyzed_file_yes_no == True:
+                shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory)
+                file_name_temporary = name_of_the_file + extension_of_the_file
+
+            elif already_analyzed_file_yes_no == False:
+                file_name_temporary = self.column_data_cleaning(type_of_the_file)
                 self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
                 pathway_extractor.data_retrieval_from_GO(file_name_temporary)
                 pathway_extractor.main(file_name_temporary)
@@ -715,15 +705,16 @@ class FileManagementGeneGOs(FileManagement):
 
             return file_name_temporary, counting_object_file
 
-        if self.type_file == 'gene_list':
+        if type_of_the_file == 'gene_list':
+            file_name_temporary = self.column_data_cleaning(type_of_the_file)
             counting_object_file, number_of_gene = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
 
             return counting_object_file, number_of_gene
 
 class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 
-    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name):
-        FileManagementGeneGOs.__init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
     def counting_genome(self, file_name_temporary, column_name, column_analyzed_object):
         analyzed_objects = []
@@ -746,8 +737,8 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 
 class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
-    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name, file_name_genome):
-        FileManagementGeneGOs.__init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name, file_name_genome):
+        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
         self._file_genome_reference_name = file_name_genome
 
     @property
@@ -792,8 +783,8 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
 class FileManagementGeneGO(FileManagement):
 
-    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name):
-        FileManagement.__init__(self, name_of_the_file, already_analyzed_t_f)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagement.__init__(self, name_of_the_file)
         self._analyzed_object = column_name
         self._type_file = type_of_the_file
 
@@ -826,8 +817,8 @@ class FileManagementGeneGO(FileManagement):
 
 class FileManagementGeneGOGenome(FileManagementGeneGO):
 
-    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name):
-        FileManagementGeneGO.__init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
     def genome_file_processing(self, genome_file_name):
         df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep = "\t", header = None)
@@ -878,8 +869,8 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
 
 class FileManagementGeneGOInterest(FileManagementGeneGO):
 
-    def __init__(self, name_of_the_file, already_analyzed_t_f, type_of_the_file, column_name, file_name_genome):
-        FileManagement.__init__(self, name_of_the_file, already_analyzed_t_f)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name, file_name_genome):
+        FileManagement.__init__(self, name_of_the_file)
         self._file_genome_reference_name = file_name_genome
 
     @property

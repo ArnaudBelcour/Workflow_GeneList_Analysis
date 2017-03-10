@@ -70,6 +70,10 @@ def mapping_data(file_name, df_genome):
     return df_genome
 
 def data_retrieval_from_GO(file_name_temporary):
+    '''
+        Add Interpro and Enzyems Codes found with mapping files of the Gene Ontology.
+        Add ChEBI linked with GO terms.
+    '''
     if os.path.isdir(temporary_directory_database) == False:
         os.makedirs(temporary_directory_database)
 
@@ -121,4 +125,3 @@ def main(file_name_temporary):
 
     print("Reactome endpoint interrogation")
     sparql_query_reactome_pathway_name.main()
-

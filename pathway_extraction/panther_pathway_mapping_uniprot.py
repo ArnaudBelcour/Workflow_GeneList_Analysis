@@ -12,6 +12,7 @@ def http_request_gene_ontology(url, file_name):
     '''
         Requests Panther ftp to obtain the mapping file between Uniprot ID/Ensembl ID and pathway.
     '''
+    print("\tRequesting Panther.")
     response = urlopen(url)
     page = response.read().decode("utf-8")
     page = page.split("\n")
@@ -20,6 +21,7 @@ def http_request_gene_ontology(url, file_name):
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['pathway_accession', 'pathway_name', 'uniprot_id', 'panther_subfamily_id', 'panther_subfamily_name'])
 
+    print("\tExtracting datas.")
     for line in tqdm(page[:-1]):
         column_separation = line.split("\t")
         writer.writerow([column_separation[0], column_separation[1], column_separation[4], column_separation[9], column_separation[10].replace('\r', '')])

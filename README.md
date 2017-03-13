@@ -15,6 +15,8 @@ The scripts need :
 
 These python modules :
 
+* [numpy](https://pypi.python.org/pypi/numpy)
+
 * [pandas](http://pandas.pydata.org/)
 
 * [requests](http://docs.python-requests.org/en/master/)
@@ -22,6 +24,8 @@ These python modules :
 * [scipy](https://pypi.python.org/pypi/scipy)
 
 * [SPARQLWrapper](https://rdflib.github.io/sparqlwrapper/)
+
+* [tqdm](https://pypi.python.org/pypi/tqdm)
 
 This R package :
 
@@ -62,6 +66,8 @@ And multiple testing corrections :
 * [Holm](http://www.jstor.org/stable/4615733?seq=1#page_scan_tab_contents) Holm, Sture. “A Simple Sequentially Rejective Multiple Test Procedure.” Scandinavian Journal of Statistics, vol. 6, no. 2, 1979, pp. 65–70.
 
 * [Benjamini & Hochberg](https://www.jstor.org/stable/2346101?seq=1#page_scan_tab_contents) Benjamini, Yoav, and Yosef Hochberg. “Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing.” Journal of the Royal Statistical Society. Series B (Methodological), vol. 57, no. 1, 1995, pp. 289–300.
+
+* [Benjamini & Yekutieli](http://www.jstor.org/stable/2674075?seq=1#page_scan_tab_contents) Benjamini, Yoav, and Daniel Yekutieli. “The Control of the False Discovery Rate in Multiple Testing under Dependency.” The Annals of Statistics, vol. 29, no. 4, 2001, pp. 1165–1188.
 
 * [SGoF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2719628/) Carvajal-Rodríguez, Antonio, Jacobo de Uña-Alvarez, and Emilio Rolán-Alvarez. “A New Multitest Correction (SGoF) That Increases Its Statistical Power When Increasing the Number of Tests.” BMC Bioinformatics 10 (2009): 209.
 

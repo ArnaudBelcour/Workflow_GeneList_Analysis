@@ -167,7 +167,7 @@ def main(file_name_temporary):
     df_genome['pathway_reactome'] = df_genome['pathway_reactome'].apply(drop_duplicates)
     df_genome['pathway_reactome'] = df_genome['pathway_reactome'].apply(list_to_string)
 
-    df_keggrest = pa.read_csv(temporary_directory_database + 'enzyme_pathway_kegg.tsv', sep = '\t')
+    df_keggrest = pa.read_csv(temporary_directory_database + 'enzyme_pathway_kegg.tsv', sep='\t')
     df_keggrest['ecCode'] = df_keggrest['ecCode'].str.replace("ec:", "")
     df_keggrest = df_keggrest.set_index('ecCode')
 
@@ -175,7 +175,7 @@ def main(file_name_temporary):
 
     df_genome['pathway_keggrest'] = df_genome['pathway_keggrest'].apply(list_to_string)
 
-    df_interpro = pa.read_csv(temporary_directory_database + 'interpro_pathway.tsv', sep = '\t')
+    df_interpro = pa.read_csv(temporary_directory_database + 'interpro_pathway.tsv', sep='\t')
     df_interpro = df_interpro.set_index('Interpros')
 
     databases = ['KEGG', 'REACTOME', 'METACYC']
@@ -185,12 +185,12 @@ def main(file_name_temporary):
         df_genome['pathway_interpro_' + database] = df_genome['pathway_interpro_' + database].apply(list_to_string)
 
 
-    df_ghost_koala = pa.read_csv(temporary_directory_database + 'gene_with_kegg_pathway.tsv', sep = '\t')
+    df_ghost_koala = pa.read_csv(temporary_directory_database + 'gene_with_kegg_pathway.tsv', sep='\t')
     df_ghost_koala = df_ghost_koala.set_index('Gene')
 
     df_genome['pathway_ghost_koala'] = df_genome['Gene_Name'].apply(translation_gene_pathway, args = (df_ghost_koala, 'kegg_pathway'))
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(drop_duplicates)
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(list_to_string)
 
-    df_genome.to_csv(temporary_directory + "result_pathway_extraction.tsv", sep = "\t")
+    df_genome.to_csv(temporary_directory + "result_pathway_extraction.tsv", sep="\t", index=False)
 

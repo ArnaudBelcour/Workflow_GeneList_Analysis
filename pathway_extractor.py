@@ -4,6 +4,7 @@ import numpy as np
 import os
 import pandas as pa
 import re
+import requests
 import subprocess
 
 import mapping_pathway_data
@@ -69,7 +70,7 @@ def mapping_data(file_name, df_genome):
 
     return df_genome
 
-def data_retrieval_from_GO(file_name_temporary):
+def data_retrieval_from_GO(file_name_temporary, session=requests):
     '''
         Add Interpro and Enzyems Codes found with mapping files of the Gene Ontology.
         Add ChEBI linked with GO terms.
@@ -81,7 +82,7 @@ def data_retrieval_from_GO(file_name_temporary):
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
     print("GO mapping files interrogation")
-    database_mapping_from_gos.main()
+    database_mapping_from_gos.main(session)
 
     print("GO owl interrogation to retrieve ChEBI")
     chebi_from_go.go_to_chebi()
@@ -100,7 +101,7 @@ def data_retrieval_from_GO(file_name_temporary):
     df_genome.drop('interpro', 1, inplace=True)
     df_genome.to_csv(temporary_directory + file_name_temporary, sep = "\t", index=False)
 
-def main(file_name_temporary):
+def main(file_name_temporary, session=requests):
     df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
@@ -109,7 +110,7 @@ def main(file_name_temporary):
     r_keggrest_ec(ecs_requests)
 
     print("EupathDB interrogation")
-    #eupathdb_pathway_extraction.main()
+    eupathdb_pathway_extraction.main(session)
 
     print("Ghost Koala interrogation")
     ghost_koala_pathway_extraction.main()
@@ -121,7 +122,7 @@ def main(file_name_temporary):
     panther_pathway_mapping_uniprot.main()
 
     print("Reactome interrogation")
-    reactome_pathway_extraction.main(file_name_temporary)
+    reactome_pathway_extraction.main(file_name_temporary, session)
 
     print("Reactome endpoint interrogation")
     sparql_query_reactome_pathway_name.main()

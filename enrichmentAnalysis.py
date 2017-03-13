@@ -223,9 +223,11 @@ class EnrichmentAnalysis():
             df = df[self.output_columns]
 
         if over_or_underrepresentation == 'over':
-            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_over.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
+            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_over.tsv", sep= "\t",
+                float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
         elif over_or_underrepresentation == 'under':
-            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_under.tsv", sep= "\t", float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
+            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_under.tsv", sep= "\t",
+                float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
 
         if over_or_underrepresentation == 'over':
             csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_over.tsv", "w", newline = "")
@@ -233,7 +235,7 @@ class EnrichmentAnalysis():
             csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_under.tsv", "w", newline = "")
 
         writer = csv.writer(csvfile, delimiter="\t")
-        writer.writerow([self.object_to_analyze + 'Sidak', self.object_to_analyze + 'Bonferroni', self.object_to_analyze + 'Holm', \
+        writer.writerow([self.object_to_analyze + 'Sidak', self.object_to_analyze + 'Bonferroni', self.object_to_analyze + 'Holm',
         self.object_to_analyze + 'SGoF', self.object_to_analyze + 'BenjaminiHochberg', self.object_to_analyze + 'BenjaminiYekutieli'])
 
         number_significatives_per_method = {}
@@ -252,7 +254,7 @@ class EnrichmentAnalysis():
                     object_significatives_value =  'nan'
                 results.append(object_significatives_value)
 
-            writer.writerow([results[5], results[2], results[3], \
+            writer.writerow([results[5], results[2], results[3],
             results[4], results[0], results[1]])
 
         csvfile.close()
@@ -406,6 +408,7 @@ class EnrichmentAnalysis():
         return df[df['pValue' + method_name] < self.alpha].dropna(0).index.tolist()
 
     def selection_object_with_sgof(self, method_name, df):
+        df.replace(np.nan, '', regex=True, inplace=True)
 
         return df[df['pValue' + method_name] == 'significant'].dropna(0).index.tolist()
 
@@ -423,7 +426,8 @@ class EnrichmentAnalysis():
         yes_or_no = input("Is this an approximation of the reference? ")
 
         for analyzed_object, row in df_joined.iterrows():
-            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InInterest', self.percentage_calculator(row['Counts'], self.number_of_analyzed_object_of_interest))
+            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InInterest',
+                self.percentage_calculator(row['Counts'], self.number_of_analyzed_object_of_interest))
 
         if yes_or_no in yes_answers:
             df_joined = self.counting_approximation(df_joined)
@@ -432,7 +436,8 @@ class EnrichmentAnalysis():
             count_column_name = 'CountsReference'
 
         for analyzed_object, row in df_joined.iterrows():
-            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference', self.percentage_calculator(row[count_column_name], self.number_of_analyzed_object_of_reference))
+            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference',
+                self.percentage_calculator(row[count_column_name], self.number_of_analyzed_object_of_reference))
 
         over_unders = ['over', 'under']
         for over_under in over_unders:
@@ -444,7 +449,8 @@ class EnrichmentAnalysis():
 class GOEnrichmentAnalysis(EnrichmentAnalysis):
 
     def __init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation, d_go_label_to_number):
-        EnrichmentAnalysis.__init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation)
+        EnrichmentAnalysis.__init__(self, column_name, file_of_interest_name, file_of_reference_name,
+            number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation)
         self.output_columns.append("GOLabel")
         self._gos_labels_to_numbers = d_go_label_to_number
 

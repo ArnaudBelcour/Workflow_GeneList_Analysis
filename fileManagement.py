@@ -6,6 +6,7 @@ import numpy as np
 import os
 import pandas as pa
 import re
+import requests
 import shutil
 import six
 
@@ -38,26 +39,13 @@ class FileManagement():
     def file_extension(self, extension):
         self._file_extension = extension
 
-    def go_label_number_dictionnary_creation(self, file_name, specification):
+    def go_label_number_dictionnary_creation(self, specification):
         d_go_label_to_number = {}
 
-        with open (file_name, 'r') as file:
-            query_results_file = file.read()
-            query_results_file = query_results_file.replace(" ,\n", "\n")
-            query_results_file = query_results_file.replace(" , ", "\t")
-            query_results_modified = open(temporary_directory + "queryResults.tsv", "w")
-            query_results_modified.write(query_results_file)
-            query_results_modified.close()
-
-        query_results_dataframe = pa.read_csv(temporary_directory + "queryResults.tsv", sep = "\t")
-
-        query_results_dataframe.columns = [["subject", "label", "NarrowSynonym", "BroadSynonym", "RelatedSynonym"]]
+        query_results_dataframe = pa.read_csv(temporary_directory + "query_results.tsv", sep="\t")
 
         quote_deletion = lambda x: x.replace('"', '')
         query_results_dataframe["subject"] = query_results_dataframe["subject"].apply(quote_deletion)
-
-        go_isolation = lambda x: x[32:]
-        query_results_dataframe["subject"] = query_results_dataframe["subject"].apply(go_isolation)
 
         query_results_dataframe["subject"] = query_results_dataframe["subject"].str.replace("_", ":")
 
@@ -465,7 +453,7 @@ class FileManagement():
         return gos_numbers
 
     def go_translation(results_dataframe):
-        d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", "normal")
+        d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation("normal")
 
         translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
         results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
@@ -693,9 +681,13 @@ class FileManagementGeneGOs(FileManagement):
             elif already_analyzed_file_yes_no == False:
                 file_name_temporary = self.column_data_cleaning(type_of_the_file)
                 self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
-                pathway_extractor.data_retrieval_from_GO(file_name_temporary)
-                pathway_extractor.main(file_name_temporary)
+
+                session = requests.Session()
+                pathway_extractor.data_retrieval_from_GO(file_name_temporary, session)
+                pathway_extractor.main(file_name_temporary, session)
+
                 mapping_pathway_data.main(file_name_temporary)
+
             counting_object_file = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
 
             return file_name_temporary, counting_object_file

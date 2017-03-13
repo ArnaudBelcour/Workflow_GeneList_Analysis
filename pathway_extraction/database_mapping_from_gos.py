@@ -8,12 +8,12 @@ from tqdm import *
 
 from . import *
 
-def http_request_gene_ontology(url, file_name):
+def http_request_gene_ontology(url, file_name, session=requests):
     """
         Requests the Gene Ontology server to obtain mapping file between GO and Interpro, KEGG, Enzyme Code, MetaCyc.
         Rewrites each file into a correct tsv file.
     """
-    response = requests.get(url)
+    response = session.get(url)
     results = response.text
     csvfile = open(temporary_directory_database + file_name + ".tsv", "w")
     writer = csv.writer(csvfile, delimiter="\t")
@@ -63,7 +63,7 @@ def cleaning_file(file_name, id_name, id_prefix):
     df['GOs'] = df['GOs'].str.replace("GO:", "GO_")
     df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
-def main():
+def main(session=requests):
     databases_gos_mapping = {'metacyc_go_mapping': 'http://geneontology.org/external2go/metacyc2go',
                    'reactome_go_mapping': 'http://geneontology.org/external2go/reactome2go',
                    'kegg_go_mapping': 'http://geneontology.org/external2go/kegg2go',
@@ -72,6 +72,6 @@ def main():
                    }
 
     for database in tqdm(databases_gos_mapping):
-        id_name, id_prefix = http_request_gene_ontology(databases_gos_mapping[database], database)
+        id_name, id_prefix = http_request_gene_ontology(databases_gos_mapping[database], database, session)
         cleaning_file(database, id_name, id_prefix)
 

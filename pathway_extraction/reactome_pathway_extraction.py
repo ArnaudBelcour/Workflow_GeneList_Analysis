@@ -9,13 +9,13 @@ from tqdm import *
 
 from . import *
 
-def http_request_reactome(data_id, data_name, writer):
+def http_request_reactome(data_id, data_name, writer, session=requests):
     '''
         Requests Reactome to retrieve pathway associated with an ID (GO terms, Reactome ID, CHEBI ID and Enzyme Code ID).
     '''
 
     try:
-        r = requests.get('http://www.reactome.org/ContentService/search/query?query=' + data_id +'&cluster=true')
+        r = session.get('http://www.reactome.org/ContentService/search/query?query=' + data_id +'&cluster=true')
         results = r.json()
 
         if 'code' in results:
@@ -40,7 +40,7 @@ def http_request_reactome(data_id, data_name, writer):
     except Exception as e:
         error = "Errors : " + repr(e)
 
-def file_creation(data_name, column_name, df_genome):
+def file_creation(data_name, column_name, df_genome, session=requests):
     csvfile = open(temporary_directory_database + 'pathway_reactome_' + data_name + '.tsv', "w", newline = "")
     writer = csv.writer(csvfile, delimiter = "\t")
     writer.writerow([data_name, 'Id', 'specie', 'data_type'])
@@ -54,30 +54,30 @@ def file_creation(data_name, column_name, df_genome):
     if data_name == "Interpro":
         print("\tPathway from Interpro extraction")
         for data in tqdm(datas_requests):
-            http_request_reactome(data, data_name, writer)
+            http_request_reactome(data, data_name, writer, session)
     elif data_name == "CHEBI":
         print("\tPathway from ChEBI extraction")
         for data in tqdm(datas_requests):
             data = data.strip().replace("_", ":")
-            http_request_reactome(data, data_name, writer)
+            http_request_reactome(data, data_name, writer, session)
     elif data_name == "REACT":
         print("\tREACT pathway extraction")
         for data in tqdm(datas_requests):
             data = data.strip()
-            http_request_reactome(data, data_name, writer)
+            http_request_reactome(data, data_name, writer, session)
     elif data_name in ["GO", "EC"]:
         print("\tPathway from " + data_name + " extraction")
         for data in tqdm(datas_requests):
             data = data.strip()[len(data_name + ':'):]
-            http_request_reactome(data, data_name, writer)
+            http_request_reactome(data, data_name, writer, session)
 
     csvfile.close()
 
-def main(file_name):
+def main(file_name, session=requests):
     df_genome = pa.read_csv(temporary_directory + file_name, sep = "\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
     data_names = {"EC": "EnzymeCodes", "GO": "GOs", "Interpro": "InterProScan", "CHEBI": "ChEBI"}
 
     for data_name in data_names:
-        file_creation(data_name, data_names[data_name], df_genome)
+        file_creation(data_name, data_names[data_name], df_genome, session)
 

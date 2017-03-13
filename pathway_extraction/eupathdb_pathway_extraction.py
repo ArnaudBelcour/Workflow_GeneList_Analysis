@@ -8,7 +8,7 @@ from tqdm import *
 
 from . import *
 
-def request_database_eupathdb(db_database):
+def request_database_eupathdb(db_database, session=requests):
     '''
         Requests all the databases present in EuPathDB.
         The requests retrieve all the file names which are present in the pathwayFiles folder of the download part of the database.
@@ -18,12 +18,12 @@ def request_database_eupathdb(db_database):
     metacyc_pathways = []
     kegg_pathways = []
 
-    r = requests.get('http://' + db_database + '.org/common/downloads/pathwayFiles//MetaCyc/')
+    r = session.get('http://' + db_database + '.org/common/downloads/pathwayFiles//MetaCyc/')
     for row in r.text.split("\n"):
         if '<img src="/icons/unknown.gif" alt="[   ]"> <a href=' in row:
             metacyc_pathways.append(row[len('<img src="/icons/unknown.gif" alt="[   ]"> <a href="'):].split('"')[0])
 
-    r = requests.get('http://' + db_database + '.org/common/downloads/pathwayFiles//KEGG/')
+    r = session.get('http://' + db_database + '.org/common/downloads/pathwayFiles//KEGG/')
     for row in r.text.split("\n"):
         if '<img src="/icons/unknown.gif" alt="[   ]"> <a href=' in row:
             kegg_pathways.append(row[len('<img src="/icons/unknown.gif" alt="[   ]"> <a href="'):].split('"')[0])
@@ -31,7 +31,7 @@ def request_database_eupathdb(db_database):
     if db_database == 'tritrypdb':
         leishcyc_pathways = []
         trypanocyc_pathways = []
-        r = requests.get('http://' + db_database + '.org/common/downloads/pathwayFiles//LeishCyc/')
+        r = session.get('http://' + db_database + '.org/common/downloads/pathwayFiles//LeishCyc/')
         for row in r.text.split("\n"):
             if '<img src="/icons/unknown.gif" alt="[   ]"> <a href=' in row:
                 leishcyc_pathways.append(row[len('<img src="/icons/unknown.gif" alt="[   ]"> <a href="'):].split('"')[0])
@@ -49,7 +49,7 @@ def request_database_eupathdb(db_database):
 
     return db_database_pathways
 
-def request_and_parse_pathway_file(db_database, database, pathways_file_name):
+def request_and_parse_pathway_file(db_database, database, pathways_file_name, session=requests):
     '''
         Use the dictionnary containing all of the file names from a database.
         For each file name a request is sent to EuPathDB to retrieve the file.
@@ -67,7 +67,7 @@ def request_and_parse_pathway_file(db_database, database, pathways_file_name):
 
     for pathway_file_name in pathways_file_name:
         if '.xgmml' in pathway_file_name:
-            r = requests.get('http://' + db_database + '.org/common/downloads/pathwayFiles//' + database + '/' + pathway_file_name)
+            r = session.get('http://' + db_database + '.org/common/downloads/pathwayFiles//' + database + '/' + pathway_file_name)
 
             pathway = pathway_file_name[:-len('.xgmml')]
 
@@ -93,14 +93,14 @@ def request_and_parse_pathway_file(db_database, database, pathways_file_name):
 
     csvfile.close()
 
-def main():
+def main(session=requests):
     db_databases = ['amoebadb', 'cryptodb', 'fungidb', 'giardiadb', 'microsporidiadb', 'piroplasmadb', 'plasmodb', 'toxodb', 'trichdb', 'tritrypdb']
 
     for db_database in tqdm(db_databases):
-        db_database_pathways = request_database_eupathdb(db_database)
-        request_and_parse_pathway_file(db_database, 'KEGG', db_database_pathways['KEGG'])
-        request_and_parse_pathway_file(db_database, 'MetaCyc', db_database_pathways['MetaCyc'])
+        db_database_pathways = request_database_eupathdb(db_database, session)
+        request_and_parse_pathway_file(db_database, 'KEGG', db_database_pathways['KEGG'], session)
+        request_and_parse_pathway_file(db_database, 'MetaCyc', db_database_pathways['MetaCyc'], session)
         if db_database == 'tritrypdb':
-            request_and_parse_pathway_file(db_database, 'LeishCyc', db_database_pathways['LeishCyc'])
-            request_and_parse_pathway_file(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'])
+            request_and_parse_pathway_file(db_database, 'LeishCyc', db_database_pathways['LeishCyc'], session)
+            request_and_parse_pathway_file(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'], session)
 

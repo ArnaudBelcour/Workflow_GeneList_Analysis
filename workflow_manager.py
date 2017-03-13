@@ -3,6 +3,8 @@
 import os
 import six
 
+import go_extract_synonyms_label
+
 from enrichmentAnalysis import GOEnrichmentAnalysis
 from fileManagement import FileManagementGeneGOsGenome, FileManagementGeneGOsInterest
 
@@ -24,11 +26,11 @@ def workflow_mainager():
     if not os.listdir(input_directory):
         sys.exit("No input data, please put your data files in inputFiles directory.")
 
-    yes_or_no = input("Do you want to download database datas? ")
+    yes_or_no = input("Do you want to recreate the GO terms and synonyms file? ")
     yes_answers = ['yes', 'y', 'oui', 'o']
 
     if yes_or_no in yes_answers:
-        input_file_of_interest_management.go_ancestors_list_of_interest(object_to_analyze)
+        go_extract_synonyms_label.main()
 
     name_reference_input_file = input("Write the name of your input file containing genome : ")
     input_genome_file_gestion = FileManagementGeneGOsGenome(name_reference_input_file, 'genome' , 'GOs')
@@ -38,7 +40,7 @@ def workflow_mainager():
     input_listde_file_gestion = FileManagementGeneGOsInterest(name_de_input_file, 'gene_list', 'GOs', reference_file_name)
     counting_interest_file_name, number_of_gene = input_listde_file_gestion.file_gene_gos_gestion()
 
-    d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionnary_creation(input_directory + "queryResults.csv", 'inverse')
+    d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionnary_creation('inverse')
 
     sentence_choice_number_gene = "Enter the number of genes in the genome of your organism : "
     number_of_genes_in_genome = int(input(sentence_choice_number_gene))

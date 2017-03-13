@@ -28,7 +28,8 @@ class EnrichmentAnalysis():
 
     def __init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation):
         self._object_to_analyze = column_name
-        self._output_columns = ['Counts', 'CountsReference', 'Percentage' + self.object_to_analyze + 'InInterest', 'Percentage' + self.object_to_analyze + 'InReference', 'pvalue_hypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg', 'pValueBenjaminiYekutieli']
+        self._output_columns = ['Counts', 'CountsReference', 'Percentage' + self.object_to_analyze + 'InInterest', 'Percentage' + self.object_to_analyze + 'InReference',
+                                 'pvalue_hypergeometric', 'pValueBonferroni', 'pValueHolm', 'pValueSGoF', 'pValueBenjaminiHochberg', 'pValueBenjaminiYekutieli']
         self._file_of_interest = file_of_interest_name
         self._file_of_reference = file_of_reference_name
         self._number_of_analyzed_object_of_interest = number_of_object_of_interest
@@ -140,10 +141,12 @@ class EnrichmentAnalysis():
 
     def compute_hypergeometric_test(self, analyzed_object, number_of_object_in_interest, number_of_object_in_reference, df, over_or_underrepresentation):
         if over_or_underrepresentation == "over":
-            pvalue_hypergeo = stats.hypergeom.sf(number_of_object_in_interest - 1, self.number_of_analyzed_object_of_reference, number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
+            pvalue_hypergeo = stats.hypergeom.sf(number_of_object_in_interest - 1, self.number_of_analyzed_object_of_reference,
+                                                    number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
 
         elif over_or_underrepresentation == "under":
-            pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest, self.number_of_analyzed_object_of_reference, number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
+            pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest, self.number_of_analyzed_object_of_reference,
+                                                    number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
 
         df.set_value(analyzed_object, 'pvalue_hypergeometric', pvalue_hypergeo)
         self.statistic_method = "pvalue_hypergeometric"
@@ -169,17 +172,6 @@ class EnrichmentAnalysis():
         self.statistic_method = 'pvalue_normal_approximation'
 
         return df
-
-    def counting_approximation(self, df):
-        for analyzed_object, row in df.iterrows():
-            df.set_value(analyzed_object, 'CountsTotal', row['Counts'] + row['CountsReference'])
-
-        return df
-
-    def percentage_calculator(self, numerator, denominator):
-        percentage = (numerator / denominator) * 100
-
-        return percentage
 
     def multiple_testing_correction(self, df):
         df = df.sort_values([self.statistic_method])
@@ -425,19 +417,18 @@ class EnrichmentAnalysis():
         yes_answers = ['yes', 'y', 'oui', 'o']
         yes_or_no = input("Is this an approximation of the reference? ")
 
-        for analyzed_object, row in df_joined.iterrows():
-            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InInterest',
-                self.percentage_calculator(row['Counts'], self.number_of_analyzed_object_of_interest))
+        percentage_calculator = lambda numerator, denominator: (numerator / denominator) * 100
+
+        df_joined['Percentage' + self.object_to_analyze + 'InInterest'] = percentage_calculator(df_joined['Counts'], self.number_of_analyzed_object_of_interest)
 
         if yes_or_no in yes_answers:
-            df_joined = self.counting_approximation(df_joined)
+            df_joined['CountsTotal'] = df_joined['Counts'] + df_joined['CountsReference']
             count_column_name = 'CountsTotal'
         else:
             count_column_name = 'CountsReference'
 
-        for analyzed_object, row in df_joined.iterrows():
-            df_joined.set_value(analyzed_object, 'Percentage' + self.object_to_analyze + 'InReference',
-                self.percentage_calculator(row[count_column_name], self.number_of_analyzed_object_of_reference))
+        df_joined['Percentage' + self.object_to_analyze + 'InReference'] = percentage_calculator(df_joined[count_column_name],
+                                                                                self.number_of_analyzed_object_of_reference)
 
         over_unders = ['over', 'under']
         for over_under in over_unders:
@@ -448,7 +439,8 @@ class EnrichmentAnalysis():
 
 class GOEnrichmentAnalysis(EnrichmentAnalysis):
 
-    def __init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation, d_go_label_to_number):
+    def __init__(self, column_name, file_of_interest_name, file_of_reference_name, number_of_object_of_interest,
+                    number_of_genes_in_reference, alpha, threshold_normal_approximation, d_go_label_to_number):
         EnrichmentAnalysis.__init__(self, column_name, file_of_interest_name, file_of_reference_name,
             number_of_object_of_interest, number_of_genes_in_reference, alpha, threshold_normal_approximation)
         self.output_columns.append("GOLabel")

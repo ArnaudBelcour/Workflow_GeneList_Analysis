@@ -543,6 +543,7 @@ class FileManagement():
             for data in datas:
                 if data not in datas_with_unique:
                     datas_with_unique.append(data)
+
             return datas_with_unique
 
         name_input_file = self.file_name
@@ -565,6 +566,7 @@ class FileManagement():
             results_dataframe = results_dataframe[[name_gene_column]]
             results_dataframe.columns = [['Gene_Name']]
             results_dataframe.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+
             return name_input_file + "GOsTranslatedAndFixed.tsv"
 
         go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)

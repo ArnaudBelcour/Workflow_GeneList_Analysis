@@ -18,12 +18,6 @@ class enrichmentAnalysis_test(unittest.TestCase):
     def tearDown(self):
         del self.obj
 
-    def test_percentage_calculator(self):
-        print("\nTesting percentage")
-        percentage_computed =  self.obj.percentage_calculator(53, 260)
-
-        np.testing.assert_almost_equal(percentage_computed, 20.38461538461538, decimal = 5)
-
     def test_hypergeometric_test_on_dataframe_over(self):
         '''
         Datas are from : https://fr.mathworks.com/help/stats/hygecdf.html?s_tid=gn_loc_drop

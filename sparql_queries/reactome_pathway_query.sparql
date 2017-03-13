@@ -1,9 +1,13 @@
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX biopax3: <http://www.biopax.org/release/biopax-level3.owl#>
 
-SELECT DISTINCT ?pathwayID ?pathwayName
+SELECT DISTINCT ?pathway_REACT ?pathway_R ?pathway_Name
 WHERE
 {
-	?pathwayID rdf:type biopax3:Pathway .
-	?pathwayID biopax3:displayName ?pathwayName
+  ?pathway_REACT rdf:type biopax3:Pathway .
+  ?pathway_REACT biopax3:xref ?xref .
+  ?pathway_REACT biopax3:displayName ?pathway_Name .
+  ?xref biopax3:id ?pathway_R .
+  FILTER regex(str(?pathway_REACT), 'REACT')
+  FILTER (!CONTAINS(?pathway_R, 'REACT'))
+  FILTER (!CONTAINS(?pathway_R, 'GO:'))
 }

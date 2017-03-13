@@ -98,7 +98,7 @@ def data_retrieval_from_GO(file_name_temporary):
 
     df_genome.drop('ec_code', 1, inplace=True)
     df_genome.drop('interpro', 1, inplace=True)
-    df_genome.to_csv(temporary_directory + file_name_temporary, sep = "\t")
+    df_genome.to_csv(temporary_directory + file_name_temporary, sep = "\t", index=False)
 
 def main(file_name_temporary):
     df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
@@ -109,7 +109,7 @@ def main(file_name_temporary):
     r_keggrest_ec(ecs_requests)
 
     print("EupathDB interrogation")
-    eupathdb_pathway_extraction.main()
+    #eupathdb_pathway_extraction.main()
 
     print("Ghost Koala interrogation")
     ghost_koala_pathway_extraction.main()

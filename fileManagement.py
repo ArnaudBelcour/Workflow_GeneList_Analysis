@@ -487,9 +487,6 @@ class FileManagement():
 
         return results_dataframe
 
-    def rewriting_file(self, newtable, file_name):
-        newtable.to_csv(temporary_directory + file_name, "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
-
     def find_column_of_interest(self, df):
         columns = df.columns.tolist()
 
@@ -579,7 +576,7 @@ class FileManagement():
         if type_file == "gene_list":
             results_dataframe = results_dataframe[[name_gene_column]]
             results_dataframe.columns = [['Gene_Name']]
-            self.rewriting_file(results_dataframe, name_input_file + "GOsTranslatedAndFixed.tsv")
+            results_dataframe.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
             return name_input_file + "GOsTranslatedAndFixed.tsv"
 
         go_column, ec_column, ipr_column = self.find_column_of_interest(results_dataframe)
@@ -626,16 +623,14 @@ class FileManagement():
         if uniprot_retrieval_y_n in yes_answers :
             results_dataframe = uniprot_retrieval_data.extract_information_from_uniprot(results_dataframe)
 
-        results_dataframe.reset_index(inplace = True)
-
-        self.rewriting_file(results_dataframe, name_input_file + "GOsTranslatedAndFixed.tsv")
+        results_dataframe.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", "\t", index=True, quoting=csv.QUOTE_NONE)
 
         return name_input_file + "GOsTranslatedAndFixed.tsv"
 
 class FileManagementGeneGOs(FileManagement):
 
-    def __init__(self, name_of_the_file, already_analyzed_tf, type_of_the_file, column_name):
-        FileManagement.__init__(self, name_of_the_file, already_analyzed_tf)
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagement.__init__(self, name_of_the_file)
         self._analyzed_object = column_name
         self._type_file = type_of_the_file
 
@@ -730,8 +725,8 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
         counts_df_genome = counts_df_genome.groupby(column_analyzed_object).size().rename(column_name)
         counts_df_genome = counts_df_genome.to_frame()
 
-        counts_df_genome.reset_index(inplace = True)
-        self.rewriting_file(counts_df_genome, "counting_objects_in_genome.tsv")
+        counts_df_genome.reset_index(inplace=True)
+        counts_df_genome.to_csv(temporary_directory + "counting_objects_in_genome.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
 
         return "counting_objects_in_genome"
 
@@ -753,17 +748,17 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
         analyzed_objects = []
         df = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
         df = df[['Gene_Name']]
-        df.set_index("Gene_Name", inplace = True)
+        df.set_index("Gene_Name", inplace=True)
 
         df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name, sep = "\t")
         df_genome = df_genome[['Gene_Name', 'GOs']]
-        df_genome.set_index("Gene_Name", inplace = True)
+        df_genome.set_index("Gene_Name", inplace=True)
 
         df_joined = df.join(df_genome)
         df_joined = df_joined[pa.notnull(df_joined[column_analyzed_object])]
-        df_joined.reset_index(inplace = True)
-        self.rewriting_file(df_joined, file_name_temporary)
-        df_joined.set_index("Gene_Name", inplace = True)
+        df_joined.reset_index(inplace=True)
+        df_joined.to_csv(temporary_directory + file_name_temporary, "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
+        df_joined.set_index("Gene_Name", inplace=True)
 
         for index, row in df_joined.iterrows():
             for analyzed_object in row[column_analyzed_object].split(","):
@@ -776,8 +771,8 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
         numberOfGene = len(df.index.unique())
 
-        counts_df.reset_index(inplace = True)
-        self.rewriting_file(counts_df, "counting_objects_in_interest.tsv")
+        counts_df.reset_index(inplace=True)
+        counts_df.to_csv(temporary_directory + "counting_objects_in_interest.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
 
         return "counting_objects_in_interest", numberOfGene
 

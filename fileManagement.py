@@ -39,7 +39,12 @@ class FileManagement():
     def file_extension(self, extension):
         self._file_extension = extension
 
-    def go_label_number_dictionnary_creation(self, specification):
+    def go_label_number_dictionnary_creation(self, specification='normal'):
+        '''
+            Create a dictionnary containing GO labels (as key) associated with their GO numbers (as value), if specification is 'normal'. Use to translate GO labels into GO numbers.
+            Or GO numbers (as key) associated with their GO labels (as value), if specification is 'inverse'. Use to translate GO numbers into GO labels.
+            Create also a dictionnary containing the synonym of the GO terms.
+        '''
         d_go_label_to_number = {}
 
         query_results_dataframe = pa.read_csv(temporary_directory + "query_results.tsv", sep="\t")
@@ -453,7 +458,7 @@ class FileManagement():
         return gos_numbers
 
     def go_translation(results_dataframe):
-        d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation("normal")
+        d_go_label_to_number, d_go_label_with_synonym = self.go_label_number_dictionnary_creation()
 
         translation = lambda x: self.translate_go_label_into_go_number(x, d_go_label_to_number)
         results_dataframe['GOs'] = results_dataframe['GOs'].apply(translation)
@@ -476,6 +481,13 @@ class FileManagement():
         return results_dataframe
 
     def find_column_of_interest(self, df):
+        '''
+            Detect columns containing GO number, GO label, EC number and Interpro ID.
+            To do this, regular expression are used, for each types of data.
+            The occurrence of each regular expression is counted.
+            Then the column containing the maximum of occurrence for a type of data is associated with it by returning it's name.
+            Between GO labels and GO numbers, GO numbers are preferred.
+        '''
         columns = df.columns.tolist()
 
         go_label_expression = r"[FPC]{1}:[\w]*"
@@ -694,7 +706,7 @@ class FileManagementGeneGOs(FileManagement):
 
             return file_name_temporary, counting_object_file
 
-        if type_of_the_file == 'gene_list':
+        elif type_of_the_file == 'gene_list':
             file_name_temporary = self.column_data_cleaning(type_of_the_file)
             counting_object_file, number_of_gene = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
 

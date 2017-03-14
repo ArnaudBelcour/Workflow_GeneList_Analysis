@@ -20,16 +20,6 @@ import pathway_extraction.sparql_query_reactome_pathway_name as sparql_query_rea
 temporary_directory = 'temporaryFiles/'
 temporary_directory_database = 'temporaryFiles/databases/'
 
-def ipr_extraction(df_genome):
-    ipr_expression = r"IPR[\d]{6}[^0-9]"
-
-    df_genome = df_genome[['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
-    df_genome.set_index("Gene_Name", inplace = True)
-    df_genome['InterProScan'] = df_genome['InterProScan'].str.split("; ").apply(
-        lambda x: [y[:len('IPRXXXXXX')]
-                   for y in x
-                   if re.match(ipr_expression, y)])
-
 def ec_extraction(df_genome):
     ecs_requests = []
 

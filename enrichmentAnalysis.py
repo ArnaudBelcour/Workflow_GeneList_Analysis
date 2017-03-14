@@ -243,7 +243,7 @@ class EnrichmentAnalysis():
                 if index in range(len(significative_objects[method])):
                     object_significatives_value =  significative_objects[method][index]
                 else :
-                    object_significatives_value =  'nan'
+                    object_significatives_value =  'nonsignificant'
                 results.append(object_significatives_value)
 
             writer.writerow([results[5], results[2], results[3],
@@ -320,15 +320,10 @@ class EnrichmentAnalysis():
             mutliple_values = list(stats.binom.sf(range(1, R+2), len(df), self.alpha)[:-1])
             reordered_pvalues = mutliple_values[::-1]
 
-            for corrected_value in reordered_pvalues:
-                if corrected_value <= self.alpha:
-                    df.set_value(row_number, 'pValueSGoF', 'significant')
-                    df.set_value(row_number, 'pValueSGoFValue', corrected_value)
-                    row_number = row_number + 1
-                elif corrected_value > self.alpha:
-                    df.set_value(row_number, 'pValueSGoF', np.nan)
-                    df.set_value(row_number, 'pValueSGoFValue', np.nan)
-                    row_number = row_number + 1
+            pvalues_remaining = number_pvalue-R
+            df['pValueSGoF'] = ['significant' if pvalue <= self.alpha else np.nan
+                                for pvalue in reordered_pvalues] + [np.nan]*pvalues_remaining
+            df['pValueSGoFValue'] = reordered_pvalues + [np.nan]*pvalues_remaining
         else:
             if number_pvalue == R:
                 R = R - 1

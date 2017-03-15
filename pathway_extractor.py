@@ -60,7 +60,7 @@ def mapping_data(file_name, df_genome):
 
     return df_genome
 
-def data_retrieval_from_GO(file_name_temporary, session=requests):
+def data_retrieval_from_GO(file_name_temporary):
     '''
         Add Interpro and Enzyems Codes found with mapping files of the Gene Ontology.
         Add ChEBI linked with GO terms.
@@ -72,7 +72,7 @@ def data_retrieval_from_GO(file_name_temporary, session=requests):
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
     print("GO mapping files interrogation")
-    database_mapping_from_gos.main(session)
+    database_mapping_from_gos.main()
 
     print("GO owl interrogation to retrieve ChEBI")
     chebi_from_go.go_to_chebi()

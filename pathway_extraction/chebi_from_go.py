@@ -34,7 +34,7 @@ def go_to_chebi():
     writer.writerow(['GOs', 'ChEBI'])
 
     for result in tqdm(results["results"]["bindings"]):
-        go = result["go"]["value"][len('http://purl.obolibrary.org/obo/'):]
+        go = result["go"]["value"][len('http://purl.obolibrary.org/obo/'):].replace("_", ":")
         chebi = result["chebi"]["value"][len('http://purl.obolibrary.org/obo/'):].replace("_", ":")
         writer.writerow([go, chebi])
 

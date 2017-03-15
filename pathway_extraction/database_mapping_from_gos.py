@@ -2,22 +2,16 @@
 
 import csv
 import pandas as pa
-import requests
 
 from tqdm import *
 
 from . import *
 
-def http_request_gene_ontology(url, file_name, session=requests):
+def request_gene_ontology(url, file_name):
     """
         Requests the Gene Ontology server to obtain mapping file between GO and Interpro, KEGG, Enzyme Code, MetaCyc.
         Rewrites each file into a correct tsv file.
     """
-    response = session.get(url)
-    results = response.text
-    csvfile = open(temporary_directory_database + file_name + ".tsv", "w")
-    writer = csv.writer(csvfile, delimiter="\t")
-    results_splitted = results.split("\n")
     if file_name == 'metacyc_go_mapping':
         id_name = 'metacyc_pathway'
         id_prefix = 'MetaCyc:'
@@ -33,37 +27,29 @@ def http_request_gene_ontology(url, file_name, session=requests):
     elif file_name == 'eccode_go_mapping':
         id_name = 'ec_code'
         id_prefix = 'EC:'
-    writer.writerow((id_name, 'go_label', 'GOs'))
-    for row in results_splitted:
-        if row.startswith("!"):
-            pass
-        else:
-            if file_name == 'metacyc_go_mapping':
-                if 'PWY' in row:
-                    row = row.replace(">", ";")
-                    writer.writerow((row.split(" ; ")))
-            else:
-                row = row.replace(">", ";")
-                writer.writerow((row.split(" ; ")))
 
-    csvfile.close()
+    if file_name in ['metacyc_go_mapping', 'reactome_go_mapping', 'kegg_go_mapping', 'eccode_go_mapping']:
+        df = pa.read_csv(url, sep=' > | ; ', skiprows=2, header=None, engine='python')
+    elif file_name  == 'interpro_go_mapping':
+        df = pa.read_csv(url, sep=' > | ; ', skiprows=6, header=None, engine='python')
 
-    return id_name, id_prefix
-
-def cleaning_file(file_name, id_name, id_prefix):
-    df = pa.read_csv(temporary_directory_database + file_name + ".tsv", sep = "\t")
-    df = df[:-1]
+    df.columns = [[id_name, 'go_label', 'GOs']]
     df[id_name] = df[id_name].str.replace(id_prefix, "")
+    df[id_name] = df[id_name].str.strip(to_strip='+-')
+
     if id_name == "interpro":
         df[id_name] = [interpro[:9]
                         for interpro in df[id_name]]
     if id_name == "ec_code":
         df[id_name] = ['ec:'+ec
                         for ec in df[id_name]]
-    df['GOs'] = df['GOs'].str.replace("GO:", "GO_")
+
+    df['go_label'] = df['go_label'].str.replace("GO:", "")
+    df['go_label'] = df['go_label'].str.strip(to_strip='+-')
+
     df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
 
-def main(session=requests):
+def main():
     databases_gos_mapping = {'metacyc_go_mapping': 'http://geneontology.org/external2go/metacyc2go',
                    'reactome_go_mapping': 'http://geneontology.org/external2go/reactome2go',
                    'kegg_go_mapping': 'http://geneontology.org/external2go/kegg2go',
@@ -72,6 +58,5 @@ def main(session=requests):
                    }
 
     for database in tqdm(databases_gos_mapping):
-        id_name, id_prefix = http_request_gene_ontology(databases_gos_mapping[database], database, session)
-        cleaning_file(database, id_name, id_prefix)
+        request_gene_ontology(databases_gos_mapping[database], database)
 

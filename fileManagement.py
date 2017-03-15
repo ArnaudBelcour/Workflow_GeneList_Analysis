@@ -10,6 +10,8 @@ import requests
 import shutil
 import six
 
+from tqdm import *
+
 import ancestor_go_extraction
 import mapping_pathway_data
 import pathway_extractor
@@ -589,7 +591,9 @@ class FileManagement():
             results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column, column_name]]
             results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan', 'Blast']]
         else:
+
             results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
+
             results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
 
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("C:", "")
@@ -654,10 +658,11 @@ class FileManagementGeneGOs(FileManagement):
 
     def go_ancestors_list_of_interest(self, column_analyzed_object, file_name_temporary):
 
+        print("GO ancestors retrieval")
         df = pa.read_csv(temporary_directory + file_name_temporary, '\t')
         df.replace(np.nan, '', regex=True, inplace=True)
 
-        for index, row in df.iterrows():
+        for index, row in tqdm(df.iterrows(), total=len(df.index)):
             df[column_analyzed_object].loc[index] = ancestor_go_extraction.union_go_and_their_ancestor(row[column_analyzed_object].split(","))
 
         df.to_csv(temporary_directory + file_name_temporary, '\t', index = False)
@@ -697,7 +702,7 @@ class FileManagementGeneGOs(FileManagement):
                 self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
 
                 session = requests.Session()
-                pathway_extractor.data_retrieval_from_GO(file_name_temporary, session)
+                pathway_extractor.data_retrieval_from_GO(file_name_temporary)
                 pathway_extractor.main(file_name_temporary, session)
 
                 mapping_pathway_data.main(file_name_temporary)

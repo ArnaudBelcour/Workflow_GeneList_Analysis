@@ -82,7 +82,7 @@ def main(file_name_temporary):
     for file_name in os.listdir(temporary_directory_database):
         if "ecChebiToPathway" in file_name:
             df_eupathdb = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
-            df_eupathdb['ecChebis'] = df_eupathdb['ecChebis'].str.replace(":", "_")
+            df_eupathdb['ecChebis'] = df_eupathdb['ecChebis']
             df_eupathdb = df_eupathdb.set_index('ecChebis')
             df_genome['pathway_' + file_name] = (df_genome['EnzymeCodes'].apply(translation_data, args = (df_eupathdb, 'pathway', 'pathway'))\
                                                  + df_genome['ChEBI'].apply(translation_data, args = (df_eupathdb, 'pathway', 'pathway')))
@@ -145,7 +145,7 @@ def main(file_name_temporary):
                 df_reactome = df_reactome.set_index('EC')
                 df_genome[file_name] = df_genome['EnzymeCodes'].apply(translation_data, args = (df_reactome, 'Id', 'pathway'))
             if 'CHEBI' in file_name:
-                df_reactome['CHEBI'] = df_reactome['CHEBI'].str.replace(":", "_")
+                df_reactome['CHEBI'] = df_reactome['CHEBI']
                 df_reactome = df_reactome.set_index('CHEBI')
                 df_genome[file_name] = df_genome['ChEBI'].apply(translation_data, args = (df_reactome, 'Id', 'pathway'))
 

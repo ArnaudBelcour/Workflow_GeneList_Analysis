@@ -17,7 +17,7 @@ These python modules :
 
 * [numpy](https://pypi.python.org/pypi/numpy)
 
-* [pandas](http://pandas.pydata.org/)
+* [pandas >=0.19.2](http://pandas.pydata.org/)
 
 * [requests](http://docs.python-requests.org/en/master/)
 

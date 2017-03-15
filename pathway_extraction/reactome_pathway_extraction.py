@@ -24,7 +24,7 @@ def http_request_reactome(data_id, data_name, writer, session=requests):
 
         if data_name in ["REACT", "Interpro", "GO", "EC"]:
             if data_name in ["GO", "EC"]:
-                data_id = data_name + "_" + data_id
+                data_id = data_name + ":" + data_id
             for index in range(len(results['results'][0]['entries'])):
                 reactome_id = results['results'][0]['entries'][index]['id']
                 reactome_id_specie = results['results'][0]['entries'][index]['species']

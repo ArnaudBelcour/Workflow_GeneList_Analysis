@@ -41,8 +41,8 @@ def http_request_reactome(data_id, data_name, writer, session=requests):
         error = "Errors : " + repr(e)
 
 def file_creation(data_name, column_name, df_genome, session=requests):
-    csvfile = open(temporary_directory_database + 'pathway_reactome_' + data_name + '.tsv', "w", newline = "")
-    writer = csv.writer(csvfile, delimiter = "\t")
+    csvfile = open(temporary_directory_database + 'pathway_reactome_' + data_name + '.tsv', "w", newline="")
+    writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow([data_name, 'Id', 'specie', 'data_type'])
 
     datas_requests = []
@@ -74,10 +74,9 @@ def file_creation(data_name, column_name, df_genome, session=requests):
     csvfile.close()
 
 def main(file_name, session=requests):
-    df_genome = pa.read_csv(temporary_directory + file_name, sep = "\t")
+    df_genome = pa.read_csv(temporary_directory + file_name, sep="\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
     data_names = {"EC": "EnzymeCodes", "GO": "GOs", "Interpro": "InterProScan", "CHEBI": "ChEBI"}
 
     for data_name in data_names:
         file_creation(data_name, data_names[data_name], df_genome, session)
-

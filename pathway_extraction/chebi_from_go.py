@@ -29,7 +29,7 @@ def go_to_chebi():
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
 
-    csvfile = open(temporary_directory_database + "go_chebi_mapping.tsv", "w", newline = "")
+    csvfile = open(temporary_directory_database + "go_chebi_mapping.tsv", "w", newline="")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(['GOs', 'ChEBI'])
 

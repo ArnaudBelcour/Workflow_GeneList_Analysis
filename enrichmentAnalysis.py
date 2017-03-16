@@ -206,7 +206,7 @@ class EnrichmentAnalysis():
         Results are written using sorted(dictionnary), so the list of result corresponds to : Sidak (position 5 in the list), Bonferroni (position 2),
         Holm (position 3), SGoF (position 4), Benjamini & Hochberg (position 0) and Benjamini & Yekutieli (position 1).
         '''
-        df = df.sort_values(['pValueBenjaminiHochberg'])
+        df.sort_values(['pValueBenjaminiHochberg'], inplace=True)
 
         if approximation_yes_or_no in yes_answers:
             self.output_columns[1] = "CountsTotal"
@@ -215,16 +215,16 @@ class EnrichmentAnalysis():
             df = df[self.output_columns]
 
         if over_or_underrepresentation == 'over':
-            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_over.tsv", sep= "\t",
-                float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
+            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_over.tsv", sep="\t",
+                float_format='%.6f', index=True, header=True, quoting=csv.QUOTE_NONE)
         elif over_or_underrepresentation == 'under':
-            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_under.tsv", sep= "\t",
-                float_format = '%.6f', index = True, header = True, quoting = csv.QUOTE_NONE)
+            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_under.tsv", sep="\t",
+                float_format='%.6f', index=True, header=True, quoting=csv.QUOTE_NONE)
 
         if over_or_underrepresentation == 'over':
-            csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_over.tsv", "w", newline = "")
+            csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_over.tsv", "w", newline="")
         elif over_or_underrepresentation == 'under':
-            csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_under.tsv", "w", newline = "")
+            csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_under.tsv", "w", newline="")
 
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow([self.object_to_analyze + 'Sidak', self.object_to_analyze + 'Bonferroni', self.object_to_analyze + 'Holm',
@@ -260,7 +260,7 @@ class EnrichmentAnalysis():
         return df
 
     def correction_benjamini_hochberg(self, df):
-        df = df.sort_values(by = self.statistic_method, ascending = True)
+        df.sort_values(by=self.statistic_method, ascending=True, inplace=True)
         number_of_test = len(df.index)
         ranks = np.arange(number_of_test) + 1
 
@@ -273,14 +273,14 @@ class EnrichmentAnalysis():
         return df
 
     def correction_benjamini_yekutieli(self, df):
-        df = df.sort_values(by = 'pvalue_hypergeometric', ascending = True)
+        df.sort_values(by='pvalue_hypergeometric', ascending=True, inplace=True)
 
         df['pValueBenjaminiYekutieli'] = multipletests(df['pvalue_hypergeometric'].tolist(), alpha=0.05, method="fdr_by")[1]
 
         return df
 
     def correction_holm(self, df):
-        df = df.sort_values(by = self.statistic_method, ascending = True)
+        df.sort_values(by=self.statistic_method, ascending=True, inplace=True)
 
         number_of_test = len(df.index)
         pvalue_max = 0
@@ -307,12 +307,12 @@ class EnrichmentAnalysis():
             and the MATLAB version developped by Garth Thompson.
             The MATLAB version is accessible at : http://acraaj.webs.uvigo.es/software/matlab_sgof.m
         '''
-        df = df.sort_values("pvalue_hypergeometric")
+        df.sort_values("pvalue_hypergeometric", inplace=True)
 
         number_pvalue = len(df.pvalue_hypergeometric)
         R = (df['pvalue_hypergeometric'] < self.alpha).sum()
 
-        df.reset_index(inplace = True)
+        df.reset_index(inplace=True)
 
         row_number = 0
 
@@ -404,8 +404,8 @@ class EnrichmentAnalysis():
         counts_df = pa.read_csv(temporary_directory + self.file_of_interest + ".tsv", sep = "\t")
         counts_df_reference = pa.read_csv(temporary_directory + self.file_of_reference + ".tsv", sep = "\t")
 
-        counts_df.set_index(self.object_to_analyze, inplace = True)
-        counts_df_reference.set_index(self.object_to_analyze, inplace = True)
+        counts_df.set_index(self.object_to_analyze, inplace=True)
+        counts_df_reference.set_index(self.object_to_analyze, inplace=True)
 
         df_joined = counts_df.join(counts_df_reference)
 
@@ -459,7 +459,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         return go_labels
 
     def multiple_testing_correction(self, df):
-        df.sort_values([self.statistic_method], inplace = True)
+        df.sort_values([self.statistic_method], inplace=True)
 
         df = self.correction_bonferroni(df)
         df = self.correction_benjamini_hochberg(df)
@@ -469,7 +469,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
 
         significative_objects = {}
         translation_gos_labels_to_numbers = self.gos_labels_to_numbers
-        df.set_index(self.object_to_analyze, inplace = True)
+        df.set_index(self.object_to_analyze, inplace=True)
 
         for multiple_test_name in self.multiple_test_names:
             if multiple_test_name == 'Sidak':

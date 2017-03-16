@@ -55,7 +55,7 @@ def request_and_parse_pathway_file(db_database, database, pathways_file_name, se
         For each file name a request is sent to EuPathDB to retrieve the file.
         Then the file is parsed and the association between ID (ChEBI and Enzyme code) and pathway (MetaCyc, KEGG) are extracted and writed into a csv.
     '''
-    csvfile = open(temporary_directory_database + "ecChebiToPathway_" + db_database + database + ".tsv", "w", newline = "")
+    csvfile = open(temporary_directory_database + "ecChebiToPathway_" + db_database + database + ".tsv", "w", newline="")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(('pathway', 'ecChebis'))
 
@@ -103,4 +103,3 @@ def main(session=requests):
         if db_database == 'tritrypdb':
             request_and_parse_pathway_file(db_database, 'LeishCyc', db_database_pathways['LeishCyc'], session)
             request_and_parse_pathway_file(db_database, 'TrypanoCyc', db_database_pathways['TrypanoCyc'], session)
-

@@ -25,7 +25,7 @@ def sparql_query(sparql_endpoint, query, output_file):
                 column_names.append(key)
 
     csvfile = open(temporary_directory_database + output_file + ".tsv", "w")
-    writer = csv.writer(csvfile, delimiter="\t")
+    writer = csv.writer(csvfile, delimiter='\t')
 
     writer.writerow((column_names))
 

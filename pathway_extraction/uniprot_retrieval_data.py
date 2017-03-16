@@ -17,7 +17,7 @@ def extract_information_from_uniprot(results_dataframe):
     results_dataframe['Blast'] = results_dataframe['Blast'].str[len('CEP03957.1hypothetical protein '):]
     results_dataframe['Blast'] = results_dataframe['Blast'].str.replace(", partial", "")
 
-    results_dataframe.set_index("Gene_Name", inplace = True)
+    results_dataframe.set_index("Gene_Name", inplace=True)
 
     for gene, row in tqdm(results_dataframe.iterrows(), total=len(results_dataframe.index)):
         transcript = 'ensembl:' + row['Blast']

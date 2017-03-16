@@ -76,12 +76,12 @@ def list_to_string(datas):
     return ','.join(datas)
 
 def main(file_name_temporary):
-    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
+    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep='\t')
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
     for file_name in os.listdir(temporary_directory_database):
         if "ecChebiToPathway" in file_name:
-            df_eupathdb = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
+            df_eupathdb = pa.read_csv(temporary_directory_database + file_name, sep='\t')
             df_eupathdb['ecChebis'] = df_eupathdb['ecChebis']
             df_eupathdb = df_eupathdb.set_index('ecChebis')
             df_genome['pathway_' + file_name] = (df_genome['EnzymeCodes'].apply(translation_data, args = (df_eupathdb, 'pathway', 'pathway'))\
@@ -184,7 +184,6 @@ def main(file_name_temporary):
         df_genome['pathway_interpro_' + database] = df_genome['InterProScan'].apply(translation_interpro_data, args = (df_interpro, 'Pathway_id', database))
         df_genome['pathway_interpro_' + database] = df_genome['pathway_interpro_' + database].apply(list_to_string)
 
-
     df_ghost_koala = pa.read_csv(temporary_directory_database + 'gene_with_kegg_pathway.tsv', sep='\t')
     df_ghost_koala = df_ghost_koala.set_index('Gene')
 
@@ -193,4 +192,3 @@ def main(file_name_temporary):
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(list_to_string)
 
     df_genome.to_csv(temporary_directory + "result_pathway_extraction.tsv", sep="\t", index=False)
-

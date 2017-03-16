@@ -51,7 +51,7 @@ def r_keggrest_ec(ecs_requests):
         raise subprocess.CalledProcessError(return_code, cmd)
 
 def mapping_data(file_name, df_genome):
-    df_mapping = pa.read_csv(temporary_directory_database + file_name, sep = '\t')
+    df_mapping = pa.read_csv(temporary_directory_database + file_name, sep='\t')
 
     df_mapping['GOs'] = df_mapping['GOs'].str.replace("_", ":")
     df_mapping = df_mapping.set_index("GOs")
@@ -68,7 +68,7 @@ def data_retrieval_from_GO(file_name_temporary):
     if os.path.isdir(temporary_directory_database) == False:
         os.makedirs(temporary_directory_database)
 
-    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
+    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
     print("GO mapping files interrogation")
@@ -89,10 +89,10 @@ def data_retrieval_from_GO(file_name_temporary):
 
     df_genome.drop('ec_code', 1, inplace=True)
     df_genome.drop('interpro', 1, inplace=True)
-    df_genome.to_csv(temporary_directory + file_name_temporary, sep = "\t", index=False)
+    df_genome.to_csv(temporary_directory + file_name_temporary, sep='\t', index=False)
 
 def main(file_name_temporary, session=requests):
-    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
+    df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep='\t')
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
     print("Keggrest interrogation")
@@ -106,10 +106,10 @@ def main(file_name_temporary, session=requests):
     ghost_koala_pathway_extraction.main()
 
     print("Interpro interrogation")
-    interpro_pathway_extraction.main()
+    interpro_pathway_extraction.request_interpro_pathway()
 
     print("Panther interrogation")
-    panther_pathway_mapping_uniprot.main()
+    panther_pathway_mapping_uniprot.request_panther_file()
 
     print("Reactome interrogation")
     reactome_pathway_extraction.main(file_name_temporary, session)

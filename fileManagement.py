@@ -74,7 +74,7 @@ class FileManagement():
 
         d_go_label_with_synonym = {}
 
-        query_results_dataframe.set_index(query_results_dataframe['subject'], inplace = True)
+        query_results_dataframe.set_index(query_results_dataframe['subject'], inplace=True)
 
         for index, row in query_results_dataframe.iterrows():
             if row['NarrowSynonym'] not in d_go_label_with_synonym and row['BroadSynonym'] not in d_go_label_with_synonym\
@@ -535,15 +535,15 @@ class FileManagement():
                         ko_keggs[column] = 1
 
         if go_number_columns:
-            go_number_column = max(go_number_columns, key = go_number_columns.get)
+            go_number_column = max(go_number_columns, key=go_number_columns.get)
             go_column = go_number_column
             go_label_columns.pop(go_number_column, None)
-        ec_column = max(ec_columns, key = ec_columns.get)
-        ipr_column = max(ipr_columns, key = ipr_columns.get)
+        ec_column = max(ec_columns, key=ec_columns.get)
+        ipr_column = max(ipr_columns, key=ipr_columns.get)
         if ko_keggs:
-            ko_kegg = max(ko_keggs, key = ko_keggs.get)
+            ko_kegg = max(ko_keggs, key=ko_keggs.get)
 
-        go_label_column = max(go_label_columns, key = go_label_columns.get)
+        go_label_column = max(go_label_columns, key=go_label_columns.get)
 
         if not go_number_columns:
             go_column = go_label_column
@@ -564,9 +564,9 @@ class FileManagement():
         extension_input_file = self.file_extension
 
         if extension_input_file == '.xls':
-            results_dataframe = pa.read_excel(input_directory + name_input_file + extension_input_file, sep = None, na_values = "")
+            results_dataframe = pa.read_excel(input_directory + name_input_file + extension_input_file, sep=None, na_values="")
         else:
-            results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, sep = None, engine = "python", na_values = "")
+            results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, sep=None, engine="python", na_values="")
 
         yes_or_no = input("Is the first columns of your file, the column containing gene name? ")
 
@@ -579,7 +579,7 @@ class FileManagement():
         if type_file == "gene_list":
             results_dataframe = results_dataframe[[name_gene_column]]
             results_dataframe.columns = [['Gene_Name']]
-            results_dataframe.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+            results_dataframe.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
 
             return name_input_file + "GOsTranslatedAndFixed.tsv"
 
@@ -659,20 +659,20 @@ class FileManagementGeneGOs(FileManagement):
     def go_ancestors_list_of_interest(self, column_analyzed_object, file_name_temporary):
 
         print("GO ancestors retrieval")
-        df = pa.read_csv(temporary_directory + file_name_temporary, '\t')
+        df = pa.read_csv(temporary_directory + file_name_temporary, sep='\t')
         df.replace(np.nan, '', regex=True, inplace=True)
 
         for index, row in tqdm(df.iterrows(), total=len(df.index)):
             df[column_analyzed_object].loc[index] = ancestor_go_extraction.union_go_and_their_ancestor(row[column_analyzed_object].split(","))
 
-        df.to_csv(temporary_directory + file_name_temporary, '\t', index = False)
+        df.to_csv(temporary_directory + file_name_temporary, sep='\t', index=False)
 
     def create_gene_object_analysis_file(self, file_name, columns_names, column_analyzed_object):
-        df = pa.read_csv(temporary_directory + file_name, sep = "\t")
+        df = pa.read_csv(temporary_directory + file_name, sep="\t")
         df = df[columns_names]
-        df.set_index(columns_names[0], inplace = True)
+        df.set_index(columns_names[0], inplace=True)
 
-        csvfile = open(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", "w", newline = "")
+        csvfile = open(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", "w", newline="")
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow((columns_names[0], columns_names[1]))
 
@@ -757,11 +757,11 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
     def counting_gene_list(self, file_name_temporary, column_name, column_analyzed_object):
         analyzed_objects = []
-        df = pa.read_csv(temporary_directory + file_name_temporary, sep = "\t")
+        df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
         df = df[['Gene_Name']]
         df.set_index("Gene_Name", inplace=True)
 
-        df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name, sep = "\t")
+        df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name, sep="\t")
         df_genome = df_genome[['Gene_Name', 'GOs']]
         df_genome.set_index("Gene_Name", inplace=True)
 
@@ -827,10 +827,10 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
         FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
     def genome_file_processing(self, genome_file_name):
-        df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep = "\t", header = None)
+        df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep="\t", header=None)
         df.columns = [['Gene', 'GOs']]
 
-        df .set_index("Gene", inplace = True)
+        df .set_index("Gene", inplace=True)
 
         genes_gos_ancestors = {}
         for gene, row in df.iterrows():
@@ -840,7 +840,7 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
             else:
                 genes_gos_ancestors[gene].extend(go_with_ancestor)
 
-        csvfile = open(temporary_directory + self.file_name + "_with_ancestor.tsv", "w", newline = "")
+        csvfile = open(temporary_directory + self.file_name + "_with_ancestor.tsv", "w", newline="")
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow(["Gene", "GO"])
 
@@ -853,9 +853,9 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
 
         csvfile.close()
 
-        df = pa.read_csv(temporary_directory + self.file_name + "_with_ancestor.tsv", sep = "\t", header = None)
+        df = pa.read_csv(temporary_directory + self.file_name + "_with_ancestor.tsv", sep = "\t", header=None)
         df.columns = [['Gene', 'GOs']]
-        df.set_index("Gene", inplace = True)
+        df.set_index("Gene", inplace=True)
         go_counts = {}
 
         for gene, row in df.iterrows():
@@ -864,7 +864,7 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
             elif row["GOs"] in go_counts:
                 go_counts[row["GOs"]] += 1
 
-        csvfile = open(temporary_directory + "number_go_in_genome.tsv", "w", newline = "")
+        csvfile = open(temporary_directory + "counting_objects_in_genome.tsv", "w", newline="")
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow(["GOs", "CountsReference"])
 
@@ -872,6 +872,8 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
             writer.writerow([go, go_counts[go]])
 
         csvfile.close()
+
+        return "counting_objects_in_genome"
 
 class FileManagementGeneGOInterest(FileManagementGeneGO):
 
@@ -888,13 +890,13 @@ class FileManagementGeneGOInterest(FileManagementGeneGO):
         self._file_genome_reference_name = file_name
 
     def file_of_interest_processing(self):
-        df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep = "\t", header = None)
+        df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep="\t", header=None)
         df.columns = [['Gene']]
-        df.set_index("Gene", inplace = True)
+        df.set_index("Gene", inplace=True)
 
-        df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name + "_with_ancestor.tsv", sep = "\t", header = None)
+        df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name + "_with_ancestor.tsv", sep="\t", header=None)
         df_genome.columns = [['Gene', 'GOs']]
-        df_genome.set_index("Gene", inplace = True)
+        df_genome.set_index("Gene", inplace=True)
 
         df_joined = df.join(df_genome)
         go_counts = {}
@@ -905,7 +907,7 @@ class FileManagementGeneGOInterest(FileManagementGeneGO):
             elif row["GOs"] in go_counts:
                 go_counts[row["GOs"]] += 1
 
-        csvfile = open(temporary_directory + "number_go_in_interest.tsv", "w", newline = "")
+        csvfile = open(temporary_directory + "counting_objects_in_interest.tsv", "w", newline="")
         writer = csv.writer(csvfile, delimiter="\t")
         writer.writerow(["GOs", "Counts"])
 
@@ -913,3 +915,5 @@ class FileManagementGeneGOInterest(FileManagementGeneGO):
             writer.writerow([go, go_counts[go]])
 
         csvfile.close()
+
+    return 'counting_objects_in_interest'

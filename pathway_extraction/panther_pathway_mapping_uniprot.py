@@ -6,10 +6,13 @@ from tqdm import *
 
 from . import *
 
-def http_request_gene_ontology(url, file_name):
+def request_panther_file():
     '''
         Requests Panther ftp to obtain the mapping file between Uniprot ID/Ensembl ID and pathway.
     '''
+    url = 'ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt'
+    file_name = 'uniprot_panther_pathway'
+
     print("\tRequesting Panther.")
     df = pa.read_csv('ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt', sep='\t', header=None)
 
@@ -20,9 +23,4 @@ def http_request_gene_ontology(url, file_name):
 
     df['uniprot_ID'] = [pathway.split("=")[-1]for pathway in df['uniprot_ID']]
 
-    df.to_csv(temporary_directory_database + file_name + ".tsv", sep = "\t", index=False)
-
-def main():
-    file_name = 'uniprot_panther_pathway'
-    http_request_gene_ontology('ftp://ftp.pantherdb.org/pathway/current_release/SequenceAssociationPathway3.4.1.txt', file_name)
-
+    df.to_csv(temporary_directory_database + file_name + ".tsv", sep='\t', index=False)

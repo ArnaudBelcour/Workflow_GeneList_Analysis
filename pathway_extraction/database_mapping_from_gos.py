@@ -47,7 +47,7 @@ def request_gene_ontology(url, file_name):
     df['go_label'] = df['go_label'].str.replace("GO:", "")
     df['go_label'] = df['go_label'].str.strip(to_strip='+-')
 
-    df.to_csv(temporary_directory_database + file_name + ".tsv", sep= "\t", index = False, header = True, quoting = csv.QUOTE_NONE)
+    df.to_csv(temporary_directory_database + file_name + ".tsv", sep='\t', index=False, header=True, quoting=csv.QUOTE_NONE)
 
 def main():
     databases_gos_mapping = {'metacyc_go_mapping': 'http://geneontology.org/external2go/metacyc2go',
@@ -59,4 +59,3 @@ def main():
 
     for database in tqdm(databases_gos_mapping):
         request_gene_ontology(databases_gos_mapping[database], database)
-

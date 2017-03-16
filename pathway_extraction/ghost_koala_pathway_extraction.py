@@ -47,8 +47,8 @@ def ghost_koala_file_gestion(file_name):
                 for gene in genes_extracted:
                     genes.append(gene)
 
-    csvfile = open(temporary_directory + "ghost_koala.tsv", "w", newline = "")
-    writer = csv.writer(csvfile, delimiter="\t")
+    csvfile = open(temporary_directory + "ghost_koala.tsv", "w", newline="")
+    writer = csv.writer(csvfile, delimiter='\t')
     writer.writerow(['Title', 'Pathway', 'KO', 'Gene'])
 
     for title in tqdm(title_pathways):
@@ -60,7 +60,7 @@ def ghost_koala_file_gestion(file_name):
     csvfile.close()
 
 def file_cleaning():
-    df = pa.read_csv(temporary_directory + "ghost_koala.tsv", sep = "\t")
+    df = pa.read_csv(temporary_directory + "ghost_koala.tsv", sep='\t')
 
     series_KO = df.groupby('Gene')['KO'].apply(list)
     series_pathway = df.groupby('Gene')['Pathway'].apply(list)
@@ -74,9 +74,8 @@ def file_cleaning():
     df_KO['kegg_title'] = df_title['Title']
 
     df_KO['kegg_pathway'] = [['path:map' + pathway[:5] for pathway in pathways] for pathways in df_KO['kegg_pathway']]
-    df_KO.to_csv(temporary_directory_database + "gene_with_kegg_pathway.tsv", sep = "\t")
+    df_KO.to_csv(temporary_directory_database + "gene_with_kegg_pathway.tsv", sep='\t')
 
 def main():
     ghost_koala_file_gestion('gene_pathwayq_GhostKoala.txt')
     file_cleaning()
-

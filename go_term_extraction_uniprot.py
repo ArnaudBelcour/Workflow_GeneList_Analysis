@@ -15,7 +15,7 @@ temporary_directory = 'temporaryFiles/'
 output_directory = 'outputFiles/'
 
 def genome_file_extraction():
-    df = pa.read_csv(input_directory + "BrowserPlasmoUniprot.tsv", skiprows = 1, sep = "\t", header=None)
+    df = pa.read_csv(input_directory + "BrowserPlasmoUniprot.tsv", skiprows=1, sep="\t", header=None)
     df = df[[0, 1, 2, 3]]
     df.columns = [["GenePlasmo", "PosDepart", "PosFin", "Uniprot"]]
 
@@ -48,7 +48,7 @@ def genome_file_extraction():
     return string_values_protein_names
 
 def create_approximation_go_genome(string_values_protein_names):
-    csvfile = open(temporary_directory + "test_genomeGO.tsv", "w", newline = "")
+    csvfile = open(temporary_directory + "test_genomeGO.tsv", "w", newline="")
     writer = csv.writer(csvfile, delimiter="\t")
     writer.writerow(("mnemonic_name_of_protein", "uniprot_id", 'GOs'))
 
@@ -80,11 +80,11 @@ def create_approximation_go_genome(string_values_protein_names):
 
     csvfile.close()
 
-    df = pa.read_csv(temporary_directory + 'test_genomeGO.tsv', '\t')
+    df = pa.read_csv(temporary_directory + 'test_genomeGO.tsv', sep='\t')
 
     for index, row in df.iterrows():
         row['GOs'] = union_go_and_their_ancestor(row['GOs'].split(","))
-    df.to_csv(temporary_directory + 'test_genomeGO_edit.tsv', '\t')
+    df.to_csv(temporary_directory + 'test_genomeGO_edit.tsv', sep='\t')
 
 def request_go_term_for_a_protein(uniprot_id):
     '''

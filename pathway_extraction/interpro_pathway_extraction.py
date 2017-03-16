@@ -9,15 +9,17 @@ from tqdm import *
 
 from . import *
 
-def interpro_pathway_extraction(url, file_name):
+def request_interpro_pathway():
     '''
         Requests Interpro to retrieve the interpro.xml.gz file.
         The file is analyzed and the Interpro ID are extracted with their associated pathways.
     '''
+    url = 'ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro.xml.gz'
+    file_name = 'interpro'
     response = urllib.request.urlopen(url)
 
     csvfile = open(temporary_directory_database + "interpro_pathway.tsv", "w")
-    writer = csv.writer(csvfile, delimiter="\t")
+    writer = csv.writer(csvfile, delimiter='\t')
     writer.writerow(['Interpros', 'Database', 'Pathway_id'])
 
     with GzipFile(fileobj = response) as xmlFile:
@@ -36,7 +38,3 @@ def interpro_pathway_extraction(url, file_name):
                             writer.writerow([interpro_id, database_name, pathway_id])
 
     csvfile.close()
-
-def main():
-    interpro_pathway_extraction('ftp://ftp.ebi.ac.uk/pub/databases/interpro/interpro.xml.gz', 'interpro')
-

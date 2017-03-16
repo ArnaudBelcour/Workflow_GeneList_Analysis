@@ -40,7 +40,7 @@ def go_term_ancestor(go):
 
     return go_ancestors
 
-def union_go_and_their_ancestor(gos):
+def union_go_and_their_ancestor(gos, option=''):
     '''
         Takes a list of GO terms corresponding to the value of a dataframe column as input (here the GO terms associated with a gene).
         Uses go_term_ancestor() function to retrieve all the ancestors of the go term.
@@ -58,5 +58,7 @@ def union_go_and_their_ancestor(gos):
     go_list_for_entity = list(set().union(*go_ancestors_for_go_lists))
     go_str_for_entity = ",".join(go_list_for_entity)
 
-    return go_str_for_entity
-
+    if option == '':
+        return go_str_for_entity
+    elif option == 'list':
+        return go_list_for_entity

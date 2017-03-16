@@ -834,7 +834,7 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
 
         genes_gos_ancestors = {}
         for gene, row in df.iterrows():
-            go_with_ancestor = ancestor_go_extraction.union_go_and_their_ancestor([row['GOs']])
+            go_with_ancestor = ancestor_go_extraction.union_go_and_their_ancestor([row['GOs']], 'list')
             if gene not in genes_gos_ancestors:
                 genes_gos_ancestors[gene] = go_with_ancestor
             else:

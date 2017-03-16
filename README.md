@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ArnaudBelcour/Workflow_GeneList_Analysis.svg?branch=master)](https://travis-ci.org/ArnaudBelcour/Workflow_GeneList_Analysis)
 [![Coverage Status](https://coveralls.io/repos/github/ArnaudBelcour/Workflow_GeneList_Analysis/badge.svg)](https://coveralls.io/github/ArnaudBelcour/Workflow_GeneList_Analysis)
 
-Workflow for gene enrichment analysis (at this time, it only does a GO terms Enrichment analysis).
+Workflow to add information to a poorly annoted genome and to perfom a Singular Enrichment Analysis.
 
 ## Installation
 
@@ -33,13 +33,14 @@ This R package :
 
 # Enrichment Analysis
 
-This workflow performs enrichment analysis (especially on GO terms).
+This workflow performs a Singular Enrichment Analysis. This analysis takes a list of genes (for example differentially expressed genes) and compute an enrichment term for each annotation term in this list.
+For a better definition, read the [article writed by Huang et al. (2009)](https://academic.oup.com/nar/article-lookup/doi/10.1093/nar/gkn923).
 
-fileManagement.py translates GO label from Blast2Go files into GO number.
+The idea behind this workflow is to made a tool to analyze poorly annoted genome and with few datas. Also, by using class it allows to use separately some of its components (like enrichmentAnalysis class).
+
+fileManagement.py manages the files to create counting files used by enrichmentAnalysis.py.
 
 enrichmentAnalysis.py is dividied in tow class. The first class ("EnrichmentAnalysis") is the basic method, which computes an hypergeometric test for variables (now it works for GO terms, in the future it will work for pathway) and calculates different multiple tests corrections (Bonferroni, Holm, Sidak, Benjamini & Hochberg and SGoF). The second class ("GOEnrichmentAnalysis") inherits from "EnrichmentAnalysis" and overrides a function to add GO label to the results.
-
-go_term_extraction_uniprot.py queries Uniprot to obtain GO terms associated with Uniprot ID.
 
 workflow_manager.py is the main script.
 
@@ -47,7 +48,7 @@ This workflow works with three directories (inputFiles, temporaryFiles and outpu
 
 * inputFiles must have three files : queryResults.csv (a csv file resulting from queriyng on the Gene Ontology to have all the GO terms with their GO labels (it will be automated in the future), GOTermsPlasmoGenome.tsv (which contains all the GO terms from the genome of your species, it will also be automated) and your data (in .csv).
 
-* temporaryFiles : will contain files used during the script, it will be created during the analysis.
+* temporaryFiles : will contain files used during the script, it will be created during the analysis. It contains datas extracted from the external databases.
 
 * outputFiles : the results of the analysis in tsv, it will be created during the analysis.
 
@@ -71,9 +72,20 @@ And multiple testing corrections :
 
 * [SGoF](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2719628/) Carvajal-Rodríguez, Antonio, Jacobo de Uña-Alvarez, and Emilio Rolán-Alvarez. “A New Multitest Correction (SGoF) That Increases Its Statistical Power When Increasing the Number of Tests.” BMC Bioinformatics 10 (2009): 209.
 
-# Network Enrichment Analysis
+# Genome enrichment annotation
 
-enzyme_to_pathway.R translates Enzyme Commission number (ec) into pathway using KEGGREST, it creates a tsv file (in temporaryFiles directory) containing ec number associated with the pathway name and the pathway ID on KEGG.
+This part of the workflow queries some databases to retrieve external information (GO terms, EC numbers, IPR, pathways from KEGG, MetaCyc and Reactome):
+
+chebi_from_go.py translates GO into ChEBI using GO-plus.owl file.
+database_mapping_from_gos.pys retrieves IPR, EC numbers, KEGG and MetaCyc pathways with GO terms.
+eupathdb_pathway_extraction.py translates EC numbers and ChEBI into KEGG and MetaCyc pathways.
+ghost_koala_pathway_extraction.py extracts KEGG pathways from Ghost Koala results.
+interpro_pathway_extraction.py retrieves MetaCyc, KEGG and Reactome pathways with IPR.
+keggrest_pathway_extraction.R translates Enzyme Commission number (ec) into pathway using KEGGREST, it creates a tsv file (in temporaryFiles directory) containing ec number associated with the pathway name and the pathway ID on KEGG.
+panther_pathway_mapping_uniprot.py retrieves pathways from Uniprot ID.
+reactome_pathway_extraction.py retrieves Reactome pathway with GO terms, EC numbers, Interpro IDs and ChEBI).
+sparql_query_reactome_pathway_name.py extracts pathway name and pathway ID of Reactome pathway.
+uniprot_retrieval_data.py retrieves data (GO terms, IPR and EC numbers) using Ensembl ID from Blast results.
 
 # Launch the analysis
 

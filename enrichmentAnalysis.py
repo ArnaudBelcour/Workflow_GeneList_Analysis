@@ -184,6 +184,8 @@ class EnrichmentAnalysis():
 
         significative_objects = {}
 
+        df.set_index(self.object_to_analyze, inplace=True)
+
         for multiple_test_name in self.multiple_test_names:
             if multiple_test_name == 'Sidak':
                 error_rate = self.error_rate_adjustement_sidak(df)

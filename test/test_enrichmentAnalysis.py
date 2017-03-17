@@ -196,5 +196,17 @@ class enrichmentAnalysis_test(unittest.TestCase):
 
         np.testing.assert_array_almost_equal([error_rate_adjusted_10, error_rate_adjusted_20], [0.0051, 0.0026], decimal = 4)
 
+    #def test_enrichment_analysis(self):
+        #pa.set_option('precision',50)
+        #go_enrichment_analysis = EnrichmentAnalysis('GOs', 'counting_objects_in_interest', 'counting_objects_in_genome', 11, 38660, 0.05, 10000)
+        #go_enrichment_analysis.enrichment_analysis()
+
+        #results = pa.read_csv('outputFiles/pValuesOfGOs_over.tsv', sep='\t', float_precision='high')
+        #results_truth = pa.read_csv('test_data/test_enrichment/overRepresentation_genesSet1.tsv', sep='\t')
+        #results = results.round({'pvalue_hypergeometric': 4})
+        #results_truth = results_truth.round({'pvalue_hypergeometric': 4})
+        #print(results['pvalue_hypergeometric'], results_truth['pvalue_hypergeometric'])
+        #np.testing.assert_array_almost_equal(results['pvalue_hypergeometric'].tolist(), results_truth['pvalue_hypergeometric'].tolist(), decimal = 4)
+
 if __name__ == '__main__':
     unittest.main()

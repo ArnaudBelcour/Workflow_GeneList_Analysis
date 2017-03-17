@@ -707,15 +707,15 @@ class FileManagementGeneGOs(FileManagement):
 
                 mapping_pathway_data.main(file_name_temporary)
 
-            counting_object_file = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
+            counting_object_file, number_of_gene_genome = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
 
-            return file_name_temporary, counting_object_file
+            return file_name_temporary, counting_object_file, number_of_gene_genome
 
         elif type_of_the_file == 'gene_list':
             file_name_temporary = self.column_data_cleaning(type_of_the_file)
-            counting_object_file, number_of_gene = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
+            counting_object_file, number_of_gene_list = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
 
-            return counting_object_file, number_of_gene
+            return counting_object_file, number_of_gene_list
 
 class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 
@@ -726,6 +726,11 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
         analyzed_objects = []
         df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
         df.replace(np.nan, '', regex=True, inplace=True)
+        df.set_index('Gene_Name', inplace=True)
+
+        #for index, row in df.iterrows():
+            #if row['GOs'] == '':
+                #df.drop(index, inplace=True)
 
         for index, row in df.iterrows():
             for analyzed_object in row[column_analyzed_object].split(","):
@@ -735,11 +740,13 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
         counts_df_genome.columns = [column_analyzed_object]
         counts_df_genome = counts_df_genome.groupby(column_analyzed_object).size().rename(column_name)
         counts_df_genome = counts_df_genome.to_frame()
-
+        #counts_df_genome['CountsProportion'] = counts_df_genome['CountsReference']/len(df.index)
         counts_df_genome.reset_index(inplace=True)
         counts_df_genome.to_csv(temporary_directory + "counting_objects_in_genome.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
 
-        return "counting_objects_in_genome"
+        number_of_gene = len(df.index.unique())
+
+        return "counting_objects_in_genome", number_of_gene
 
 class FileManagementGeneGOsInterest(FileManagementGeneGOs):
 
@@ -771,6 +778,10 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
         df_joined.to_csv(temporary_directory + file_name_temporary, "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
         df_joined.set_index("Gene_Name", inplace=True)
 
+        #for index, row in df_joined.iterrows():
+            #if row['GOs'] == '':
+                #df_joined.drop(index, inplace=True)
+
         for index, row in df_joined.iterrows():
             for analyzed_object in row[column_analyzed_object].split(","):
                 analyzed_objects.append(analyzed_object)
@@ -779,13 +790,16 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
         counts_df.columns = [column_analyzed_object]
         counts_df = counts_df.groupby(column_analyzed_object).size().rename(column_name)
         counts_df = counts_df.to_frame()
-
-        numberOfGene = len(df.index.unique())
+        #counts_df['CountsProportion'] = counts_df['Counts']/len(df_joined.index)
+        #counts_ref = pa.read_csv(temporary_directory + "counting_objects_in_genome.tsv", sep='\t')
+        #counts_ref.set_index('GOs', inplace=True)
+        #counts_df['Counts'] = counts_df['Counts'] - (56 * counts_df['CountsProportion'])
+        number_of_gene = len(df.index.unique())
 
         counts_df.reset_index(inplace=True)
         counts_df.to_csv(temporary_directory + "counting_objects_in_interest.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
 
-        return "counting_objects_in_interest", numberOfGene
+        return "counting_objects_in_interest", number_of_gene
 
 class FileManagementGeneGO(FileManagement):
 
@@ -916,4 +930,4 @@ class FileManagementGeneGOInterest(FileManagementGeneGO):
 
         csvfile.close()
 
-    return 'counting_objects_in_interest'
+        return 'counting_objects_in_interest'

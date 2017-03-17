@@ -34,21 +34,18 @@ def workflow_mainager():
 
     name_reference_input_file = input("Write the name of your input file containing genome : ")
     input_genome_file_gestion = FileManagementGeneGOsGenome(name_reference_input_file, 'genome' , 'GOs')
-    reference_file_name, counting_reference_file_name = input_genome_file_gestion.file_gene_gos_gestion()
+    reference_file_name, counting_reference_file_name, number_of_gene_genome = input_genome_file_gestion.file_gene_gos_gestion()
 
     name_de_input_file = input("Write the name of your input file containing differentially expressed gene : ")
     input_listde_file_gestion = FileManagementGeneGOsInterest(name_de_input_file, 'gene_list', 'GOs', reference_file_name)
-    counting_interest_file_name, number_of_gene = input_listde_file_gestion.file_gene_gos_gestion()
+    counting_interest_file_name, number_of_gene_list = input_listde_file_gestion.file_gene_gos_gestion()
 
     d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionnary_creation('inverse')
-
-    sentence_choice_number_gene = "Enter the number of genes in the genome of your organism : "
-    number_of_genes_in_genome = int(input(sentence_choice_number_gene))
 
     sentence_choice_alpha = "Enter the alpha risk : "
     alpha = float(input(sentence_choice_alpha))
 
-    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', counting_interest_file_name, counting_reference_file_name, number_of_gene, number_of_genes_in_genome, alpha, 10000, d_go_label_to_number)
+    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', counting_interest_file_name, counting_reference_file_name, number_of_gene_list, number_of_gene_genome, alpha, 10000, d_go_label_to_number)
     go_enrichment_analysis.enrichment_analysis()
 
 workflow_mainager()

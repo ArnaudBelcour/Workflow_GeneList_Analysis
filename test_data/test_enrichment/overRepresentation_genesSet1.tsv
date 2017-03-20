@@ -1,4 +1,4 @@
-Gos	Labels	C	C2	C3	C4	pvalue_hypergeometric	pvalue_binom
+Gos	Labels	C	C2	C3	C4	pvalue_binom	pvalue_hypergeometric
  GO0006783 	 heme biosynthetic process 	11	11	29	38660	4.23153200773E-035	4.79662053328E-036
  GO0006779 	 porphyrin-containing compound biosynthetic process 	11	11	36	38660	4.56506706209E-034	8.32965535557E-035
  GO0042168 	 heme metabolic process 	11	11	47	38660	8.57424898445E-033	2.41473770756E-033

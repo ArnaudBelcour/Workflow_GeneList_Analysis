@@ -3,7 +3,7 @@ import pandas as pa
 import scipy.stats as stats
 import unittest
 
-from enrichmentAnalysis import EnrichmentAnalysis
+from enrichmentAnalysis import EnrichmentAnalysis, GOEnrichmentAnalysis
 from unittest.mock import patch
 
 test_data_directory = 'test_data/'
@@ -203,19 +203,24 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Use a mock to simulate yes_or_no input for approximation and change global variable.
         '''
         print("\nTesting enrichment analysis ")
+        df_dic_go_label = pa.read_csv('test_data/test_enrichment/go_number_to_go_label.tsv', sep='\t')
+        df_dic_go_label.set_index('GO_number', inplace=True)
+        go_number_go_labels = df_dic_go_label.to_dict(orient='dict')['GO_label']
+
         with patch('builtins.input', return_value='n'):
             with patch('enrichmentAnalysis.temporary_directory', 'test_data/test_enrichment/'):
                 with patch('enrichmentAnalysis.output_directory', 'test_data/test_enrichment/'):
-                    go_enrichment_analysis = EnrichmentAnalysis('GOs', 'counting_objects_in_interest', 'counting_objects_in_genome', 11, 38660, 0.05, 10000)
+                    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', 'counting_objects_in_interest', 'counting_objects_in_genome',
+                                                                    11, 38660, 0.05, 10000, go_number_go_labels)
                     go_enrichment_analysis.enrichment_analysis()
 
                     results = pa.read_csv('test_data/test_enrichment/pValuesOfGOs_over.tsv', sep='\t', float_precision='high')
                     results_truth = pa.read_csv('test_data/test_enrichment/overRepresentation_genesSet1.tsv', sep='\t')
-
-                    results.sort_values('pvalue_hypergeometric', inplace=True)
-                    results_truth.sort_values('pvalue_hypergeometric', inplace=True)
+                    results.sort_values('GOs', inplace=True)
+                    results_truth.sort_values('GOs', inplace=True)
 
                     np.testing.assert_array_almost_equal(results['pvalue_hypergeometric'].tolist(), results_truth['pvalue_hypergeometric'].tolist(), decimal = 4)
+                    np.testing.assert_array_equal(results['GOLabel'].tolist(), results_truth['Labels'].tolist())
 
 if __name__ == '__main__':
     unittest.main()

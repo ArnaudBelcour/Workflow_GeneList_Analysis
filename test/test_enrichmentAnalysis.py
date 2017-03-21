@@ -3,7 +3,8 @@ import pandas as pa
 import scipy.stats as stats
 import unittest
 
-from enrichmentAnalysis import EnrichmentAnalysis
+from enrichmentAnalysis import EnrichmentAnalysis, GOEnrichmentAnalysis
+from unittest.mock import patch
 
 test_data_directory = 'test_data/'
 test_data_directory_cdf = test_data_directory + 'test_cdf/'
@@ -81,7 +82,7 @@ class enrichmentAnalysis_test(unittest.TestCase):
 
         df_joined = counts_df.join(counts_df_reference)
 
-        df_joined = enrichment_analysis_test.compute_normal_approximation('Gene_1', 6000, 57500, df_joined, 'over')
+        df_joined['pvalue_normal_approximation'] = df_joined.apply(enrichment_analysis_test.compute_normal_approximation, args=('CountsReference', 'over'), axis=1)
         df_joined = enrichment_analysis_test.hypergeometric_test_on_dataframe(df_joined, 'over', 'CountsReference')
 
         np.testing.assert_array_almost_equal(df_joined['pvalue_hypergeometric'].tolist(), df_joined['pvalue_normal_approximation'].tolist(), decimal = 4)
@@ -196,17 +197,30 @@ class enrichmentAnalysis_test(unittest.TestCase):
 
         np.testing.assert_array_almost_equal([error_rate_adjusted_10, error_rate_adjusted_20], [0.0051, 0.0026], decimal = 4)
 
-    #def test_enrichment_analysis(self):
-        #pa.set_option('precision',50)
-        #go_enrichment_analysis = EnrichmentAnalysis('GOs', 'counting_objects_in_interest', 'counting_objects_in_genome', 11, 38660, 0.05, 10000)
-        #go_enrichment_analysis.enrichment_analysis()
+    def test_enrichment_analysis(self):
+        '''
+        Datas are from an enrichment analysis course.
+        Use a mock to simulate yes_or_no input for approximation and change global variable.
+        '''
+        print("\nTesting enrichment analysis ")
+        df_dic_go_label = pa.read_csv('test_data/test_enrichment/go_number_to_go_label.tsv', sep='\t')
+        df_dic_go_label.set_index('GO_number', inplace=True)
+        go_number_go_labels = df_dic_go_label.to_dict(orient='dict')['GO_label']
 
-        #results = pa.read_csv('outputFiles/pValuesOfGOs_over.tsv', sep='\t', float_precision='high')
-        #results_truth = pa.read_csv('test_data/test_enrichment/overRepresentation_genesSet1.tsv', sep='\t')
-        #results = results.round({'pvalue_hypergeometric': 4})
-        #results_truth = results_truth.round({'pvalue_hypergeometric': 4})
-        #print(results['pvalue_hypergeometric'], results_truth['pvalue_hypergeometric'])
-        #np.testing.assert_array_almost_equal(results['pvalue_hypergeometric'].tolist(), results_truth['pvalue_hypergeometric'].tolist(), decimal = 4)
+        with patch('builtins.input', return_value='n'):
+            with patch('enrichmentAnalysis.temporary_directory', 'test_data/test_enrichment/'):
+                with patch('enrichmentAnalysis.output_directory', 'test_data/test_enrichment/'):
+                    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', 'counting_objects_in_interest', 'counting_objects_in_genome',
+                                                                    11, 38660, 0.05, 10000, go_number_go_labels)
+                    go_enrichment_analysis.enrichment_analysis()
+
+                    results = pa.read_csv('test_data/test_enrichment/pValuesOfGOs_over.tsv', sep='\t', float_precision='high')
+                    results_truth = pa.read_csv('test_data/test_enrichment/overRepresentation_genesSet1.tsv', sep='\t')
+                    results.sort_values('GOs', inplace=True)
+                    results_truth.sort_values('GOs', inplace=True)
+
+                    np.testing.assert_array_almost_equal(results['pvalue_hypergeometric'].tolist(), results_truth['pvalue_hypergeometric'].tolist(), decimal = 4)
+                    np.testing.assert_array_equal(results['GOLabel'].tolist(), results_truth['Labels'].tolist())
 
 if __name__ == '__main__':
     unittest.main()

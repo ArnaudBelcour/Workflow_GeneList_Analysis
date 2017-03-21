@@ -122,43 +122,48 @@ class EnrichmentAnalysis():
 
         approximation_threshold = self.normal_approximation_threshold
 
-        for analyzed_object, row in df.iterrows():
-            if math.isnan(df.get_value(analyzed_object, reference_column)):
-                df = df.drop([analyzed_object])
-            else:
-                if row['Counts'] < approximation_threshold:
-                    df = self.compute_hypergeometric_test(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
+        value_higher_threshold = all(df['Counts'] > approximation_threshold)
 
-                elif row['Counts'] > approximation_threshold:
-                    df = self.compute_normal_approximation(analyzed_object, row['Counts'], row[reference_column], df, over_or_underrepresentation)
+        if value_higher_threshold == False:
+            self.statistic_method = "pvalue_hypergeometric"
+            df[self.statistic_method] = df.apply(self.compute_hypergeometric_test, args=(reference_column, over_or_underrepresentation), axis=1)
+            df = df.sort_values(self.statistic_method)
 
-                if math.isnan(df.get_value(analyzed_object, self.statistic_method)):
-                    analyzed_objects_with_hypergeo_test_nan.append(analyzed_object)
-                    df = df.drop([analyzed_object])
-                df = df.sort_values(self.statistic_method)
+        elif value_higher_threshold == True:
+            self.output_columns[4] = 'pvalue_normal_approximation'
+            self.statistic_method = 'pvalue_normal_approximation'
+            df[self.statistic_method] = df.apply(self.compute_normal_approximation, args=(reference_column, over_or_underrepresentation), axis=1)
+            df = df.sort_values(self.statistic_method)
 
         return df
 
-    def compute_hypergeometric_test(self, analyzed_object, number_of_object_in_interest, number_of_object_in_reference, df, over_or_underrepresentation):
+    def compute_hypergeometric_test(self, row, reference_column, over_or_underrepresentation):
+        number_of_object_in_interest = row['Counts']
+        number_of_object_in_reference = row[reference_column]
+
         if over_or_underrepresentation == "over":
             pvalue_hypergeo = stats.hypergeom.sf(number_of_object_in_interest - 1, self.number_of_analyzed_object_of_reference,
                                                     number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
 
-        elif over_or_underrepresentation == "under":
+        if over_or_underrepresentation == "under":
             pvalue_hypergeo = stats.hypergeom.cdf(number_of_object_in_interest, self.number_of_analyzed_object_of_reference,
                                                     number_of_object_in_reference, self.number_of_analyzed_object_of_interest)
 
-        df.set_value(analyzed_object, 'pvalue_hypergeometric', pvalue_hypergeo)
-        self.statistic_method = "pvalue_hypergeometric"
+        return pvalue_hypergeo
 
-        return df
+    def compute_normal_approximation(self, row, reference_column, over_or_underrepresentation):
+        number_of_object_in_interest = row['Counts']
+        number_of_object_in_reference = row[reference_column]
 
-    def compute_normal_approximation(self, analyzedObject, number_of_object_in_interest, number_of_object_in_reference, df, over_or_underrepresentation):
         p = number_of_object_in_reference / self.number_of_analyzed_object_of_reference
         q = 1 - p
         t = self.number_of_analyzed_object_of_interest / self.number_of_analyzed_object_of_reference
 
         mu = self.number_of_analyzed_object_of_interest  * p
+
+        if 0 in [self.number_of_analyzed_object_of_interest, p, q, (1 - t)]:
+            return np.nan
+
         sigma = math.sqrt(self.number_of_analyzed_object_of_interest  * p * q * (1 - t))
 
         if over_or_underrepresentation == "over":
@@ -167,11 +172,7 @@ class EnrichmentAnalysis():
         elif over_or_underrepresentation == "under":
             pvalue_normal = stats.norm.cdf(number_of_object_in_interest, loc = mu, scale = sigma)
 
-        df.set_value(analyzedObject, 'pvalue_normal_approximation', pvalue_normal)
-        self.output_columns[4] = 'pvalue_normal_approximation'
-        self.statistic_method = 'pvalue_normal_approximation'
-
-        return df
+        return pvalue_normal
 
     def multiple_testing_correction(self, df):
         df = df.sort_values([self.statistic_method])
@@ -393,6 +394,7 @@ class EnrichmentAnalysis():
         Return a list containing all the significatives objects (all the objects having a pvalue lower than the alpha threshold).
         This selection method is used by Holm, Benjamini & Hochberg and Benjamini & Yekutieli multiple testing correction.
         '''
+        df.replace('', np.nan, regex=True, inplace=True)
 
         return df[df['pValue' + method_name] < self.alpha].dropna(0).index.tolist()
 

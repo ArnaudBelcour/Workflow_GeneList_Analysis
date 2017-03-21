@@ -5,6 +5,7 @@ import math
 import numpy as np
 import os
 import pandas as pa
+import pronto
 import re
 import requests
 import shutil
@@ -49,30 +50,26 @@ class FileManagement():
         '''
         d_go_label_to_number = {}
 
+        go_ontology = pronto.Ontology('http://purl.obolibrary.org/obo/go/go-basic.obo')
+
+        if specification == "inverse":
+            for go_term in go_ontology:
+                d_go_label_to_number[go_term.id] = go_term.name
+
+            return d_go_label_to_number
+
+        else:
+            for go_term in go_ontology:
+                d_go_label_to_number[go_term.name] = go_term.id
+
+        d_go_label_with_synonym = {}
+
         query_results_dataframe = pa.read_csv(temporary_directory + "query_results.tsv", sep="\t")
 
         quote_deletion = lambda x: x.replace('"', '')
         query_results_dataframe["subject"] = query_results_dataframe["subject"].apply(quote_deletion)
 
         query_results_dataframe["subject"] = query_results_dataframe["subject"].str.replace("_", ":")
-
-        if specification == "inverse":
-            d_go_label_to_number = dict(zip(query_results_dataframe['subject'], query_results_dataframe['label']))
-
-            return d_go_label_to_number
-
-        else:
-            space_deletion = lambda x: x.replace(" ", "")
-            query_results_dataframe["label"] = query_results_dataframe["label"].apply(space_deletion)
-
-            space_deletion = lambda x: str(x).replace(" ", "")
-            query_results_dataframe["NarrowSynonym"] = query_results_dataframe["NarrowSynonym"].apply(space_deletion)
-            query_results_dataframe["BroadSynonym"] = query_results_dataframe["BroadSynonym"].apply(space_deletion)
-            query_results_dataframe["RelatedSynonym"] = query_results_dataframe["RelatedSynonym"].apply(space_deletion)
-
-            d_go_label_to_number = dict(zip(query_results_dataframe['label'], query_results_dataframe['subject']))
-
-        d_go_label_with_synonym = {}
 
         query_results_dataframe.set_index(query_results_dataframe['subject'], inplace=True)
 

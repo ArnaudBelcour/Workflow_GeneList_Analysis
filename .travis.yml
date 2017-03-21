@@ -16,6 +16,8 @@ install:
 
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy "pandas>=0.19.2" coverage statsmodels
   - conda install -q -n test-environment -c conda-forge python-coveralls tqdm
+  - conda install -q -n test-environment -c bioconda pronto
+
   - source activate test-environment
 
 # Run tests with coverage

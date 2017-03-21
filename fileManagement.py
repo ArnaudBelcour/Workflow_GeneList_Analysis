@@ -64,6 +64,10 @@ class FileManagement():
 
         d_go_label_with_synonym = {}
 
+        for term in ont:
+            if getattr(term, 'synonyms', 'default value'):
+                for synonym in term.synonyms:
+                    d_go_label_with_synonym[str(synonym).split('"')[1]] = term.id
         query_results_dataframe = pa.read_csv(temporary_directory + "query_results.tsv", sep="\t")
 
         quote_deletion = lambda x: x.replace('"', '')

@@ -42,7 +42,7 @@ class FileManagement():
     def file_extension(self, extension):
         self._file_extension = extension
 
-    def dict_to_file(dictionary, file_name):
+    def dict_to_file(self, dictionary, file_name):
         df = pa.DataFrame.from_dict(dictionary, orient='index')
         df.reset_index(inplace=True)
         df.columns = [['GOlabel', 'GOnumber']]
@@ -61,7 +61,7 @@ class FileManagement():
         if specification == "inverse":
             for go_term in go_ontology:
                 d_go_label_to_number[go_term.id] = go_term.name
-            dict_to_file(d_go_label_to_number, 'go_number_label')
+            self.dict_to_file(d_go_label_to_number, 'go_number_label')
 
             return d_go_label_to_number
 
@@ -76,8 +76,8 @@ class FileManagement():
                 for synonym in term.synonyms:
                     d_go_label_with_synonym[str(synonym).split('"')[1]] = term.id
 
-        dict_to_file(d_go_label_to_number, 'go_number_label')
-        dict_to_file(d_go_label_with_synonym, 'go_number_label_synonym')
+        self.dict_to_file(d_go_label_to_number, 'go_number_label')
+        self.dict_to_file(d_go_label_with_synonym, 'go_number_label_synonym')
 
         return d_go_label_to_number, d_go_label_with_synonym
 

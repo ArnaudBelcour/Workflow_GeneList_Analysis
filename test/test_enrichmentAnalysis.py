@@ -3,6 +3,7 @@ import pandas as pa
 import scipy.stats as stats
 import unittest
 
+from fileManagement import FileManagement
 from enrichmentAnalysis import EnrichmentAnalysis, GOEnrichmentAnalysis
 from unittest.mock import patch
 
@@ -203,10 +204,8 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Use a mock to simulate yes_or_no input for approximation and change global variable.
         '''
         print("\nTesting enrichment analysis ")
-        df_dic_go_label = pa.read_csv('test_data/test_enrichment/go_number_to_go_label.tsv', sep='\t')
-        df_dic_go_label.set_index('GO_number', inplace=True)
-        go_number_go_labels = df_dic_go_label.to_dict(orient='dict')['GO_label']
-
+        file_management = FileManagement('test_data/test_enrichment/counting_objects_in_genome.tsv')
+        go_number_go_labels = go_label_number_dictionnary_creation(specification='inverse')
         with patch('builtins.input', return_value='n'):
             with patch('enrichmentAnalysis.temporary_directory', 'test_data/test_enrichment/'):
                 with patch('enrichmentAnalysis.output_directory', 'test_data/test_enrichment/'):

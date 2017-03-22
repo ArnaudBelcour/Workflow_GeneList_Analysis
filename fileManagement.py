@@ -42,7 +42,13 @@ class FileManagement():
     def file_extension(self, extension):
         self._file_extension = extension
 
-    def go_label_number_dictionnary_creation(self, specification='normal'):
+    def dict_to_file(dictionary, file_name):
+        df = pa.DataFrame.from_dict(dictionary, orient='index')
+        df.reset_index(inplace=True)
+        df.columns = [['GOlabel', 'GOnumber']]
+        df.to_csv(temporary_directory + file_name + '.tsv', sep='\t', index=False)
+
+    def go_label_number_dictionnary_creation_from_http(self, specification='normal'):
         '''
             Create a dictionnary containing GO labels (as key) associated with their GO numbers (as value), if specification is 'normal'. Use to translate GO labels into GO numbers.
             Or GO numbers (as key) associated with their GO labels (as value), if specification is 'inverse'. Use to translate GO numbers into GO labels.
@@ -55,6 +61,7 @@ class FileManagement():
         if specification == "inverse":
             for go_term in go_ontology:
                 d_go_label_to_number[go_term.id] = go_term.name
+            dict_to_file(d_go_label_to_number, 'go_number_label')
 
             return d_go_label_to_number
 
@@ -64,37 +71,31 @@ class FileManagement():
 
         d_go_label_with_synonym = {}
 
-        for term in ont:
+        for term in go_ontology:
             if getattr(term, 'synonyms', 'default value'):
                 for synonym in term.synonyms:
                     d_go_label_with_synonym[str(synonym).split('"')[1]] = term.id
-        query_results_dataframe = pa.read_csv(temporary_directory + "query_results.tsv", sep="\t")
 
-        quote_deletion = lambda x: x.replace('"', '')
-        query_results_dataframe["subject"] = query_results_dataframe["subject"].apply(quote_deletion)
+        dict_to_file(d_go_label_to_number, 'go_number_label')
+        dict_to_file(d_go_label_with_synonym, 'go_number_label_synonym')
 
-        query_results_dataframe["subject"] = query_results_dataframe["subject"].str.replace("_", ":")
+        return d_go_label_to_number, d_go_label_with_synonym
 
-        query_results_dataframe.set_index(query_results_dataframe['subject'], inplace=True)
+    def go_label_number_dictionnary_creation_from_file(self, specification='normal'):
+        if specification == "inverse":
+            df = pa.read_csv(temporary_directory + 'go_number_label.tsv', sep='\t')
+            df.set_index('GOnumber', inplace=True)
+            d_go_label_to_number = df.to_dict('dict')['GOlabel']
 
-        for index, row in query_results_dataframe.iterrows():
-            if row['NarrowSynonym'] not in d_go_label_with_synonym and row['BroadSynonym'] not in d_go_label_with_synonym\
-            and row['RelatedSynonym'] not in d_go_label_with_synonym:
-                if row['NarrowSynonym'] != 'nan':
-                    d_go_label_with_synonym[row['NarrowSynonym']] = index
-                if row['BroadSynonym'] != 'nan':
-                    d_go_label_with_synonym[row['BroadSynonym']] = index
-                if row['RelatedSynonym'] != 'nan':
-                    d_go_label_with_synonym[row['RelatedSynonym']] = index
+            return d_go_label_to_number
+        else:
+            df = pa.read_csv(temporary_directory + 'go_number_label.tsv', sep='\t')
+            df.set_index('GOlabel', inplace=True)
+            d_go_label_to_number = df.to_dict('dict')['GOnumber']
 
-        keys_to_delete = []
-
-        for key, values in d_go_label_with_synonym.items():
-            if values == []:
-                keys_to_delete.append(key)
-
-        for key in keys_to_delete:
-            del d_go_label_with_synonym[key]
+        df = pa.read_csv(temporary_directory + 'go_number_label_synonym.tsv', sep='\t')
+        df.set_index('GOlabel', inplace=True)
+        d_go_label_with_synonym = df.to_dict('dict')['GOnumber']
 
         return d_go_label_to_number, d_go_label_with_synonym
 
@@ -495,7 +496,7 @@ class FileManagement():
 
         go_label_expression = r"[FPC]{1}:[\w]*"
         go_number_expression = r"[FPC]{1}:GO[:_][\d]{7}"
-        ec_expression = r"EC:[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,2}"
+        ec_expression = r"[Ee][Cc]:[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,2}"
         ipr_expression = r"IPR[\d]{6}"
         ko_kegg_expression = r"K[\d]{5}"
 
@@ -544,9 +545,8 @@ class FileManagement():
         if ko_keggs:
             ko_kegg = max(ko_keggs, key=ko_keggs.get)
 
-        go_label_column = max(go_label_columns, key=go_label_columns.get)
-
         if not go_number_columns:
+            go_label_column = max(go_label_columns, key=go_label_columns.get)
             go_column = go_label_column
 
         return go_column, ec_column, ipr_column

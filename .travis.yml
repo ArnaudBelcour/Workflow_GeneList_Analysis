@@ -20,6 +20,7 @@ install:
   - source activate test-environment
 
   - pip install pronto
+  - pip install SPARQLWrapper
 
 # Run tests with coverage
 script:

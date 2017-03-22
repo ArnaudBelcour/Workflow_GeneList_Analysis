@@ -205,7 +205,7 @@ class enrichmentAnalysis_test(unittest.TestCase):
         '''
         print("\nTesting enrichment analysis ")
         file_management = FileManagement('test_data/test_enrichment/counting_objects_in_genome.tsv')
-        go_number_go_labels = go_label_number_dictionnary_creation(specification='inverse')
+        go_number_go_labels = file_management.go_label_number_dictionnary_creation(specification='inverse')
         with patch('builtins.input', return_value='n'):
             with patch('enrichmentAnalysis.temporary_directory', 'test_data/test_enrichment/'):
                 with patch('enrichmentAnalysis.output_directory', 'test_data/test_enrichment/'):

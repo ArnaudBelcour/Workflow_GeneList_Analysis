@@ -21,6 +21,7 @@ install:
 
   - pip install pronto
   - pip install SPARQLWrapper
+  - pip install lxml
 
 # Run tests with coverage
 script:

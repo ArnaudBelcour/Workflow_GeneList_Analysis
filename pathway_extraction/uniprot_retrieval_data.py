@@ -14,8 +14,9 @@ def extract_information_from_uniprot(results_dataframe):
         Requests the SPARQL endpoint of Uniprot to retrieve (from Ensembl transcrit ID) GO terms, interpro, pfam/supfam and prosites.
         The file taken as input file contains each gene associated with the result of a blast (that's the thing with 'hypothetical protein').
     '''
-    results_dataframe['Blast'] = results_dataframe['Blast'].str[len('CEP03957.1hypothetical protein '):]
-    results_dataframe['Blast'] = results_dataframe['Blast'].str.replace(", partial", "")
+    if any(results_dataframe['Blast'].str.contains('hypothetical protein')):
+        results_dataframe['Blast'] = results_dataframe['Blast'].str[len('CEP03957.1hypothetical protein '):]
+    results_dataframe['Blast'] = results_dataframe['Blast'].str.replace(', partial', '')
 
     results_dataframe.set_index("Gene_Name", inplace=True)
 

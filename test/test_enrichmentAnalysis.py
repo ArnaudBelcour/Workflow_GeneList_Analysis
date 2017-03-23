@@ -12,6 +12,7 @@ test_data_directory = 'test_data/'
 test_data_directory_cdf = test_data_directory + 'test_cdf/'
 test_data_directory_sf = test_data_directory + 'test_sf/'
 test_data_directory_multiple = test_data_directory + 'test_multiple/'
+test_data_directory_enrichment = test_data_directory + 'test_enrichment/'
 
 class enrichmentAnalysis_test(unittest.TestCase):
 
@@ -205,31 +206,31 @@ class enrichmentAnalysis_test(unittest.TestCase):
         Use a mock to simulate yes_or_no input for approximation and change global variable.
         '''
         print("\nTesting enrichment analysis ")
-        file_management = FileManagement('test_data/test_enrichment/counting_objects_in_genome.tsv')
+        file_management = FileManagement(test_data_directory_enrichment + 'counting_objects_in_genome.tsv')
 
-        with patch('fileManagement.temporary_directory', 'test_data/test_enrichment/'):
+        with patch('fileManagement.temporary_directory', test_data_directory_enrichment):
             go_number_go_labels = file_management.go_label_number_dictionary_creation_from_http(specification='inverse')
 
         with patch('builtins.input', return_value='n'):
-            with patch('enrichmentAnalysis.temporary_directory', 'test_data/test_enrichment/'):
-                with patch('enrichmentAnalysis.output_directory', 'test_data/test_enrichment/'):
+            with patch('enrichmentAnalysis.temporary_directory', test_data_directory_enrichment):
+                with patch('enrichmentAnalysis.output_directory', test_data_directory_enrichment):
                     go_enrichment_analysis = GOEnrichmentAnalysis('GOs', 'counting_objects_in_interest', 'counting_objects_in_genome',
                                                                     11, 38660, 0.05, 10000, go_number_go_labels)
                     go_enrichment_analysis.enrichment_analysis()
 
-                    results = pa.read_csv('test_data/test_enrichment/pValuesOfGOs_over.tsv', sep='\t', float_precision='high')
-                    results_truth = pa.read_csv('test_data/test_enrichment/overRepresentation_genesSet1.tsv', sep='\t')
+                    results = pa.read_csv(test_data_directory_enrichment + 'pValuesOfGOs_over.tsv', sep='\t', float_precision='high')
+                    results_truth = pa.read_csv(test_data_directory_enrichment + 'overRepresentation_genesSet1.tsv', sep='\t')
                     results.sort_values('GOs', inplace=True)
                     results_truth.sort_values('GOs', inplace=True)
 
                     np.testing.assert_array_almost_equal(results['pvalue_hypergeometric'].tolist(), results_truth['pvalue_hypergeometric'].tolist(), decimal = 4)
                     np.testing.assert_array_equal(results['GOLabel'].tolist(), results_truth['Labels'].tolist())
 
-                    os.remove('test_data/test_enrichment/pValuesOfGOs_over.tsv')
-                    os.remove('test_data/test_enrichment/pValuesOfGOs_under.tsv')
-                    os.remove('test_data/test_enrichment/go_number_label.tsv')
-                    os.remove('test_data/test_enrichment/significativesGOs_over.tsv')
-                    os.remove('test_data/test_enrichment/significativesGOs_under.tsv')
+                    os.remove(test_data_directory_enrichment + 'pValuesOfGOs_over.tsv')
+                    os.remove(test_data_directory_enrichment + 'pValuesOfGOs_under.tsv')
+                    os.remove(test_data_directory_enrichment + 'go_number_label.tsv')
+                    os.remove(test_data_directory_enrichment + 'significativesGOs_over.tsv')
+                    os.remove(test_data_directory_enrichment + 'significativesGOs_under.tsv')
 
 if __name__ == '__main__':
     unittest.main()

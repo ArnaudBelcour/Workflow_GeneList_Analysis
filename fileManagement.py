@@ -424,6 +424,13 @@ class FileManagementGeneGO(FileManagement):
         self._analyzed_object = column_name
         self._type_file = type_of_the_file
 
+    def go_to_gos(input_name, output_name):
+        df = pa.read_csv(input_name, sep='\t', header=None)
+        df.columns = [['Gene_Name', 'GOs']]
+        df = df.groupby('Gene_Name')['GOs'].apply(','.join)
+        df = df.to_frame()
+        df.to_csv(output_name, sep='\t')
+
     @property
     def analyzed_object_name(self):
         return self._analyzed_object

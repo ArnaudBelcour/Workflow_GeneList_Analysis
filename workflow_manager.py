@@ -3,8 +3,6 @@
 import os
 import six
 
-import go_extract_synonyms_label
-
 from enrichmentAnalysis import GOEnrichmentAnalysis
 from fileManagement import FileManagementGeneGOsGenome, FileManagementGeneGOsInterest
 
@@ -25,12 +23,6 @@ def workflow_mainager():
 
     if not os.listdir(input_directory):
         sys.exit("No input data, please put your data files in inputFiles directory.")
-
-    yes_or_no = input("Do you want to recreate the GO terms and synonyms file? ")
-    yes_answers = ['yes', 'y', 'oui', 'o']
-
-    if yes_or_no in yes_answers:
-        go_extract_synonyms_label.main()
 
     name_reference_input_file = input("Write the name of your input file containing genome : ")
     input_genome_file_gestion = FileManagementGeneGOsGenome(name_reference_input_file, 'genome' , 'GOs')

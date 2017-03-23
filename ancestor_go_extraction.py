@@ -15,7 +15,7 @@ def go_term_ancestor(go):
         Requests a SPARQL Endpoint (which contains the go.owl file from the Gene Ontology) to retrieve GO ancestors of a specific go term.
     '''
     go_ancestors = []
-    sparql = SPARQLWrapper("http://localhost:3030/datanase/query")
+    sparql = SPARQLWrapper("http://localhost:3030/go/query")
     sparql.setQuery("""
     PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
     PREFIX uniprot: <http://bio2rdf.org/uniprot:>

@@ -165,7 +165,7 @@ class FileManagement():
             ipr_column = np.nan
         if ko_keggs and ko_keggs != []:
             ko_kegg = max(ko_keggs, key=ko_keggs.get)
-        except:
+        else:
             ko_kegg = np.nan
 
         if not go_number_columns:

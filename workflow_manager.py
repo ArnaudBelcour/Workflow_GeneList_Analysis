@@ -29,7 +29,7 @@ def workflow_mainager():
     reference_file_name, counting_reference_file_name, number_of_gene_genome = input_genome_file_gestion.file_gene_gos_gestion()
 
     name_de_input_file = input("Write the name of your input file containing differentially expressed gene : ")
-    input_listde_file_gestion = FileManagementGeneGOsInterest(name_de_input_file, 'gene_list', 'GOs', reference_file_name)
+    input_listde_file_gestion = FileManagementGeneInterest(name_de_input_file, 'gene_list', 'GOs', reference_file_name)
     counting_interest_file_name, number_of_gene_list = input_listde_file_gestion.file_gene_gos_gestion()
 
     d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionnary_creation('inverse')

@@ -155,10 +155,18 @@ class FileManagement():
             go_number_column = max(go_number_columns, key=go_number_columns.get)
             go_column = go_number_column
             go_label_columns.pop(go_number_column, None)
-        ec_column = max(ec_columns, key=ec_columns.get)
-        ipr_column = max(ipr_columns, key=ipr_columns.get)
-        if ko_keggs:
+        if ec_columns != []:
+            ec_column = max(ec_columns, key=ec_columns.get)
+        else:
+            ec_column = np.nan
+        if ipr_columns != []:
+            ipr_column = max(ipr_columns, key=ipr_columns.get)
+        else:
+            ipr_column = np.nan
+        if ko_keggs and ko_keggs != []:
             ko_kegg = max(ko_keggs, key=ko_keggs.get)
+        except:
+            ko_kegg = np.nan
 
         if not go_number_columns:
             go_label_column = max(go_label_columns, key=go_label_columns.get)
@@ -204,13 +212,31 @@ class FileManagement():
         uniprot_retrieval_y_n = input("Do you want to try to retrieve data from blast results? ").lower()
         if uniprot_retrieval_y_n in yes_answers :
             column_name = input("What is the name of the column of the blast results? ")
-            results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column, column_name]]
-            results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan', 'Blast']]
+            if ec_column != np.nan and ipr_column != np.nan:
+                results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column, column_name]]
+                results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan', 'Blast']]
+            elif ec_column == np.nan and ipr_column != np.nan:
+                results_dataframe = results_dataframe[[name_gene_column, go_column, ipr_column, column_name]]
+                results_dataframe.columns = [['Gene_Name', 'GOs', 'InterProScan', 'Blast']]
+            elif ec_column != np.nan and ipr_column == np.nan:
+                results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, column_name]]
+                results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'Blast']]
+            else:
+                results_dataframe = results_dataframe[[name_gene_column, go_column, column_name]]
+                results_dataframe.columns = [['Gene_Name', 'GOs', 'Blast']]
         else:
-
-            results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
-
-            results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
+            if ec_column != np.nan and ipr_column != np.nan:
+                results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column, ipr_column]]
+                results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes', 'InterProScan']]
+            elif ec_column == np.nan and ipr_column != np.nan:
+                results_dataframe = results_dataframe[[name_gene_column, go_column, ipr_column]]
+                results_dataframe.columns = [['Gene_Name', 'GOs', 'InterProScan']]
+            elif ec_column != np.nan and ipr_column == np.nan:
+                results_dataframe = results_dataframe[[name_gene_column, go_column, ec_column]]
+                results_dataframe.columns = [['Gene_Name', 'GOs', 'EnzymeCodes']]
+            else:
+                results_dataframe = results_dataframe[[name_gene_column, go_column]]
+                results_dataframe.columns = [['Gene_Name', 'GOs']]
 
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("C:", "")
         results_dataframe['GOs'] = results_dataframe['GOs'].str.replace("P:", "")
@@ -344,9 +370,9 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
         df.replace(np.nan, '', regex=True, inplace=True)
         df.set_index('Gene_Name', inplace=True)
 
-        #for index, row in df.iterrows():
-            #if row['GOs'] == '':
-                #df.drop(index, inplace=True)
+        for index, row in df.iterrows():
+            if row['GOs'] == '':
+                df.drop(index, inplace=True)
 
         for index, row in df.iterrows():
             for analyzed_object in row[column_analyzed_object].split(","):
@@ -356,7 +382,6 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
         counts_df_genome.columns = [column_analyzed_object]
         counts_df_genome = counts_df_genome.groupby(column_analyzed_object).size().rename(column_name)
         counts_df_genome = counts_df_genome.to_frame()
-        #counts_df_genome['CountsProportion'] = counts_df_genome['CountsReference']/len(df.index)
         counts_df_genome.reset_index(inplace=True)
         counts_df_genome.to_csv(temporary_directory + "counting_objects_in_genome.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
 
@@ -364,7 +389,7 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 
         return "counting_objects_in_genome", number_of_gene
 
-class FileManagementGeneGOsInterest(FileManagementGeneGOs):
+class FileManagementGeneInterest(FileManagementGeneGOs):
 
     def __init__(self, name_of_the_file, type_of_the_file, column_name, file_name_genome):
         FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
@@ -394,9 +419,9 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
         df_joined.to_csv(temporary_directory + file_name_temporary, "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
         df_joined.set_index("Gene_Name", inplace=True)
 
-        #for index, row in df_joined.iterrows():
-            #if row['GOs'] == '':
-                #df_joined.drop(index, inplace=True)
+        for index, row in df_joined.iterrows():
+            if row['GOs'] == '':
+                df_joined.drop(index, inplace=True)
 
         for index, row in df_joined.iterrows():
             for analyzed_object in row[column_analyzed_object].split(","):
@@ -406,10 +431,7 @@ class FileManagementGeneGOsInterest(FileManagementGeneGOs):
         counts_df.columns = [column_analyzed_object]
         counts_df = counts_df.groupby(column_analyzed_object).size().rename(column_name)
         counts_df = counts_df.to_frame()
-        #counts_df['CountsProportion'] = counts_df['Counts']/len(df_joined.index)
-        #counts_ref = pa.read_csv(temporary_directory + "counting_objects_in_genome.tsv", sep='\t')
-        #counts_ref.set_index('GOs', inplace=True)
-        #counts_df['Counts'] = counts_df['Counts'] - (56 * counts_df['CountsProportion'])
+
         number_of_gene = len(df.index.unique())
 
         counts_df.reset_index(inplace=True)
@@ -423,13 +445,6 @@ class FileManagementGeneGO(FileManagement):
         FileManagement.__init__(self, name_of_the_file)
         self._analyzed_object = column_name
         self._type_file = type_of_the_file
-
-    def go_to_gos(input_name, output_name):
-        df = pa.read_csv(input_name, sep='\t', header=None)
-        df.columns = [['Gene_Name', 'GOs']]
-        df = df.groupby('Gene_Name')['GOs'].apply(','.join)
-        df = df.to_frame()
-        df.to_csv(output_name, sep='\t')
 
     @property
     def analyzed_object_name(self):
@@ -447,14 +462,13 @@ class FileManagementGeneGO(FileManagement):
     def type_file(self, type_name):
         self._type_file = type_name
 
-    def file_gene_gos_gestion():
+    def file_gene_go_gestion():
+
         analyzed_object_name = self.analyzed_object_name
         name_of_file = self.file_name
 
         self.column_data_cleaning()
 
-        if self.type_file == 'gene_list':
-            self.genome_file_processing(name_of_file)
         if self.type_file == 'genome':
             self.file_of_interest_processing(name_of_file)
 
@@ -465,8 +479,19 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
 
     def genome_file_processing(self, genome_file_name):
         df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep="\t", header=None)
-        df.columns = [['Gene', 'GOs']]
+        yes_or_no = input("Is the first columns of your file, the column containing gene name? ")
 
+        yes_answers = ['yes', 'y', 'oui', 'o']
+        if yes_or_no.lower() in yes_answers :
+            name_gene_column = results_dataframe.columns[0]
+        else :
+            name_gene_column = input("Write the name of the column containing the gene names : ")
+        go_column, ec_column, ipr_column = self.find_column_of_interest(df)
+        df = df[[name_gene_column, go_column]]
+        df.columns = [['Gene_Name', 'GOs']]
+        df = df.groupby('Gene_Name')['GOs'].apply(','.join)
+        df = df.to_frame()
+        df.to_csv(temporary_directory + self.file_name + self.file_extension, sep='\t', index=False)
         df .set_index("Gene", inplace=True)
 
         genes_gos_ancestors = {}
@@ -511,46 +536,3 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
         csvfile.close()
 
         return "counting_objects_in_genome"
-
-class FileManagementGeneGOInterest(FileManagementGeneGO):
-
-    def __init__(self, name_of_the_file, type_of_the_file, column_name, file_name_genome):
-        FileManagement.__init__(self, name_of_the_file)
-        self._file_genome_reference_name = file_name_genome
-
-    @property
-    def genome_file_reference_name(self):
-        return self._file_genome_reference_name
-
-    @genome_file_reference_name.setter
-    def genome_file_reference_name(self, file_name):
-        self._file_genome_reference_name = file_name
-
-    def file_of_interest_processing(self):
-        df = pa.read_csv(temporary_directory + self.file_name + self.file_extension, sep="\t", header=None)
-        df.columns = [['Gene']]
-        df.set_index("Gene", inplace=True)
-
-        df_genome = pa.read_csv(temporary_directory + self.genome_file_reference_name + "_with_ancestor.tsv", sep="\t", header=None)
-        df_genome.columns = [['Gene', 'GOs']]
-        df_genome.set_index("Gene", inplace=True)
-
-        df_joined = df.join(df_genome)
-        go_counts = {}
-
-        for gene, row in df_joined.iterrows():
-            if row["GOs"] not in go_counts:
-                go_counts[row["GOs"]] = 1
-            elif row["GOs"] in go_counts:
-                go_counts[row["GOs"]] += 1
-
-        csvfile = open(temporary_directory + "counting_objects_in_interest.tsv", "w", newline="")
-        writer = csv.writer(csvfile, delimiter="\t")
-        writer.writerow(["GOs", "Counts"])
-
-        for go in go_counts:
-            writer.writerow([go, go_counts[go]])
-
-        csvfile.close()
-
-        return 'counting_objects_in_interest'

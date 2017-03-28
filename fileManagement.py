@@ -42,10 +42,13 @@ class FileManagement():
     def file_extension(self, extension):
         self._file_extension = extension
 
-    def dict_to_file(self, dictionary, file_name):
+    def dict_to_file(self, dictionary, file_name, specification='normal'):
         df = pa.DataFrame.from_dict(dictionary, orient='index')
         df.reset_index(inplace=True)
-        df.columns = [['GOlabel', 'GOnumber']]
+        if specification == 'inverse':
+            df.columns = [['GOnumber', 'GOlabel']]
+        elif specification == 'normal':
+            df.columns = [['GOlabel', 'GOnumber']]
         df.to_csv(temporary_directory + file_name + '.tsv', sep='\t', index=False)
 
     def go_label_number_dictionary_creation_from_http(self, specification='normal'):
@@ -61,7 +64,7 @@ class FileManagement():
         if specification == "inverse":
             for go_term in go_ontology:
                 d_go_label_to_number[go_term.id] = go_term.name
-            self.dict_to_file(d_go_label_to_number, 'go_number_label')
+            self.dict_to_file(d_go_label_to_number, 'go_number_label', specification)
 
             return d_go_label_to_number
 
@@ -88,6 +91,7 @@ class FileManagement():
             d_go_label_to_number = df.to_dict('dict')['GOlabel']
 
             return d_go_label_to_number
+
         else:
             df = pa.read_csv(temporary_directory + 'go_number_label.tsv', sep='\t')
             df.set_index('GOlabel', inplace=True)
@@ -190,7 +194,10 @@ class FileManagement():
         if extension_input_file == '.xls':
             results_dataframe = pa.read_excel(input_directory + name_input_file + extension_input_file, sep=None, na_values="")
         else:
-            results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, sep=None, engine="python", na_values="")
+            try:
+                results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, sep=None, engine="python", na_values="")
+            except ValueError:
+                results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, header=None, engine="python")
 
         yes_or_no = input("Is the first columns of your file, the column containing gene name? ")
 

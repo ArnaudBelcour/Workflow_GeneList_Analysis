@@ -32,7 +32,7 @@ def workflow_mainager():
     input_listde_file_gestion = FileManagementGeneInterest(name_de_input_file, 'gene_list', 'GOs', reference_file_name)
     counting_interest_file_name, number_of_gene_list = input_listde_file_gestion.file_gene_gos_gestion()
 
-    d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionnary_creation('inverse')
+    d_go_label_to_number = input_listde_file_gestion.go_label_number_dictionary_creation_from_http('inverse')
 
     sentence_choice_alpha = "Enter the alpha risk : "
     alpha = float(input(sentence_choice_alpha))

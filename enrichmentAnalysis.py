@@ -216,13 +216,18 @@ class EnrichmentAnalysis():
             df = df[self.output_columns]
         else:
             df = df[self.output_columns]
-
         if over_or_underrepresentation == 'over':
-            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_over.tsv", sep="\t",
-                float_format='%.6f', index=True, header=True, quoting=csv.QUOTE_NONE)
+            comment_file = open(output_directory + "pValuesOf" + self.object_to_analyze + "_over.tsv", "w")
+            comment_file.write("# Number of objects in reference : " + str(self.number_of_analyzed_object_of_reference) +
+                                            "\t Number of objects in interest : " + str(self.number_of_analyzed_object_of_interest) +"\n")
+            df.to_csv(comment_file, sep="\t", float_format='%.6f', index=True, header=True, quoting=csv.QUOTE_NONE)
         elif over_or_underrepresentation == 'under':
-            df.to_csv(output_directory + "pValuesOf" + self.object_to_analyze + "_under.tsv", sep="\t",
-                float_format='%.6f', index=True, header=True, quoting=csv.QUOTE_NONE)
+            comment_file = open(output_directory + "pValuesOf" + self.object_to_analyze + "_under.tsv", "w")
+            comment_file.write("# Number of objects in reference : " + str(self.number_of_analyzed_object_of_reference) +
+                                            "\t Number of objects in interest : " + str(self.number_of_analyzed_object_of_interest) +"\n")
+            df.to_csv(comment_file, sep="\t", float_format='%.6f', index=True, header=True, quoting=csv.QUOTE_NONE)
+
+        comment_file.close()
 
         if over_or_underrepresentation == 'over':
             csvfile = open(output_directory + "significatives" + self.object_to_analyze + "_over.tsv", "w", newline="")

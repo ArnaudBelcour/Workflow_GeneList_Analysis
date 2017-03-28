@@ -218,7 +218,7 @@ class enrichmentAnalysis_test(unittest.TestCase):
                                                                     11, 38660, 0.05, 10000, go_number_go_labels)
                     go_enrichment_analysis.enrichment_analysis()
 
-                    results = pa.read_csv(test_data_directory_enrichment + 'pValuesOfGOs_over.tsv', sep='\t', float_precision='high')
+                    results = pa.read_csv(test_data_directory_enrichment + 'pValuesOfGOs_over.tsv', sep='\t', float_precision='high', skiprows=1)
                     results_truth = pa.read_csv(test_data_directory_enrichment + 'overRepresentation_genesSet1.tsv', sep='\t')
                     results.sort_values('GOs', inplace=True)
                     results_truth.sort_values('GOs', inplace=True)

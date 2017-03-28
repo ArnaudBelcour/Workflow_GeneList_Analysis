@@ -416,6 +416,8 @@ class FileManagementGeneGOGenome(FileManagementGeneGOsGenome):
 
         df.to_csv(temporary_directory + file_name_temporary, "\t", index=True, quoting=csv.QUOTE_NONE)
 
+        self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
+
         counting_object_file, number_of_gene = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
 
         return file_name_temporary, counting_object_file, number_of_gene

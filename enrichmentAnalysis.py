@@ -356,6 +356,7 @@ class EnrichmentAnalysis():
             g_threshold = stats.chi2.ppf(1 - self.alpha,1)
 
             reordered_pvalues = prob_each_pvalues[::-1]
+            df['pValueSGoF'] = ''
 
             for corrected_value in reordered_pvalues:
                 if prob_each_pvalues[-1] >= prob_each_pvalues[-2]:

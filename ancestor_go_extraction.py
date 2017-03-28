@@ -25,10 +25,10 @@ def go_term_ancestor(go):
 
     SELECT DISTINCT ?goAnc ?goAncLabel
     WHERE {
-      go:""" + go[3:] + """ (rdfs:subClassOf|(rdfs:subClassOf/owl:someValuesFrom))*
-    ?goAnc .
-      OPTIONAL { ?goAnc rdfs:label ?goAncLabel .}
-        FILTER ((str(?goAnc) != "b")) .
+        go:""" + go[3:] + """ (rdfs:subClassOf|(rdfs:subClassOf/owl:someValuesFrom))*
+        ?goAnc .
+        OPTIONAL { ?goAnc rdfs:label ?goAncLabel .}
+        FILTER contains(str(?goAnc), "GO_")
     }
     """)
 

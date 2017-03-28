@@ -209,7 +209,9 @@ class enrichmentAnalysis_test(unittest.TestCase):
         file_management = FileManagement(test_data_directory_enrichment + 'counting_objects_in_genome.tsv')
 
         with patch('fileManagement.temporary_directory', test_data_directory_enrichment):
-            go_number_go_labels = file_management.go_label_number_dictionary_creation_from_http(specification='inverse')
+            go_number_go_labels = file_management.go_label_number_dictionary_creation(specification='inverse')
+            go_number_go_labels_from_file = file_management.go_label_number_dictionary_creation_from_file(specification='inverse')
+            self.assertDictEqual(go_number_go_labels, go_number_go_labels_from_file)
 
         with patch('builtins.input', return_value='n'):
             with patch('enrichmentAnalysis.temporary_directory', test_data_directory_enrichment):

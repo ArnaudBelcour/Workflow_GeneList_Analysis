@@ -42,14 +42,16 @@ class FileManagement():
     def file_extension(self, extension):
         self._file_extension = extension
 
-    def dict_to_file(self, dictionary, file_name, specification='normal'):
-        df = pa.DataFrame.from_dict(dictionary, orient='index')
-        df.reset_index(inplace=True)
-        if specification == 'inverse':
-            df.columns = [['GOnumber', 'GOlabel']]
-        elif specification == 'normal':
-            df.columns = [['GOlabel', 'GOnumber']]
-        df.to_csv(temporary_directory + file_name + '.tsv', sep='\t', index=False)
+    def go_label_number_dictionary_creation(self, specification='normal'):
+        '''
+            Check the internet connection to use a http request or a file.
+        '''
+        try:
+            requests.get('http://www.google.com/')
+            return self.go_label_number_dictionary_creation_from_http(specification)
+
+        except requests.ConnectionError:
+            return self.go_label_number_dictionary_creation_from_file(specification)
 
     def go_label_number_dictionary_creation_from_http(self, specification='normal'):
         '''
@@ -57,6 +59,15 @@ class FileManagement():
             Or GO numbers (as key) associated with their GO labels (as value), if specification is 'inverse'. Use to translate GO numbers into GO labels.
             Create also a dictionary containing the synonym of the GO terms.
         '''
+        def dict_to_file(dictionary, file_name, specification='normal'):
+            df = pa.DataFrame.from_dict(dictionary, orient='index')
+            df.reset_index(inplace=True)
+            if specification == 'inverse':
+                df.columns = [['GOnumber', 'GOlabel']]
+            elif specification == 'normal':
+                df.columns = [['GOlabel', 'GOnumber']]
+            df.to_csv(temporary_directory + file_name + '.tsv', sep='\t', index=False)
+
         d_go_label_to_number = {}
 
         go_ontology = pronto.Ontology('http://purl.obolibrary.org/obo/go/go-basic.obo')
@@ -194,9 +205,10 @@ class FileManagement():
         if extension_input_file == '.xls':
             results_dataframe = pa.read_excel(input_directory + name_input_file + extension_input_file, sep=None, na_values="")
         else:
+                #Check if the file contains more than one column (using sep=None, checking some delimiters) if not a TypeError occurres (there is only one column).
             try:
                 results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, sep=None, engine="python", na_values="")
-            except ValueError:
+            except TypeError:
                 results_dataframe = pa.read_csv(input_directory + name_input_file + extension_input_file, header=None, engine="python")
 
         yes_or_no = input("Is the first columns of your file, the column containing gene name? ")

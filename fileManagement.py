@@ -75,7 +75,7 @@ class FileManagement():
         if specification == "inverse":
             for go_term in go_ontology:
                 d_go_label_to_number[go_term.id] = go_term.name
-            self.dict_to_file(d_go_label_to_number, 'go_number_label', specification)
+            dict_to_file(d_go_label_to_number, 'go_number_label', specification)
 
             return d_go_label_to_number
 
@@ -90,8 +90,8 @@ class FileManagement():
                 for synonym in term.synonyms:
                     d_go_label_with_synonym[str(synonym).split('"')[1]] = term.id
 
-        self.dict_to_file(d_go_label_to_number, 'go_number_label')
-        self.dict_to_file(d_go_label_with_synonym, 'go_number_label_synonym')
+        dict_to_file(d_go_label_to_number, 'go_number_label')
+        dict_to_file(d_go_label_with_synonym, 'go_number_label_synonym')
 
         return d_go_label_to_number, d_go_label_with_synonym
 

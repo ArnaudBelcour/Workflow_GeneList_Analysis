@@ -375,6 +375,8 @@ class EnrichmentAnalysis():
             if R == 0:
                 df['pValueSGoF'] = np.nan
 
+            df.replace('', np.nan, inplace=True)
+
         return df
 
     def error_rate_adjustement_bonferroni(self, df):

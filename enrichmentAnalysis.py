@@ -213,9 +213,9 @@ class EnrichmentAnalysis():
 
         if approximation_yes_or_no in yes_answers:
             self.output_columns[1] = "CountsTotal"
-            df = df[self.output_columns]
-        else:
-            df = df[self.output_columns]
+
+        df = df[self.output_columns]
+
         if over_or_underrepresentation == 'over':
             comment_file = open(output_directory + "pValuesOf" + self.object_to_analyze + "_over.tsv", "w")
             comment_file.write("# Number of objects in reference : " + str(self.number_of_analyzed_object_of_reference) +

@@ -189,7 +189,7 @@ class FileManagement():
 
         return go_column, ec_column, ipr_column
 
-    def column_data_cleaning(self, type_file):
+    def preprocessing_file(self, type_file):
 
         def drop_duplicates(datas):
             datas_with_unique = []
@@ -274,7 +274,7 @@ class FileManagement():
 
         return name_input_file + "GOsTranslatedAndFixed.tsv"
 
-class FileManagementGeneGOs(FileManagement):
+class FileManagementGeneGO(FileManagement):
 
     def __init__(self, name_of_the_file, type_of_the_file, column_name):
         FileManagement.__init__(self, name_of_the_file)
@@ -308,61 +308,6 @@ class FileManagementGeneGOs(FileManagement):
 
         df.to_csv(temporary_directory + file_name_temporary, sep='\t', index=False)
 
-    def create_gene_object_analysis_file(self, file_name, columns_names, column_analyzed_object):
-        df = pa.read_csv(temporary_directory + file_name, sep="\t")
-        df = df[columns_names]
-        df.set_index(columns_names[0], inplace=True)
-
-        csvfile = open(temporary_directory + "Gene_" + file_name + column_analyzed_object + ".tsv", "w", newline="")
-        writer = csv.writer(csvfile, delimiter="\t")
-        writer.writerow((columns_names[0], columns_names[1]))
-
-        for gene, list_of_list_of_analyzed_objects in df.iterrows():
-            for list_of_analyzed_objects in list_of_list_of_analyzed_objects:
-                for analyzed_object in list_of_analyzed_objects.split(","):
-                    writer.writerow((gene, analyzed_object))
-
-        csvfile.close()
-
-    def file_gene_gos_gestion(self):
-        string_to_boolean = lambda value: value.lower() in ("yes", "true", "y", "t", "1")
-
-        analyzed_object_name = self.analyzed_object_name
-        name_of_the_file = self.file_name
-        extension_of_the_file  = self.file_extension
-        type_of_the_file = self.type_file
-
-        if type_of_the_file == 'genome':
-            already_analyzed_file_yes_no = string_to_boolean(input("Does this file have already been analyzed? "))
-            if already_analyzed_file_yes_no == True:
-                shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory)
-                file_name_temporary = name_of_the_file + extension_of_the_file
-
-            elif already_analyzed_file_yes_no == False:
-                file_name_temporary = self.column_data_cleaning(type_of_the_file)
-                self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
-
-                session = requests.Session()
-                pathway_extractor.data_retrieval_from_GO(file_name_temporary)
-                pathway_extractor.main(file_name_temporary, session)
-
-                mapping_pathway_data.main(file_name_temporary)
-
-            counting_object_file, number_of_gene_genome = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
-
-            return file_name_temporary, counting_object_file, number_of_gene_genome
-
-        elif type_of_the_file == 'gene_list':
-            file_name_temporary = self.column_data_cleaning(type_of_the_file)
-            counting_object_file, number_of_gene_list = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
-
-            return counting_object_file, number_of_gene_list
-
-class FileManagementGeneGOsGenome(FileManagementGeneGOs):
-
-    def __init__(self, name_of_the_file, type_of_the_file, column_name):
-        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
-
     def counting_genome(self, file_name_temporary, column_name, column_analyzed_object):
         analyzed_objects = []
         df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
@@ -388,10 +333,49 @@ class FileManagementGeneGOsGenome(FileManagementGeneGOs):
 
         return "counting_objects_in_genome", number_of_gene
 
-class FileManagementGeneGOGenome(FileManagementGeneGOsGenome):
+class FileManagementGeneGOsGenome(FileManagementGeneGO):
 
     def __init__(self, name_of_the_file, type_of_the_file, column_name):
-        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
+        FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
+
+    def file_gene_gos_gestion(self):
+        string_to_boolean = lambda value: value.lower() in ("yes", "true", "y", "t", "1")
+
+        analyzed_object_name = self.analyzed_object_name
+        name_of_the_file = self.file_name
+        extension_of_the_file  = self.file_extension
+        type_of_the_file = self.type_file
+
+        if type_of_the_file == 'genome':
+            already_analyzed_file_yes_no = string_to_boolean(input("Does this file have already been analyzed? "))
+            if already_analyzed_file_yes_no == True:
+                shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory)
+                file_name_temporary = name_of_the_file + extension_of_the_file
+
+            elif already_analyzed_file_yes_no == False:
+                file_name_temporary = self.preprocessing_file(type_of_the_file)
+                self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
+
+                session = requests.Session()
+                pathway_extractor.data_retrieval_from_GO(file_name_temporary)
+                pathway_extractor.main(file_name_temporary, session)
+
+                mapping_pathway_data.main(file_name_temporary)
+
+            counting_object_file, number_of_gene_genome = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
+
+            return file_name_temporary, counting_object_file, number_of_gene_genome
+
+        elif type_of_the_file == 'gene_list':
+            file_name_temporary = self.preprocessing_file(type_of_the_file)
+            counting_object_file, number_of_gene_list = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
+
+            return counting_object_file, number_of_gene_list
+
+class FileManagementGeneGOGenome(FileManagementGeneGO):
+
+    def __init__(self, name_of_the_file, type_of_the_file, column_name):
+        FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
     def genome_file_processing(self):
         analyzed_object_name = self.analyzed_object_name
@@ -422,10 +406,10 @@ class FileManagementGeneGOGenome(FileManagementGeneGOsGenome):
 
         return file_name_temporary, counting_object_file, number_of_gene
 
-class FileManagementGeneInterest(FileManagementGeneGOs):
+class FileManagementGeneInterest(FileManagementGeneGO):
 
     def __init__(self, name_of_the_file, type_of_the_file, column_name, file_name_genome):
-        FileManagementGeneGOs.__init__(self, name_of_the_file, type_of_the_file, column_name)
+        FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
         self._file_genome_reference_name = file_name_genome
 
     @property

@@ -338,7 +338,7 @@ class FileManagementGeneGOsGenome(FileManagementGeneGO):
     def __init__(self, name_of_the_file, type_of_the_file, column_name):
         FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
-    def file_gene_gos_gestion(self):
+    def genome_file_processing(self):
         string_to_boolean = lambda value: value.lower() in ("yes", "true", "y", "t", "1")
 
         analyzed_object_name = self.analyzed_object_name
@@ -346,31 +346,24 @@ class FileManagementGeneGOsGenome(FileManagementGeneGO):
         extension_of_the_file  = self.file_extension
         type_of_the_file = self.type_file
 
-        if type_of_the_file == 'genome':
-            already_analyzed_file_yes_no = string_to_boolean(input("Does this file have already been analyzed? "))
-            if already_analyzed_file_yes_no == True:
-                shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory)
-                file_name_temporary = name_of_the_file + extension_of_the_file
+        already_analyzed_file_yes_no = string_to_boolean(input("Does this file have already been analyzed? "))
+        if already_analyzed_file_yes_no == True:
+            shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory)
+            file_name_temporary = name_of_the_file + extension_of_the_file
 
-            elif already_analyzed_file_yes_no == False:
-                file_name_temporary = self.preprocessing_file(type_of_the_file)
-                self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
-
-                session = requests.Session()
-                pathway_extractor.data_retrieval_from_GO(file_name_temporary)
-                pathway_extractor.main(file_name_temporary, session)
-
-                mapping_pathway_data.main(file_name_temporary)
-
-            counting_object_file, number_of_gene_genome = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
-
-            return file_name_temporary, counting_object_file, number_of_gene_genome
-
-        elif type_of_the_file == 'gene_list':
+        elif already_analyzed_file_yes_no == False:
             file_name_temporary = self.preprocessing_file(type_of_the_file)
-            counting_object_file, number_of_gene_list = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
+            self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
 
-            return counting_object_file, number_of_gene_list
+            session = requests.Session()
+            pathway_extractor.data_retrieval_from_GO(file_name_temporary)
+            pathway_extractor.main(file_name_temporary, session)
+
+            mapping_pathway_data.main(file_name_temporary)
+
+        counting_object_file, number_of_gene_genome = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)
+
+        return file_name_temporary, counting_object_file, number_of_gene_genome
 
 class FileManagementGeneGOGenome(FileManagementGeneGO):
 
@@ -419,6 +412,19 @@ class FileManagementGeneInterest(FileManagementGeneGO):
     @genome_file_reference_name.setter
     def genome_file_reference_name(self, file_name):
         self._file_genome_reference_name = file_name
+
+    def interest_file_processing(self):
+        string_to_boolean = lambda value: value.lower() in ("yes", "true", "y", "t", "1")
+
+        analyzed_object_name = self.analyzed_object_name
+        name_of_the_file = self.file_name
+        extension_of_the_file  = self.file_extension
+        type_of_the_file = self.type_file
+
+        file_name_temporary = self.preprocessing_file(type_of_the_file)
+        counting_object_file, number_of_gene_list = self.counting_gene_list(file_name_temporary, 'Counts', analyzed_object_name)
+
+        return counting_object_file, number_of_gene_list
 
     def counting_gene_list(self, file_name_temporary, column_name, column_analyzed_object):
         analyzed_objects = []

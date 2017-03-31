@@ -353,12 +353,14 @@ class FileManagementGeneGOsGenome(FileManagementGeneGO):
 
         elif already_analyzed_file_yes_no == False:
             file_name_temporary = self.preprocessing_file(type_of_the_file)
+
+            request_base_yes_no = string_to_boolean(input("Do you want to update your databases? "))
+            if request_base_yes_no == True:
+                session = requests.Session()
+                pathway_extractor.data_retrieval_from_GO(file_name_temporary)
+                pathway_extractor.main(file_name_temporary, session)
+
             self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)
-
-            session = requests.Session()
-            pathway_extractor.data_retrieval_from_GO(file_name_temporary)
-            pathway_extractor.main(file_name_temporary, session)
-
             mapping_pathway_data.main(file_name_temporary)
 
         counting_object_file, number_of_gene_genome = self.counting_genome(file_name_temporary, 'CountsReference', analyzed_object_name)

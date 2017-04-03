@@ -22,20 +22,14 @@ def http_request_reactome(data_id, data_name, writer, session=requests):
             if results['code'] == 404:
                 return
 
-        if data_name in ["REACT", "Interpro", "GO", "EC"]:
-            if data_name in ["GO", "EC"]:
-                data_id = data_name + ":" + data_id
-            for index in range(len(results['results'][0]['entries'])):
-                reactome_id = results['results'][0]['entries'][index]['id']
-                reactome_id_specie = results['results'][0]['entries'][index]['species']
+        if data_name in ["GO", "EC"]:
+            data_id = data_name + ":" + data_id
 
-        elif data_name == "CHEBI":
-            for index in range(len(results['results'])):
-                for index2 in range(len(results['results'][index]['entries'])):
-                    reactome_id = results['results'][index]['entries'][index2]['id']
-                    reactome_id_specie = results['results'][index]['entries'][index2]['species']
-
-        writer.writerow([data_id, reactome_id, reactome_id_specie])
+        for index in range(len(results['results'])):
+            for index2 in range(len(results['results'][index]['entries'])):
+                reactome_id = results['results'][index]['entries'][index2]['id']
+                reactome_id_specie = results['results'][index]['entries'][index2]['species']
+                writer.writerow([data_id, reactome_id, reactome_id_specie])
 
     except Exception as e:
         error = "Errors : " + repr(e)
@@ -59,11 +53,6 @@ def file_creation(data_name, column_name, df_genome, session=requests):
         print("\tPathway from ChEBI extraction")
         for data in tqdm(datas_requests):
             data = data.strip().replace("_", ":")
-            http_request_reactome(data, data_name, writer, session)
-    elif data_name == "REACT":
-        print("\tREACT pathway extraction")
-        for data in tqdm(datas_requests):
-            data = data.strip()
             http_request_reactome(data, data_name, writer, session)
     elif data_name in ["GO", "EC"]:
         print("\tPathway from " + data_name + " extraction")

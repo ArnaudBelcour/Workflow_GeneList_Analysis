@@ -65,7 +65,8 @@ def extract_information_from_uniprot(results_dataframe):
         enzymes_found = []
 
         for result in results["results"]["bindings"]:
-            enzymes_found.append('ec:' + result["enzyme"]["value"][len('http://purl.uniprot.org/enzyme/'):])
+            if "enzyme" in result:
+                enzymes_found.append('ec:' + result["enzyme"]["value"][len('http://purl.uniprot.org/enzyme/'):])
 
         sparql.setQuery("""
         PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#> 

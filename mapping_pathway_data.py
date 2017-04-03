@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import logging
 import numpy as np
 import os
 import pandas as pa
@@ -9,6 +10,9 @@ from ast import literal_eval
 input_directory = "inputFiles/"
 temporary_directory = "temporaryFiles/"
 temporary_directory_database = "temporaryFiles/databases/"
+
+logging.basicConfig(filename='analysis.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def translation_data(selected_datas, df_mapping, data_column, specification):
     datas = []
@@ -76,6 +80,7 @@ def list_to_string(datas):
     return ','.join(datas)
 
 def main(file_name_temporary):
+    logger.info('-------------------------------------Mapping pathway data main-------------------------------------')
     df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep='\t')
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
@@ -190,5 +195,7 @@ def main(file_name_temporary):
     df_genome['pathway_ghost_koala'] = df_genome['Gene_Name'].apply(translation_gene_pathway, args = (df_ghost_koala, 'kegg_pathway'))
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(drop_duplicates)
     df_genome['pathway_ghost_koala'] = df_genome['pathway_ghost_koala'].apply(list_to_string)
+
+    logger.debug('df_genome: %s', df_genome)
 
     df_genome.to_csv(temporary_directory + "result_pathway_extraction.tsv", sep="\t", index=False)

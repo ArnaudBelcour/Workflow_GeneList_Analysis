@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import logging
 import csv
 import math
 import numpy as np
@@ -12,6 +13,9 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
 output_directory = 'outputFiles/'
+
+logging.basicConfig(filename='analysis.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class EnrichmentAnalysis():
 
@@ -412,6 +416,14 @@ class EnrichmentAnalysis():
         return df[df['pValue' + method_name] == 'significant'].dropna(0).index.tolist()
 
     def enrichment_analysis(self):
+        logger.info('-------------------------------------Enrichment Analysis-------------------------------------')
+
+        logger.debug('Object to analyze: %s', self.object_to_analyze)
+        logger.debug('Name of the file of interest: %s', self.file_of_interest)
+        logger.debug('Name of the file of reference: %s', self.file_of_reference)
+        logger.debug('Number of analyzed objects in interest: %s', self.number_of_analyzed_object_of_interest)
+        logger.debug('Number of analyzed objects in reference: %s', self.number_of_analyzed_object_of_reference)
+        logger.debug('Alpha: %s', self.alpha)
 
         counts_df = pa.read_csv(temporary_directory + self.file_of_interest + ".tsv", sep = "\t")
         counts_df_reference = pa.read_csv(temporary_directory + self.file_of_reference + ".tsv", sep = "\t")
@@ -436,7 +448,7 @@ class EnrichmentAnalysis():
 
         df_joined['Percentage' + self.object_to_analyze + 'InReference'] = percentage_calculator(df_joined[count_column_name],
                                                                                 self.number_of_analyzed_object_of_reference)
-
+        logger.debug('df_joined: %s', df_joined)
         over_unders = ['over', 'under']
         for over_under in over_unders:
             df_joined_over_under = self.hypergeometric_test_on_dataframe(df_joined, over_under, count_column_name)
@@ -471,6 +483,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         return go_labels
 
     def multiple_testing_correction(self, df):
+        logger.info('-------------------------------------Multiple testing correction with GO translation-------------------------------------')
         df.sort_values([self.statistic_method], inplace=True)
 
         df = self.correction_bonferroni(df)
@@ -482,6 +495,8 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         significative_objects = {}
         translation_gos_labels_to_numbers = self.gos_labels_to_numbers
         df.set_index(self.object_to_analyze, inplace=True)
+
+        logger.debug('GO label/number dictionary: %s', len(translation_gos_labels_to_numbers))
 
         for multiple_test_name in self.multiple_test_names:
             if multiple_test_name == 'Sidak':
@@ -501,5 +516,7 @@ class GOEnrichmentAnalysis(EnrichmentAnalysis):
         for go, row in df.iterrows():
             if go in translation_gos_labels_to_numbers:
                 df.set_value(go, 'GOLabel', translation_gos_labels_to_numbers[go])
+
+        logger.debug('Dataframe with GO labels: %s', df)
 
         return df, significative_objects

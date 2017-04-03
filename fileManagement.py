@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import csv
+import logging
 import math
 import numpy as np
 import os
@@ -20,6 +21,9 @@ import pathway_extraction.uniprot_retrieval_data as uniprot_retrieval_data
 
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
+
+logging.basicConfig(filename='analysis.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class FileManagement():
 
@@ -191,6 +195,8 @@ class FileManagement():
 
     def preprocessing_file(self, type_file):
 
+        logger.info('-------------------------------------Preprocessing file-------------------------------------')
+
         def drop_duplicates(datas):
             datas_with_unique = []
             for data in datas:
@@ -273,6 +279,8 @@ class FileManagement():
         temporary_file_name = name_input_file + "GOsTranslatedAndFixed.tsv"
         results_dataframe.to_csv(temporary_directory + temporary_file_name, "\t", index=False, quoting=csv.QUOTE_NONE)
 
+        logger.debug('results_dataframe: %s', results_dataframe)
+
         return temporary_file_name
 
 class FileManagementGeneGO(FileManagement):
@@ -299,8 +307,8 @@ class FileManagementGeneGO(FileManagement):
         self._type_file = type_name
 
     def go_ancestors_list_of_interest(self, column_analyzed_object, file_name_temporary):
-
         print("GO ancestors retrieval")
+        logger.info('-------------------------------------GO ancestors retrieval-------------------------------------')
         df = pa.read_csv(temporary_directory + file_name_temporary, sep='\t')
         df.replace(np.nan, '', regex=True, inplace=True)
 
@@ -308,8 +316,10 @@ class FileManagementGeneGO(FileManagement):
             df[column_analyzed_object].loc[index] = ancestor_go_extraction.union_go_and_their_ancestor(row[column_analyzed_object].split(","))
 
         df.to_csv(temporary_directory + file_name_temporary, sep='\t', index=False)
+        logger.debug('df: %s', df)
 
     def counting_genome(self, file_name_temporary, column_name, column_analyzed_object):
+        logger.info('-------------------------------------Counting genome-------------------------------------')
         analyzed_objects = []
         df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
         df.replace(np.nan, '', regex=True, inplace=True)
@@ -331,6 +341,8 @@ class FileManagementGeneGO(FileManagement):
         counts_df_genome.to_csv(temporary_directory + "counting_objects_in_genome.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
 
         number_of_gene = len(df.index.unique())
+
+        logger.debug('counts_df_genome: %s', counts_df_genome)
 
         return "counting_objects_in_genome", number_of_gene
 
@@ -430,6 +442,7 @@ class FileManagementGeneInterest(FileManagementGeneGO):
         return counting_object_file, number_of_gene_list
 
     def counting_gene_list(self, file_name_temporary, column_name, column_analyzed_object):
+        logger.info('-------------------------------------Counting gene list-------------------------------------')
         analyzed_objects = []
         df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
         df = df[['Gene_Name']]
@@ -462,5 +475,7 @@ class FileManagementGeneInterest(FileManagementGeneGO):
 
         counts_df.reset_index(inplace=True)
         counts_df.to_csv(temporary_directory + "counting_objects_in_interest.tsv", "\t", index=False, header=True, quoting=csv.QUOTE_NONE)
+
+        logger.debug('counts_df: %s', counts_df)
 
         return "counting_objects_in_interest", number_of_gene

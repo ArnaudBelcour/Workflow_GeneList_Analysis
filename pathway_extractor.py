@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import logging
 import numpy as np
 import os
 import pandas as pa
@@ -19,6 +20,9 @@ import pathway_extraction.sparql_query_reactome_pathway_name as sparql_query_rea
 
 temporary_directory = 'temporaryFiles/'
 temporary_directory_database = 'temporaryFiles/databases/'
+
+logging.basicConfig(filename='analysis.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def ec_extraction(df_genome):
     ecs_requests = []
@@ -65,9 +69,7 @@ def data_retrieval_from_GO(file_name_temporary):
         Add Interpro and Enzyems Codes found with mapping files of the Gene Ontology.
         Add ChEBI linked with GO terms.
     '''
-    if os.path.isdir(temporary_directory_database) == False:
-        os.makedirs(temporary_directory_database)
-
+    logger.info('-------------------------------------Data retrieval from GO-------------------------------------')
     df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 
@@ -89,9 +91,13 @@ def data_retrieval_from_GO(file_name_temporary):
 
     df_genome.drop('ec_code', 1, inplace=True)
     df_genome.drop('interpro', 1, inplace=True)
+
+    logger.debug('df_genome: %s', df_genome)
+
     df_genome.to_csv(temporary_directory + file_name_temporary, sep='\t', index=False)
 
 def main(file_name_temporary, session=requests):
+    logger.info('-------------------------------------Pathway extractor main-------------------------------------')
     df_genome = pa.read_csv(temporary_directory + file_name_temporary, sep='\t')
     df_genome.replace(np.nan, '', regex=True, inplace=True)
 

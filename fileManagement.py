@@ -270,9 +270,10 @@ class FileManagement():
         if uniprot_retrieval_y_n in yes_answers :
             results_dataframe = uniprot_retrieval_data.extract_information_from_uniprot(results_dataframe)
 
-        results_dataframe.to_csv(temporary_directory + name_input_file + "GOsTranslatedAndFixed.tsv", "\t", index=False, quoting=csv.QUOTE_NONE)
+        temporary_file_name = name_input_file + "GOsTranslatedAndFixed.tsv"
+        results_dataframe.to_csv(temporary_directory + temporary_file_name, "\t", index=False, quoting=csv.QUOTE_NONE)
 
-        return name_input_file + "GOsTranslatedAndFixed.tsv"
+        return temporary_file_name
 
 class FileManagementGeneGO(FileManagement):
 
@@ -354,10 +355,10 @@ class FileManagementGeneGOsGenome(FileManagementGeneGO):
         elif already_analyzed_file_yes_no == False:
             file_name_temporary = self.preprocessing_file(type_of_the_file)
 
+            session = requests.Session()
+            pathway_extractor.data_retrieval_from_GO(file_name_temporary)
             request_base_yes_no = string_to_boolean(input("Do you want to update your databases? "))
             if request_base_yes_no == True:
-                session = requests.Session()
-                pathway_extractor.data_retrieval_from_GO(file_name_temporary)
                 pathway_extractor.main(file_name_temporary, session)
 
             self.go_ancestors_list_of_interest(analyzed_object_name, file_name_temporary)

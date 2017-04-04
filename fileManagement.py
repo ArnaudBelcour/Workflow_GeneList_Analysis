@@ -126,6 +126,7 @@ class FileManagement():
             Then the column containing the maximum of occurrence for a type of data is associated with it by returning it's name.
             Between GO labels and GO numbers, GO numbers are preferred.
         '''
+        logger.info('-------------------------------------Column auto-detection-------------------------------------')
         columns = df.columns.tolist()
 
         go_label_expression = r"[FPC]{1}:[\w]*"
@@ -170,6 +171,11 @@ class FileManagement():
                     else:
                         ko_keggs[column] = 1
 
+        logger.debug('GO number column: %s', go_number_columns)
+        logger.debug('GO label column: %s', go_label_columns)
+        logger.debug('EC number column: %s', ec_columns)
+        logger.debug('InterPro column: %s', ipr_columns)
+
         if go_number_columns:
             go_number_column = max(go_number_columns, key=go_number_columns.get)
             go_column = go_number_column
@@ -194,7 +200,6 @@ class FileManagement():
         return go_column, ec_column, ipr_column
 
     def preprocessing_file(self, type_file):
-
         logger.info('-------------------------------------Preprocessing file-------------------------------------')
 
         def drop_duplicates(datas):
@@ -352,6 +357,7 @@ class FileManagementGeneGOsGenome(FileManagementGeneGO):
         FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
     def genome_file_processing(self):
+        logger.info('-------------------------------------Genome GOs file processing-------------------------------------')
         string_to_boolean = lambda value: value.lower() in ("yes", "true", "y", "t", "1")
 
         analyzed_object_name = self.analyzed_object_name
@@ -360,6 +366,7 @@ class FileManagementGeneGOsGenome(FileManagementGeneGO):
         type_of_the_file = self.type_file
 
         already_analyzed_file_yes_no = string_to_boolean(input("Does this file have already been analyzed? "))
+        logger.debug('Input for already analyzed file: %s', already_analyzed_file_yes_no)
         if already_analyzed_file_yes_no == True:
             shutil.copy(input_directory + name_of_the_file + extension_of_the_file, temporary_directory)
             file_name_temporary = name_of_the_file + extension_of_the_file
@@ -370,6 +377,7 @@ class FileManagementGeneGOsGenome(FileManagementGeneGO):
             session = requests.Session()
             pathway_extractor.data_retrieval_from_GO(file_name_temporary)
             request_base_yes_no = string_to_boolean(input("Do you want to update your databases? "))
+            logger.debug('Input for database interrogation: %s', request_base_yes_no)
             if request_base_yes_no == True:
                 pathway_extractor.main(file_name_temporary, session)
 
@@ -386,6 +394,7 @@ class FileManagementGeneGOGenome(FileManagementGeneGO):
         FileManagementGeneGO.__init__(self, name_of_the_file, type_of_the_file, column_name)
 
     def genome_file_processing(self):
+        logger.info('-------------------------------------Genome GO file processing-------------------------------------')
         analyzed_object_name = self.analyzed_object_name
         name_of_the_file = self.file_name
         extension_of_the_file  = self.file_extension
@@ -429,6 +438,7 @@ class FileManagementGeneInterest(FileManagementGeneGO):
         self._file_genome_reference_name = file_name
 
     def interest_file_processing(self):
+        logger.info('-------------------------------------Interest file processing-------------------------------------')
         string_to_boolean = lambda value: value.lower() in ("yes", "true", "y", "t", "1")
 
         analyzed_object_name = self.analyzed_object_name

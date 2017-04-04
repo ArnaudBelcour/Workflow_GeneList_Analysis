@@ -179,6 +179,7 @@ class EnrichmentAnalysis():
         return pvalue_normal
 
     def multiple_testing_correction(self, df):
+        logger.info('-------------------------------------Multiple testing correction-------------------------------------')
         df = df.sort_values([self.statistic_method])
 
         df = self.correction_bonferroni(df)
@@ -205,6 +206,8 @@ class EnrichmentAnalysis():
 
             significative_objects[multiple_test_name] = object_significatives
 
+        logger.debug('Multiple testing correction dataframe: %s', df)
+
         return df, significative_objects
 
     def writing_output(self, df, significative_objects, over_or_underrepresentation, approximation_yes_or_no, yes_answers):
@@ -213,6 +216,7 @@ class EnrichmentAnalysis():
         Results are written using sorted(dictionnary), so the list of result corresponds to : Sidak (position 5 in the list), Bonferroni (position 2),
         Holm (position 3), SGoF (position 4), Benjamini & Hochberg (position 0) and Benjamini & Yekutieli (position 1).
         '''
+        logger.info('-------------------------------------Write output-------------------------------------')
         df.sort_values(['pValueBenjaminiHochberg'], inplace=True)
 
         if approximation_yes_or_no in yes_answers:

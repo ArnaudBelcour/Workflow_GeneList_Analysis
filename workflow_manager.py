@@ -4,7 +4,7 @@ import os
 import six
 
 from enrichmentAnalysis import GOEnrichmentAnalysis
-from fileManagement import FileManagementGeneGOGenome, FileManagementGeneInterest
+from fileManagement import FileManagementGeneGOsGenome, FileManagementGeneInterest
 
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
@@ -25,7 +25,7 @@ def workflow_mainager():
         sys.exit("No input data, please put your data files in inputFiles directory.")
 
     name_reference_input_file = input("Write the name of your input file containing genome : ")
-    input_genome_file_gestion = FileManagementGeneGOGenome(name_reference_input_file, 'genome' , 'GOs')
+    input_genome_file_gestion = FileManagementGeneGOsGenome(name_reference_input_file, 'genome' , 'GOs')
     reference_file_name, counting_reference_file_name, number_of_gene_genome = input_genome_file_gestion.genome_file_processing()
 
     name_de_input_file = input("Write the name of your input file containing differentially expressed gene : ")

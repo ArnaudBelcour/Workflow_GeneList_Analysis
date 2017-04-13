@@ -4,6 +4,8 @@ import pandas as pa
 
 from SPARQLWrapper import SPARQLWrapper, JSON
 
+output_directory = 'outputFiles/'
+
 def insert_delete_pval(prefix, go_pval_rdf, insert_or_delete):
     '''
         Insert datas into a Fuseki SPARQL Endpoint.
@@ -18,7 +20,7 @@ def insert_delete_pval(prefix, go_pval_rdf, insert_or_delete):
     """)
     sparql.query()
 
- def go_term_ancestor(go):
+def go_term_ancestor(go):
     '''
         Requests a SPARQL Endpoint (which contains the go.owl file from the Gene Ontology) to retrieve GO ancestors of a specific go term.
     '''
@@ -52,7 +54,7 @@ def middle_selection():
     '''
         Remove GO terms which have a more significant descendant and GO terms which have a more significant ancestor.
     '''
-    df_over = pa.read_csv('pValuesOfGOs_over.tsv', sep='\t', header=1)
+    df_over = pa.read_csv(output_directory + 'pValuesOfGOs_under.tsv', sep='\t', header=1)
     go_pval_rdf = ""
     prefix = """PREFIX od: <http://test/od/>
                 PREFIX go: <http://purl.obolibrary.org/obo/>"""
@@ -91,7 +93,7 @@ def middle_selection():
     """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
-    csvfile = open("result_go_cleaned_BH.tsv", "w", newline="")
+    csvfile = open(output_directory + "result_go_cleaned_BH.tsv", "w", newline="")
     writer = csv.writer(csvfile, delimiter='\t')
     writer.writerow(['goID', 'pValue', 'goLabel'])
 
@@ -102,30 +104,28 @@ def middle_selection():
 
     insert_delete_pval(prefix, go_pval_rdf, "DELETE")
  
- def specific_selection():
+def specific_selection():
     '''
         Remove all the ancestors of the lowest GO terms and keep these lowest GO terms.
     '''
-    df_over = pa.read_csv('pValuesOfGOs_over.tsv', sep='\t', header=1)
+    df_over = pa.read_csv(output_directory + 'pValuesOfGOs_under.tsv', sep='\t', header=1)
     significatives_gos = df_over[df_over['pValueBenjaminiHochberg'] < 0.05]['GOs'].tolist()
     go_to_delete = []
 
     for go in significatives_gos:
-        print(go)
         go_with_ancestors = go_term_ancestor(go)
         go_to_delete.extend(go_with_ancestors)
 
     for go in go_to_delete:
         if go in significatives_gos:
             significatives_gos.remove(go)
-    print(len(df_over[df_over['pValueBenjaminiHochberg'] < 0.05]['GOs'].tolist()))
-    print(len(significatives_gos))
 
     df_go = pa.DataFrame(significatives_gos)
     df_go.columns = [['GOs']]
     df_go.set_index('GOs', inplace=True)
     df_over.set_index('GOs', inplace=True)
     df_joined = df_go.join(df_over)
-    df_joined.to_csv("result_go_cleaned_specific.tsv", sep="\t")
-    print(df_joined['GOLabel'])
-    print(df_over['GOLabel'])
+    df_joined.to_csv(output_directory + "result_go_cleaned_specific.tsv", sep="\t")
+
+middle_selection()
+specific_selection()

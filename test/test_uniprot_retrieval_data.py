@@ -16,5 +16,5 @@ class uniprot_retrieval_data_test(unittest.TestCase):
 
         df_result_truth = pa.read_csv(test_data_directory_uniprot + 'result.tsv', sep='\t')
 
-        np.testing.assert_array_equal(df_result['GOs'].tolist(), df_result_truth['GOs'].tolist())
+        np.testing.assert_array_equal(df_result['GOs'].tolist().sort(), df_result_truth['GOs'].tolist().sort())
         np.testing.assert_array_equal(df_result['InterProScan'].tolist(), df_result_truth['InterProScan'].tolist())

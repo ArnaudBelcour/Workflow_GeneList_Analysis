@@ -50,17 +50,17 @@ def go_term_ancestor(go):
     go_ancestors.remove(go)
     return go_ancestors
 
-def middle_selection():
+def middle_selection(under_over):
     '''
         Remove GO terms which have a more significant descendant and GO terms which have a more significant ancestor.
     '''
-    df_over = pa.read_csv(output_directory + 'pValuesOfGOs_under.tsv', sep='\t', header=1)
+    df_over = pa.read_csv(output_directory + 'pValuesOfGOs_' + under_over +'.tsv', sep='\t', header=1)
     go_pval_rdf = ""
     prefix = """PREFIX od: <http://test/od/>
                 PREFIX go: <http://purl.obolibrary.org/obo/>"""
     for index, row in df_over.iterrows():
         if row['pValueBenjaminiHochberg'] < 0.05:
-            go_pval_rdf += "go:" + str(row['GOs']) + " " + "od:hasPValueHypergeometric" + " " + str(row['pValueBenjaminiHochberg']) + " .\n"
+            go_pval_rdf += "go:" + str(row['GOs']) + " " + "od:pvalue_hypergeometric" + " " + str(row['pValueBenjaminiHochberg']) + " .\n"
 
     go_pval_rdf = go_pval_rdf.replace('GO:', 'GO_')
 
@@ -93,7 +93,7 @@ def middle_selection():
     """)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
-    csvfile = open(output_directory + "result_go_cleaned_BH.tsv", "w", newline="")
+    csvfile = open(output_directory + "result_go_middle_" + under_over + ".tsv", "w", newline="")
     writer = csv.writer(csvfile, delimiter='\t')
     writer.writerow(['goID', 'pValue', 'goLabel'])
 
@@ -104,12 +104,12 @@ def middle_selection():
 
     insert_delete_pval(prefix, go_pval_rdf, "DELETE")
  
-def specific_selection():
+def specific_selection(under_over):
     '''
         Remove all the ancestors of the lowest GO terms and keep these lowest GO terms.
     '''
-    df_over = pa.read_csv(output_directory + 'pValuesOfGOs_under.tsv', sep='\t', header=1)
-    significatives_gos = df_over[df_over['pValueBenjaminiHochberg'] < 0.05]['GOs'].tolist()
+    df_over = pa.read_csv(output_directory + 'pValuesOfGOs_' + under_over +'.tsv', sep='\t', header=1)
+    significatives_gos = df_over[df_over['pvalue_hypergeometric'] < 0.05]['GOs'].tolist()
     go_to_delete = []
 
     for go in significatives_gos:
@@ -125,7 +125,10 @@ def specific_selection():
     df_go.set_index('GOs', inplace=True)
     df_over.set_index('GOs', inplace=True)
     df_joined = df_go.join(df_over)
-    df_joined.to_csv(output_directory + "result_go_cleaned_specific.tsv", sep="\t")
+    df_joined.to_csv(output_directory + "result_go_cleaned_specific_" + under_over + ".tsv", sep="\t")
 
-middle_selection()
-specific_selection()
+def main():
+    middle_selection('under')
+    specific_selection('under')
+    middle_selection('over')
+    specific_selection('over')

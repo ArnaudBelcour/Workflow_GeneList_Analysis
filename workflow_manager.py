@@ -3,6 +3,8 @@
 import os
 import six
 
+import result_go_selection
+
 from enrichmentAnalysis import GOEnrichmentAnalysis
 from fileManagement import FileManagementGeneGOsGenome, FileManagementGeneInterest
 
@@ -39,5 +41,7 @@ def workflow_mainager():
 
     go_enrichment_analysis = GOEnrichmentAnalysis('GOs', counting_interest_file_name, counting_reference_file_name, number_of_gene_list, number_of_gene_genome, alpha, 10000, d_go_label_to_number)
     go_enrichment_analysis.enrichment_analysis()
+
+    result_go_selection.main()
 
 workflow_mainager()

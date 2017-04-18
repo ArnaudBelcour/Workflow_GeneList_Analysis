@@ -60,7 +60,7 @@ def middle_selection(under_over):
                 PREFIX go: <http://purl.obolibrary.org/obo/>"""
     for index, row in df_over.iterrows():
         if row['pValueBenjaminiHochberg'] < 0.05:
-            go_pval_rdf += "go:" + str(row['GOs']) + " " + "od:pvalue_hypergeometric" + " " + str(row['pValueBenjaminiHochberg']) + " .\n"
+            go_pval_rdf += "go:" + str(row['GOs']) + " " + "od:hasPValueHypergeometric" + " " + str(row['pValueBenjaminiHochberg']) + " .\n"
 
     go_pval_rdf = go_pval_rdf.replace('GO:', 'GO_')
 
@@ -109,7 +109,7 @@ def specific_selection(under_over):
         Remove all the ancestors of the lowest GO terms and keep these lowest GO terms.
     '''
     df_over = pa.read_csv(output_directory + 'pValuesOfGOs_' + under_over +'.tsv', sep='\t', header=1)
-    significatives_gos = df_over[df_over['pvalue_hypergeometric'] < 0.05]['GOs'].tolist()
+    significatives_gos = df_over[df_over['pValueBenjaminiHochberg'] < 0.05]['GOs'].tolist()
     go_to_delete = []
 
     for go in significatives_gos:
@@ -119,6 +119,8 @@ def specific_selection(under_over):
     for go in go_to_delete:
         if go in significatives_gos:
             significatives_gos.remove(go)
+    if significatives_gos == []:
+        significatives_gos.append('')
 
     df_go = pa.DataFrame(significatives_gos)
     df_go.columns = [['GOs']]
@@ -128,7 +130,7 @@ def specific_selection(under_over):
     df_joined.to_csv(output_directory + "result_go_cleaned_specific_" + under_over + ".tsv", sep="\t")
 
 def main():
-    middle_selection('under')
-    specific_selection('under')
     middle_selection('over')
     specific_selection('over')
+    middle_selection('under')
+    specific_selection('under')

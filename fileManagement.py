@@ -50,11 +50,12 @@ class FileManagement():
         '''
             Check the internet connection to use a http request or a file.
         '''
-        try:
-            requests.get('http://www.google.com/')
+        response = os.system('curl 8.8.8.8')
+        print(response)
+        if response != 1792:
             return self.go_label_number_dictionary_creation_from_http(specification)
 
-        except requests.ConnectionError:
+        else:
             return self.go_label_number_dictionary_creation_from_file(specification)
 
     def go_label_number_dictionary_creation_from_http(self, specification='normal'):

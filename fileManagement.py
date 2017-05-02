@@ -51,7 +51,6 @@ class FileManagement():
             Check the internet connection to use a http request or a file.
         '''
         response = os.system('curl 8.8.8.8')
-        print(response)
         if response != 1792:
             return self.go_label_number_dictionary_creation_from_http(specification)
 

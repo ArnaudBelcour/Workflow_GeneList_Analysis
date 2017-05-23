@@ -50,11 +50,10 @@ class FileManagement():
         '''
             Check the internet connection to use a http request or a file.
         '''
-        response = os.system('curl 8.8.8.8')
-        if response != 1792:
+        try:
+            requests.get('http://www.google.com/')
             return self.go_label_number_dictionary_creation_from_http(specification)
-
-        else:
+        except requests.ConnectionError:
             return self.go_label_number_dictionary_creation_from_file(specification)
 
     def go_label_number_dictionary_creation_from_http(self, specification='normal'):
@@ -129,47 +128,39 @@ class FileManagement():
         logger.info('-------------------------------------Column auto-detection-------------------------------------')
         columns = df.columns.tolist()
 
-        go_label_expression = r"[FPC]{1}:[\w]*"
-        go_number_expression = r"[FPC]{1}:GO[:_][\d]{7}"
-        ec_expression = r"[Ee][Cc]:[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,2}"
+        go_label_expression = r"[FPC]?:?[\w]*"
+        go_number_expression = r"[FPC]?:?GO[:_][\d]{7}"
+        ec_expression = r"[Ee]?[Cc]?:?[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,3}"
         ipr_expression = r"IPR[\d]{6}"
-        ko_kegg_expression = r"K[\d]{5}"
 
         go_label_columns = {}
         go_number_columns = {}
         ec_columns = {}
         ipr_columns = {}
-        ko_keggs = {}
 
         for column in columns:
             for column_values in df[column]:
-                if type(column_values) is not str:
-                    continue
-                if re.match(go_number_expression, column_values):
-                    if column in go_number_columns:
-                        go_number_columns[column] += 1
-                    else:
-                        go_number_columns[column] = 1
-                elif re.match(go_label_expression, column_values):
-                    if column in go_label_columns:
-                        go_label_columns[column] += 1
-                    else:
-                        go_label_columns[column] = 1
-                elif re.match(ec_expression, column_values):
-                    if column in ec_columns:
-                        ec_columns[column] += 1
-                    else:
-                        ec_columns[column] = 1
-                elif re.match(ipr_expression, column_values):
-                    if column in ipr_columns:
-                        ipr_columns[column] += 1
-                    else:
-                        ipr_columns[column] = 1
-                elif re.match(ko_kegg_expression, column_values):
-                    if column in ko_keggs:
-                        ko_keggs[column] += 1
-                    else:
-                        ko_keggs[column] = 1
+                if type(column_values) is str:
+                    if bool(re.search(go_number_expression, column_values)):
+                        if column in go_number_columns:
+                            go_number_columns[column] += 1
+                        else:
+                            go_number_columns[column] = 1
+                    if bool(re.search(go_label_expression, column_values)):
+                        if column in go_label_columns:
+                            go_label_columns[column] += 1
+                        else:
+                            go_label_columns[column] = 1
+                    if bool(re.search(ec_expression, column_values)):
+                        if column in ec_columns:
+                            ec_columns[column] += 1
+                        else:
+                            ec_columns[column] = 1
+                    if bool(re.search(ipr_expression, column_values)):
+                        if column in ipr_columns:
+                            ipr_columns[column] += 1
+                        else:
+                            ipr_columns[column] = 1
 
         logger.debug('GO number column: %s', go_number_columns)
         logger.debug('GO label column: %s', go_label_columns)
@@ -188,12 +179,8 @@ class FileManagement():
             ipr_column = max(ipr_columns, key=ipr_columns.get)
         else:
             ipr_column = np.nan
-        if ko_keggs and ko_keggs != []:
-            ko_kegg = max(ko_keggs, key=ko_keggs.get)
-        else:
-            ko_kegg = np.nan
 
-        if not go_number_columns:
+        if not go_number_columns and go_label_columns:
             go_label_column = max(go_label_columns, key=go_label_columns.get)
             go_column = go_label_column
 

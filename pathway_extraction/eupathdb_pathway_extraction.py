@@ -4,7 +4,7 @@ import csv
 import re
 import requests
 
-from tqdm import *
+from tqdm import tqdm
 
 from . import *
 

@@ -5,7 +5,7 @@ import urllib.request
 
 from gzip import GzipFile
 from lxml import etree
-from tqdm import *
+from tqdm import tqdm
 
 from . import *
 

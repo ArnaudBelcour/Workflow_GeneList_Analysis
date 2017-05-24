@@ -3,7 +3,7 @@
 import csv
 
 from SPARQLWrapper import SPARQLWrapper, JSON
-from tqdm import *
+from tqdm import tqdm
 
 from . import *
 

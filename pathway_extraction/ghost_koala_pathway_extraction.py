@@ -4,7 +4,7 @@ import csv
 import pandas as pa
 import re
 
-from tqdm import *
+from tqdm import tqdm
 
 from . import *
 

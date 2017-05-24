@@ -12,7 +12,7 @@ import requests
 import shutil
 import six
 
-from tqdm import *
+from tqdm import tqdm
 
 import ancestor_go_extraction
 import mapping_pathway_data
@@ -22,7 +22,7 @@ import pathway_extraction.uniprot_retrieval_data as uniprot_retrieval_data
 input_directory = "inputFiles/"
 temporary_directory = 'temporaryFiles/'
 
-logging.basicConfig(filename='analysis.log',level=logging.DEBUG)
+logging.basicConfig(filename='analysis.log', level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class FileManagement():
@@ -212,9 +212,9 @@ class FileManagement():
         yes_or_no = input("Is the first columns of your file, the column containing gene name? ")
 
         yes_answers = ['yes', 'y', 'oui', 'o']
-        if yes_or_no.lower() in yes_answers :
+        if yes_or_no.lower() in yes_answers:
             name_gene_column = results_dataframe.columns[0]
-        else :
+        else:
             name_gene_column = input("Write the name of the column containing the gene names : ")
 
         if type_file == "gene_list":
@@ -242,8 +242,8 @@ class FileManagement():
         results_dataframe['GOs'] = results_dataframe['GOs'].str.join(",")
 
         results_dataframe.replace(np.nan, '', regex=True, inplace=True)
-        list_to_string = lambda datas: ','.join(datas)
-        to_list = lambda x: x.split("; ")
+        list_to_string = ','.join
+        to_list = lambda x: re.split(r'; |,', x)
 
         results_dataframe['InterProScan'] = results_dataframe['InterProScan'].apply(to_list)
 

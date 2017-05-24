@@ -2,7 +2,7 @@
 
 import pandas as pa
 
-from tqdm import *
+from tqdm import tqdm
 
 from . import *
 

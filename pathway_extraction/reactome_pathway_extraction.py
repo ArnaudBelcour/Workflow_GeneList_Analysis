@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pa
 import requests
 
-from tqdm import *
+from tqdm import tqdm
 
 from . import *
 

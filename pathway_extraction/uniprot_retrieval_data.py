@@ -5,7 +5,7 @@ import pandas as pa
 import six
 
 from SPARQLWrapper import SPARQLWrapper, JSON
-from tqdm import *
+from tqdm import tqdm
 
 from . import *
 

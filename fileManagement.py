@@ -139,28 +139,11 @@ class FileManagement():
         ipr_columns = {}
 
         for column in columns:
-            for column_values in df[column]:
-                if type(column_values) is str:
-                    if bool(re.search(go_number_expression, column_values)):
-                        if column in go_number_columns:
-                            go_number_columns[column] += 1
-                        else:
-                            go_number_columns[column] = 1
-                    if bool(re.search(go_label_expression, column_values)):
-                        if column in go_label_columns:
-                            go_label_columns[column] += 1
-                        else:
-                            go_label_columns[column] = 1
-                    if bool(re.search(ec_expression, column_values)):
-                        if column in ec_columns:
-                            ec_columns[column] += 1
-                        else:
-                            ec_columns[column] = 1
-                    if bool(re.search(ipr_expression, column_values)):
-                        if column in ipr_columns:
-                            ipr_columns[column] += 1
-                        else:
-                            ipr_columns[column] = 1
+            df[column] = df[column].astype(str)
+            go_number_columns[column] = len(df[df[column].str.match(go_number_expression)])
+            go_label_columns[column] = len(df[df[column].str.match(go_label_expression)])
+            ec_columns[column] = len(df[df[column].str.match(ec_expression)])
+            ipr_columns[column] = len(df[df[column].str.match(ipr_expression)])
 
         logger.debug('GO number column: %s', go_number_columns)
         logger.debug('GO label column: %s', go_label_columns)

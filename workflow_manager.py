@@ -5,7 +5,7 @@ import six
 
 import result_go_selection
 
-from enrichmentAnalysis import GOEnrichmentAnalysis
+from liasis import GOEnrichmentAnalysis
 from fileManagement import FileManagementGeneGOsGenome, FileManagementGeneInterest
 
 input_directory = "inputFiles/"

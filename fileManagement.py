@@ -130,7 +130,7 @@ class FileManagement():
 
         go_label_expression = r"[FPC]?:?[\w]*"
         go_number_expression = r"[FPC]?:?GO[:_][\d]{7}"
-        ec_expression = r"[Ee]?[Cc]?:?[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,3}"
+        ec_expression = r"[Ee][Cc]:[\d]{1}[\.]{1}[\d]{,2}[\.]{,1}[\d]{,2}[\.]{,1}[\d]{,3}"
         ipr_expression = r"IPR[\d]{6}"
 
         go_label_columns = {}
@@ -242,7 +242,7 @@ class FileManagement():
         results_dataframe['EnzymeCodes'] = results_dataframe['EnzymeCodes'].apply(to_list)
 
         ec_modification = lambda ecs: [ec.lower()
-                                     for ec in ecs]
+                                       for ec in ecs]
 
         results_dataframe['EnzymeCodes'] = results_dataframe['EnzymeCodes'].apply(ec_modification)
         results_dataframe['EnzymeCodes'] = results_dataframe['EnzymeCodes'].apply(drop_duplicates)

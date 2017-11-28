@@ -5,7 +5,7 @@ import six
 
 import result_go_selection
 
-from liasis import GOEnrichmentAnalysis
+from liasis import AnnotationEnrichmentAnalysis, preprocessing_files
 from fileManagement import FileManagementGeneGOsGenome, FileManagementGeneInterest
 
 input_directory = "inputFiles/"
@@ -40,7 +40,9 @@ def workflow_mainager():
     sentence_choice_alpha = "Enter the alpha risk : "
     alpha = float(input(sentence_choice_alpha))
 
-    go_enrichment_analysis = GOEnrichmentAnalysis('GOs', counting_interest_file_name, counting_reference_file_name, number_of_gene_list, number_of_gene_genome, alpha, 10000, d_go_label_to_number)
+    dataframe, name_interest, name_reference = preprocessing_files('GOs', counting_interest_file_name, counting_reference_file_name)
+    go_enrichment_analysis = AnnotationEnrichmentAnalysis(dataframe, name_interest, name_reference,
+							number_of_gene_list, number_of_gene_genome, alpha, 10000, d_go_label_to_number, 'GOlabel')
     go_enrichment_analysis.enrichment_analysis()
 
     result_go_selection.main()

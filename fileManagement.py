@@ -424,6 +424,7 @@ class FileManagementGeneInterest(FileManagementGeneGO):
     def counting_gene_list(self, file_name_temporary, column_name, column_analyzed_object):
         logger.info('-------------------------------------Counting gene list-------------------------------------')
         analyzed_objects = []
+        linked_genes = {}
         df = pa.read_csv(temporary_directory + file_name_temporary, sep="\t")
         df = df[['Gene_Name']]
         df.set_index("Gene_Name", inplace=True)
@@ -445,12 +446,17 @@ class FileManagementGeneInterest(FileManagementGeneGO):
         for index, row in df_joined.iterrows():
             for analyzed_object in row[column_analyzed_object].split(","):
                 analyzed_objects.append(analyzed_object)
+                if analyzed_object in linked_genes:
+                    linked_genes[analyzed_object].append(index)
+                else:
+                    linked_genes[analyzed_object] = [index]
 
         counts_df = pa.DataFrame(analyzed_objects)
         counts_df.columns = [column_analyzed_object]
         counts_df = counts_df.groupby(column_analyzed_object).size().rename(column_name)
         counts_df = counts_df.to_frame()
-
+        counts_df['linked_genes'] = pa.Series(linked_genes, index=counts_df.index)
+        counts_df['linked_genes'] = [','.join([gene for gene in genes]) for genes in counts_df['linked_genes']]
         number_of_gene = len(df.index.unique())
 
         counts_df.reset_index(inplace=True)

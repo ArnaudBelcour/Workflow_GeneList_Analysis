@@ -1,5 +1,11 @@
 # Workflow for Genes List Analysis
 
+**WARNING:**
+
+**This workflow was a test during an internship. Currently it is not working and I will not update it, so don't use it.**
+
+
+
 [![Build Status](https://travis-ci.org/ArnaudBelcour/Workflow_GeneList_Analysis.svg?branch=master)](https://travis-ci.org/ArnaudBelcour/Workflow_GeneList_Analysis)
 [![Coverage Status](https://coveralls.io/repos/github/ArnaudBelcour/Workflow_GeneList_Analysis/badge.svg)](https://coveralls.io/github/ArnaudBelcour/Workflow_GeneList_Analysis)
 
